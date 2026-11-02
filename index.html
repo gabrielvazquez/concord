@@ -197,7 +197,7 @@ a.btn{text-decoration:none}
 .send{width:38px;height:38px;border-radius:12px;background:var(--ac);color:var(--act);display:grid;place-items:center;margin-bottom:2px}
 
 /* Palco de voz */
-#stage{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+#stage{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;overflow:clip}
 #tiles{flex:1;display:grid;gap:10px;padding:16px;align-content:center;overflow:auto;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
 #tiles.focus{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));align-content:start}
 #tiles.focus .tile.big{grid-column:1/-1;aspect-ratio:auto;height:min(62vh,calc(100vh - 340px))}
@@ -683,7 +683,7 @@ html.is-desktop #who{top:34px}
 .djclear{margin:8px 6px 0}
 .djempty{display:grid;place-items:center;padding:24px}
 #djChip{position:absolute;top:12px;right:12px;z-index:5}
-#djChip button{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);max-width:320px;color:var(--tx)}
+#djChip #djChipB{display:flex;align-items:center;gap:8px;padding:0 8px 0 10px;border-radius:999px;max-width:280px;color:var(--tx)}
 #djChip b{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #djChip small{font-size:10px;font-weight:800;color:#1ed760;letter-spacing:.06em}
 .eq{display:inline-flex;align-items:flex-end;gap:2px;height:12px;width:14px}
@@ -697,6 +697,18 @@ html.is-desktop #who{top:34px}
 #slashBox button{display:flex;align-items:baseline;gap:8px;width:100%;padding:8px 10px;border-radius:9px;text-align:left}
 #slashBox button:hover{background:var(--card)}
 #slashBox b{font-size:13.5px}#slashBox i{font-size:12px;color:var(--tx3)}#slashBox small{margin-left:auto;font-size:12px;color:var(--tx3)}
+#djChip{display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line2);border-radius:999px;padding:3px}
+#djChip.hidden{display:none}
+#djChip #djChipB{height:30px}
+.djmb{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--tx);flex-shrink:0}
+.djmb:hover{background:#fff;color:#000}
+.i.fill,.djmb .fill{fill:currentColor}
+#djMini{display:flex;align-items:center;gap:2px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+#djMini.hidden{display:none}
+.djmt{flex:1;min-width:0;display:flex;align-items:center;gap:8px;text-align:left;color:var(--tx)}
+.djmt>span:last-child{min-width:0}
+.djmt b{display:block;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.djmt small{display:block;font-size:10.5px;color:#1ed760;font-weight:700;letter-spacing:.03em}
 /* ---------- Status e atividade ---------- */
 #meAvW{cursor:pointer;border-radius:50%}
 #userbar .who{cursor:pointer;min-width:0}
@@ -1047,6 +1059,7 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
           <button id="vbScreen" title="Transmitir tela"><svg class="i sm"><use href="#i-cast"/></svg></button>
           <button id="vbLeave" class="leave" title="Desconectar"><svg class="i sm"><use href="#i-leave"/></svg></button>
         </div>
+        <div id="djMini" class="hidden"></div>
       </div>
       <div id="userbar">
         <div id="meAvW" title="Status"></div>
@@ -3346,7 +3359,7 @@ const djPos = ()=> DJ.st.playing ? DJ.st.pos + (Date.now()-DJ.st.at)/1000 : DJ.s
 const fmtDur = s => { s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=String(s%60).padStart(2,'0'); return h? `${h}:${String(m).padStart(2,'0')}:${x}` : `${m}:${x}`; };
 function ytIdOf(s){ const m=String(s).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|music\.youtube\.com\/watch\?(?:.*&)?v=)([A-Za-z0-9_-]{11})/); return m?m[1]:null; }
 function djReset(){ clearInterval(DJ.timer); DJ.timer=null; try{ DJ.player?.destroy?.(); }catch{} DJ.player=null; DJ.pid=null; DJ.st={ v:0, by:'', q:[], idx:0, playing:false, pos:0, at:0 }; DJ.open=false; DJ.results=[];
-  $('#djPanel').classList.add('hidden'); $('#djPanel').classList.remove('open'); $('#djPanel').innerHTML=''; $('#djChip').classList.add('hidden'); $('#cDj')?.classList.remove('active'); }
+  $('#djPanel').classList.add('hidden'); $('#djPanel').classList.remove('open'); $('#djPanel').innerHTML=''; $('#djChip').classList.add('hidden'); $('#djMini')?.classList.add('hidden'); $('#cDj')?.classList.remove('active'); }
 function djSend(op){ if(!V?.rt) return; const st={...DJ.st, pos:djPos()}; delete st.at; V.rt.send({ type:'broadcast', event:'dj', payload:{ st, op:op||null, from:S.sid } }); }
 function djOnMsg(p){
   if(!V || !p?.st) return;
@@ -3394,8 +3407,9 @@ async function djSync(){
     if(DJ.pid!==c.id){ DJ.pid=c.id; if(DJ.st.playing) pl.loadVideoById({ videoId:c.id, startSeconds:want }); else pl.cueVideoById({ videoId:c.id, startSeconds:want }); }
     else {
       const t=pl.getCurrentTime?.()||0, stt=pl.getPlayerState?.();
-      if(DJ.st.playing){ if(Math.abs(t-want)>1.5) pl.seekTo(want, true); if(stt!==1 && stt!==3) pl.playVideo(); }
-      else { if(stt===1) pl.pauseVideo(); if(Math.abs(t-want)>1) pl.seekTo(want, true); }
+      const ad = DJ.st.playing && stt===1 && t<1 && want>4;          // provável anúncio: não briga com ele
+      if(DJ.st.playing){ if((stt===1 || stt===2) && !ad && Math.abs(t-want)>2) pl.seekTo(want, true); if(stt===2 || stt===5 || stt===-1) pl.playVideo(); }
+      else { if(stt===1 || stt===3) pl.pauseVideo(); if(stt===2 && Math.abs(t-want)>1.5) pl.seekTo(want, true); }
     }
   }catch(e){ console.warn(e); }
   if(!DJ.timer) DJ.timer=setInterval(()=>{ if(!V){ clearInterval(DJ.timer); DJ.timer=null; return; } if(djCur()){ djSync(); djRenderProgress(); } }, 3000);
@@ -3410,8 +3424,13 @@ function djRender(){
   const c=djCur(), q=DJ.st.q, up=q.slice(DJ.st.idx+1);
   $('#cDj').classList.toggle('active', DJ.open || !!c);
   chip.classList.toggle('hidden', !c || DJ.open);
-  if(c) chip.innerHTML = `<button id="djChipB"><span class="eq ${DJ.st.playing?'on':''}"><i></i><i></i><i></i></span><b>${esc(c.title||'Música')}</b><small>DJ</small></button>`;
+  const ctl = (id)=>`<button class="djmb" data-dj="toggle" title="${DJ.st.playing?'Pausar':'Tocar'}">${DJ.st.playing?'<svg viewBox="0 0 24 24" class="i sm"><path d="M8 5v14M16 5v14"/></svg>':'<svg viewBox="0 0 24 24" class="i sm fill"><path d="M7 4l13 8-13 8z"/></svg>'}</button><button class="djmb" data-dj="next" title="Pular"><svg viewBox="0 0 24 24" class="i sm fill"><path d="M5 4l10 8-10 8zM17 5v14"/></svg></button>`;
+  if(c) chip.innerHTML = `<button id="djChipB" title="Abrir DJ"><span class="eq ${DJ.st.playing?'on':''}"><i></i><i></i><i></i></span><b>${esc(c.title||'Música')}</b></button>${ctl()}`;
   $('#djChipB')?.addEventListener('click', ()=>djToggle(true));
+  const mini=$('#djMini'); mini.classList.toggle('hidden', !c);
+  if(c) mini.innerHTML = `<button class="djmt" data-dj="open" title="Abrir DJ"><span class="eq ${DJ.st.playing?'on':''}"><i></i><i></i><i></i></span><span><b>${esc(c.title||'Música')}</b><small>${DJ.st.playing?'DJ CONCORD':'Pausado'}</small></span></button>${ctl()}`;
+  [chip, mini].forEach(el=>el.querySelectorAll('[data-dj]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const a=b.dataset.dj;
+    if(a==='toggle') djCommand(s=>{ s.playing=!s.playing; }); else if(a==='next') djCommand(s=>{ s.idx++; s.pos=0; s.playing=s.idx<s.q.length; }); else if(a==='open'){ if(S.view?.type!=='voice' || S.view.ch.id!==V.ch.id) $('#vbChan').click(); djToggle(true); } }));
   P1.classList.remove('hidden'); P1.classList.toggle('open', DJ.open);
   if(!P1.querySelector('#djVideo')){
     P1.innerHTML = `<div class="djh"><div class="djbot">${ic('music','sm')}</div><b>DJ CONCORD</b><span class="botb">BOT</span><div class="sp"></div><button class="ibtn" id="djClose" title="Fechar">${ic('x','sm')}</button></div>
@@ -3470,6 +3489,7 @@ function djAdd(item){
 }
 function djToggle(open){ DJ.open = open ?? !DJ.open; djRender(); if(DJ.open) setTimeout(()=>$('#djQ')?.focus(), 80); }
 $('#cDj').onclick=()=>{ if(V) djToggle(); };
+document.addEventListener('keydown', e=>{ if(e.code!=='Space' || !V || !djCur() || e.target.closest('input,textarea,select,[contenteditable]') || e.ctrlKey || e.altKey) return; if(S.view?.type!=='voice' && !DJ.open) return; e.preventDefault(); djCommand(s=>{ s.playing=!s.playing; }); });
 /* comandos no chat */
 const DJ_CMDS = [['/play','música ou link','Toca no DJ da sua sala de voz'],['/pular','','Pula para a próxima'],['/pausar','','Pausa a música'],['/continuar','','Continua tocando'],['/fila','','Mostra a fila'],['/parar','','Para e limpa a fila'],['/volume','0–100','Seu volume do DJ'],['/dj','','Abre o painel do DJ']];
 function botReply(html){
