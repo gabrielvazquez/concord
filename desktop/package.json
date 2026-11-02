@@ -1,0 +1,46 @@
+{
+  "name": "concord-desktop",
+  "productName": "CONCORD",
+  "version": "1.0.0",
+  "description": "CONCORD para PC — chat, voz e transmissão entre amigos",
+  "author": "Gabriel Vazquez",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable --publish never"
+  },
+  "dependencies": {
+    "uiohook-napi": "latest"
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest"
+  },
+  "build": {
+    "appId": "com.gabrielvazquez.concord",
+    "productName": "CONCORD",
+    "copyright": "CONCORD",
+    "npmRebuild": false,
+    "asar": true,
+    "files": ["main.js", "preload.js", "picker.html", "picker-preload.js", "offline.html", "build/**/*", "package.json"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": ["nsis", "portable"]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CONCORD",
+      "artifactName": "CONCORD-Setup.exe",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "CONCORD-Portatil.exe"
+    }
+  }
+}

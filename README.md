@@ -14,3 +14,12 @@ Chat, voz e transmissão de tela entre amigos, no estilo Discord.
 - **Vídeo e transmissão**: até 1440p a 60 fps com som; H.264 (placa de vídeo) para jogos e VP9 para texto; divisão de upload entre os espectadores; modo baixa latência; estatísticas ao vivo
 
 Funciona melhor no Chrome ou no Edge do computador. Conexão direta entre os participantes (WebRTC), ideal para até 5–6 pessoas. Backend: Supabase (Auth, Postgres com RLS, Realtime, Storage).
+
+## App para PC (Windows)
+
+Baixe em **[Releases](https://github.com/gabrielvazquez/concord/releases/latest)** (`CONCORD-Setup.exe`).
+O app abre o mesmo CONCORD do site (mesma conta, mesmos servidores, conversa com quem está no navegador) e adiciona:
+atalhos globais e **push-to-talk** dentro do jogo (tecla ou botão lateral do mouse), seletor de tela com **som do PC**,
+ícone na bandeja, iniciar com o Windows, notificações e janela que nunca "adormece".
+
+O código fica em `desktop/` e o instalador é gerado pelo GitHub Actions ao criar uma tag `desktop-vX.Y.Z`.

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Escolher o que transmitir</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0b;color:#fafafa;font:14px 'Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;user-select:none}
+header{padding:18px 22px 10px}
+h1{font-size:19px;font-weight:700}
+.tabs{display:flex;gap:4px;margin-top:14px;background:#131315;border:1px solid #202024;padding:4px;border-radius:12px;width:max-content}
+.tabs button{background:none;border:0;color:#a1a1aa;font:600 13px inherit;font-family:inherit;padding:8px 16px;border-radius:9px;cursor:pointer}
+.tabs button.on{background:#fff;color:#000}
+main{flex:1;overflow:auto;padding:8px 22px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;align-content:start}
+.src{background:#131315;border:1px solid #202024;border-radius:14px;padding:8px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:.12s}
+.src:hover{border-color:#3f3f46}
+.src.on{border-color:#fff;box-shadow:0 0 0 1px #fff}
+.th{aspect-ratio:16/9;background:#000;border-radius:9px;display:grid;place-items:center;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:contain}
+.nm{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#d4d4d8;white-space:nowrap;overflow:hidden}
+.nm span{overflow:hidden;text-overflow:ellipsis}
+.nm img{width:16px;height:16px;flex-shrink:0}
+footer{border-top:1px solid #202024;padding:14px 22px;display:flex;align-items:center;gap:14px}
+label.snd{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600}
+label.snd input{width:18px;height:18px;accent-color:#fff}
+.note{flex:1;font-size:12px;color:#71717a;line-height:1.4}
+.btn{border:0;border-radius:11px;padding:11px 18px;font:700 14px inherit;font-family:inherit;cursor:pointer}
+.btn.sec{background:#1a1a1d;color:#fafafa;border:1px solid #2a2a2f}
+.btn.pri{background:#fff;color:#000}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.empty{grid-column:1/-1;color:#71717a;text-align:center;padding:40px}
+</style>
+</head>
+<body>
+<header><h1>Escolher o que transmitir</h1>
+  <div class="tabs"><button data-t="win" class="on">Janelas e jogos</button><button data-t="screen">Telas inteiras</button></div>
+</header>
+<main id="grid"><div class="empty">Carregando…</div></main>
+<footer>
+  <label class="snd"><input type="checkbox" id="snd" checked> Transmitir o som do PC</label>
+  <div class="note" id="note">Vai o som de tudo que toca no PC (jogo, filme, música). A voz da galera na call também entra — se alguém ouvir eco, use fone ou desmarque.</div>
+  <button class="btn sec" id="cancel">Cancelar</button>
+  <button class="btn pri" id="go" disabled>Transmitir</button>
+</footer>
+<script>
+let all=[], tab='win', sel=null;
+const grid=document.getElementById('grid'), go=document.getElementById('go');
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function render(){
+  const list=all.filter(s=>tab==='screen'?s.screen:!s.screen);
+  if(!list.length){ grid.innerHTML='<div class="empty">Nada para mostrar aqui.</div>'; return; }
+  grid.innerHTML=list.map(s=>`<div class="src ${sel===s.id?'on':''}" data-id="${esc(s.id)}"><div class="th">${s.thumb?`<img src="${s.thumb}">`:''}</div><div class="nm">${s.icon?`<img src="${s.icon}">`:''}<span>${esc(s.screen?(s.name||'Tela'):s.name)}</span></div></div>`).join('');
+  grid.querySelectorAll('.src').forEach(el=>{ el.onclick=()=>{ sel=el.dataset.id; go.disabled=false; render(); }; el.ondblclick=()=>{ sel=el.dataset.id; choose(); }; });
+}
+async function load(){ try{ all=await window.picker.sources(); }catch{ all=[]; } render(); }
+function choose(){ if(!sel) return; window.picker.choose({ id:sel, audio:document.getElementById('snd').checked }); }
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+go.onclick=choose; document.getElementById('cancel').onclick=()=>window.picker.choose(null);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') window.picker.choose(null); if(e.key==='Enter') choose(); });
+load(); setInterval(load, 4000);
+</script>
+</body>
+</html>

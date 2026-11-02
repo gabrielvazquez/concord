@@ -41,6 +41,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .btn.sec{background:var(--card2);color:var(--tx);border:1px solid var(--line2)}.btn.sec:hover{background:#222226}
 .btn.danger{background:transparent;color:var(--red);border:1px solid #4a1f25}.btn.danger:hover{background:#1f1012}
 .btn.auto{width:auto}
+a.btn{text-decoration:none}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .link{color:var(--tx2);font-size:13px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#3f3f46}
 .link:hover{color:var(--tx)}
@@ -633,6 +634,8 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
   <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-1.2-1-1.5-1-2.5s.8-1.5 2-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></symbol>
+  <symbol id="i-keyb" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></symbol>
   <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/></symbol>
@@ -768,7 +771,7 @@ const SHARE_Q = {
 const CAM_Q = { '480':{w:854,h:480,br:700000}, '720':{w:1280,h:720,br:1500000}, '1080':{w:1920,h:1080,br:2800000} };
 const PREF_DEFAULTS = {
   micId:'', outId:'', camId:'', inGain:1, outVol:1,
-  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
+  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
   camRes:'720', camFps:30,
   shareQ:'jogo1080', shareCodec:'auto', uploadMbps:20, lowLatency:false, showStats:false,
   turnUrl:'', turnUser:'', turnPass:'',
@@ -1123,7 +1126,8 @@ async function afterLogin(session){
    Servidores
    ===================================================================== */
 async function start(){
-  $('#app').classList.remove('hidden'); renderMe();
+  $('#app').classList.remove('hidden'); renderMe(); syncDesktop();
+  if(P().notify && !DESK && 'Notification' in window && Notification.permission==='default') setTimeout(()=>{ try{ Notification.requestPermission(); }catch{} }, 4000);
   const hashCode = (location.hash||'').replace('#','').trim().toUpperCase();
   await loadServers();
   let joinedNew=null;
@@ -1230,6 +1234,7 @@ function subscribeMessages(){
   if(!ids.length) return;
   S.msgRt = sb.channel('dc-msgs-'+S.server.id+'-'+Date.now())
     .on('postgres_changes', {event:'INSERT', schema:'public', table:'dc_messages', filter:'channel_id=in.('+ids.join(',')+')'}, ({new:m})=>{
+      notifyMessage(m);
       if(S.view?.type==='text' && S.view.ch.id===m.channel_id) appendMsg(m, true);
       else { S.unread.add(m.channel_id); renderChannels(); }
     })
@@ -1310,7 +1315,7 @@ function renderMe(){
   $('#meAvW').dataset.pu=S.me.id;
   $('#meAvW').innerHTML = avatarU(S.me.id, 34, null, {status: p.presence_status||'online'});
   $('#meName').innerHTML = nameHtml(S.me.id, dname(S.me.id));
-  $('#meStatus').textContent = V ? 'Em voz · '+V.ch.name : (p.status_text || STATUS[p.presence_status||'online'][0]);
+  $('#meStatus').textContent = V ? (P().voiceMode==='ptt' ? (S.pttHeld?'Falando…':'Push-to-talk') : 'Em voz · '+V.ch.name) : (p.status_text || STATUS[p.presence_status||'online'][0]);
   setIcon($('#ubMute'), S.muted||S.deaf ? 'mic-off' : 'mic'); $('#ubMute').classList.toggle('off', S.muted||S.deaf);
   setIcon($('#ubDeaf'), S.deaf ? 'head-off' : 'head'); $('#ubDeaf').classList.toggle('off', S.deaf);
 }
@@ -1535,8 +1540,8 @@ async function joinVoice(ch){
   try{
     V.pipe = new MicPipeline();
     V.mic = await V.pipe.start();
-    V.pipe.listeners.add(d=>{ setSpeaking(S.sid, d.open && !S.muted && !S.deaf); });
-    V.mic.getAudioTracks().forEach(t=>{ t.enabled=!S.muted && !S.deaf; t.contentHint='speech'; });
+    V.pipe.listeners.add(d=>{ setSpeaking(S.sid, d.open && micLive()); });
+    V.mic.getAudioTracks().forEach(t=>{ t.enabled=micLive(); t.contentHint='speech'; });
   }catch(e){ V.pipe=null; V.mic=null; toast('Sem microfone: você entrou só para ouvir/assistir. ('+(e.name||e.message)+')', true); }
   if(!V) return;
   try{ V.audioCtx = new AudioContext(); }catch{}
@@ -1582,8 +1587,9 @@ function addStreamToPeer(peer, stream, kind){
   }
 }
 async function setLocal(pc, desc){
+  if(desc.type==='offer' && pc.signalingState!=='stable') return;      // chegou uma oferta do outro lado: a negociação refaz sozinha depois
   try{ await pc.setLocalDescription({ type:desc.type, sdp:mungeSdp(desc.sdp) }); }
-  catch(e){ console.warn('sdp otimizado recusado, usando padrão', e); await pc.setLocalDescription(desc); }
+  catch(e){ if(pc.signalingState!=='stable' && desc.type==='offer') return; console.warn('sdp otimizado recusado, usando padrão', e); await pc.setLocalDescription(desc); }
 }
 function createPeer(id){
   const pc = new RTCPeerConnection({ iceServers: iceServers(), bundlePolicy:'max-bundle', rtcpMuxPolicy:'require', iceCandidatePoolSize:2 });
@@ -1600,8 +1606,9 @@ function createPeer(id){
       const offer = await pc.createOffer();
       if(pc.signalingState!=='stable') return;
       await setLocal(pc, offer);
+      if(pc.localDescription?.type!=='offer' || pc.signalingState!=='have-local-offer') return;
       sendSig(id, {desc:pc.localDescription.toJSON()});
-    }catch(e){ console.warn('offer', e); } finally{ peer.makingOffer=false; }
+    }catch(e){ if(e.name!=='InvalidStateError') console.warn('offer', e); } finally{ peer.makingOffer=false; }
   };
   pc.onicecandidate = ({candidate}) => { if(candidate) sendSig(id, {cand:candidate.toJSON()}); };
   pc.ontrack = ({track, streams, receiver}) => {
@@ -1698,10 +1705,10 @@ function renderVoiceState(){
 
 /* ---- Controles ---- */
 function setMuted(m){ S.muted=m; if(!m && S.deaf) setDeaf(false, true);
-  V?.mic?.getAudioTracks().forEach(t=>t.enabled=!S.muted && !S.deaf); afterToggle(); }
+  updateMicEnabled(); afterToggle(); }
 function setDeaf(d, silent){ S.deaf=d;
   if(V){ for(const p of V.peers.values()) p.audio.muted=d; document.querySelectorAll('#tiles .tile[data-kind=screen] video').forEach(v=>{ if(!v.dataset.local) v.muted=d; });
-    V.mic?.getAudioTracks().forEach(t=>t.enabled=!S.muted && !S.deaf); }
+    updateMicEnabled(); }
   if(!silent) afterToggle(); }
 function afterToggle(){ renderMe(); renderControls(); if(V) V.rt?.track(myVoiceMeta()); trackServerPresence(); renderTiles(); }
 function camConstraints(){ const p=P(), C=CAM_Q[p.camRes]||CAM_Q['720'];
@@ -1737,7 +1744,7 @@ async function toggleScreen(){
     V.screen = await navigator.mediaDevices.getDisplayMedia({ video,
       audio:{ channelCount:2, sampleRate:48000, echoCancellation:false, noiseSuppression:false, autoGainControl:false, suppressLocalAudioPlayback:false },
       systemAudio:'include', selfBrowserSurface:'exclude', surfaceSwitching:'include', ...(Q.cinema?{ preferCurrentTab:false, monitorTypeSurfaces:'include' }:{}) });
-  }catch(e){ if(e.name!=='NotAllowedError') toast('Não foi possível transmitir: '+(e.name||e.message), true); return; }
+  }catch(e){ if(e.name!=='NotAllowedError' && e.name!=='AbortError' && !/Permission|denied|cancel/i.test(e.message||'')) toast('Não foi possível transmitir: '+(e.name||e.message), true); return; }
   if(!V){ return; }
   const vt=V.screen.getVideoTracks()[0];
   if(vt){ vt.contentHint = Q.motion ? 'motion' : 'detail'; vt.onended = ()=>stopScreen(); }
@@ -1998,15 +2005,70 @@ function renderTiles(){
 }
 
 /* =====================================================================
+   App para PC (Electron) + push-to-talk + notificações
+   ===================================================================== */
+const DESK = window.concordDesktop || null;
+const APP_DOWNLOAD = 'https://github.com/gabrielvazquez/concord/releases/latest/download/CONCORD-Setup.exe';
+S.pttHeld = false; let pttTimer = null;
+function micLive(){ return !S.muted && !S.deaf && (P().voiceMode!=='ptt' || S.pttHeld); }
+function updateMicEnabled(){ V?.mic?.getAudioTracks().forEach(t=>t.enabled=micLive()); }
+function pttPress(down){
+  if(P().voiceMode!=='ptt') return;
+  clearTimeout(pttTimer);
+  if(down){ if(!S.pttHeld){ S.pttHeld=true; updateMicEnabled(); renderMe(); } }
+  else pttTimer=setTimeout(()=>{ S.pttHeld=false; updateMicEnabled(); setSpeaking(S.sid,false); renderMe(); }, P().pttRelease||200);
+}
+function syncDesktop(){
+  if(!DESK) return;
+  const p=P();
+  DESK.setShortcuts({ mute:p.keyMute||'', deafen:p.keyDeaf||'', ptt: p.voiceMode==='ptt' ? (p.pttKey||null) : null })
+    .then(r=>{ const bad=Object.entries(r||{}).filter(([,ok])=>!ok).map(([k])=>k==='mute'?'mutar':'ensurdecer'); if(bad.length) toast('O atalho de '+bad.join(' e ')+' já está em uso por outro programa. Escolha outro em Configurações → Atalhos.', true); })
+    .catch(()=>{});
+}
+if(DESK){
+  DESK.onEvent((ev)=>{
+    if(ev==='mute') setMuted(!(S.muted||S.deaf));
+    else if(ev==='deafen') setDeaf(!S.deaf);
+    else if(ev==='ptt-down') pttPress(true);
+    else if(ev==='ptt-up') pttPress(false);
+  });
+  document.documentElement.classList.add('is-desktop');
+}
+// push-to-talk no navegador (só com a aba em foco)
+const typing = e => /^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName) || e.target?.isContentEditable;
+document.addEventListener('keydown', e=>{ if(!DESK && P().voiceMode==='ptt' && P().pttWeb && e.code===P().pttWeb && !typing(e) && !e.repeat){ e.preventDefault(); pttPress(true); } });
+document.addEventListener('keyup', e=>{ if(!DESK && P().voiceMode==='ptt' && P().pttWeb && e.code===P().pttWeb){ pttPress(false); } });
+window.addEventListener('blur', ()=>{ if(!DESK && S.pttHeld) pttPress(false); });
+
+function notifyMessage(m){
+  if(!P().notify || m.user_id===S.me?.id) return;
+  const ch=S.channels.find(c=>c.id===m.channel_id); if(!ch) return;
+  const focusedHere = document.hasFocus() && S.view?.ch?.id===m.channel_id;
+  if(focusedHere) return;
+  DESK?.attention();
+  if(!('Notification' in window) || Notification.permission!=='granted' || document.hasFocus()) return;
+  try{ const n=new Notification(`${dname(m.user_id, m.author)} em #${ch.name}`, { body:String(m.content).slice(0,160), tag:'concord-'+m.channel_id, silent:false });
+    n.onclick=()=>{ window.focus(); DESK?.focus(); openText(ch); n.close(); }; }catch{}
+}
+function accelFromEvent(e){
+  const k=e.key; if(['Control','Shift','Alt','Meta'].includes(k)) return null;
+  let key = /^F\d{1,2}$/.test(k) ? k : k.length===1 ? k.toUpperCase() : ({ArrowUp:'Up',ArrowDown:'Down',ArrowLeft:'Left',ArrowRight:'Right',' ':'Space',Insert:'Insert',Delete:'Delete',Home:'Home',End:'End',PageUp:'PageUp',PageDown:'PageDown'})[k];
+  if(!key) return null;
+  const mods=[]; if(e.ctrlKey) mods.push('Ctrl'); if(e.altKey) mods.push('Alt'); if(e.shiftKey) mods.push('Shift');
+  if(!mods.length && !/^F\d/.test(key)) return 'NEEDMOD';
+  return [...mods, key].join('+');
+}
+
+/* =====================================================================
    Configurações
    ===================================================================== */
 const SET = { sec:'perfil', mode:'user', test:null, camStream:null, unsub:null, draft:null };
 const SECTIONS = [
   ['Usuário', [['perfil','palette','Meu perfil'], ['conta','user','Minha conta']]],
-  ['App', [['aparencia','palette','Aparência'], ['voz','mic','Voz'], ['video','cam','Vídeo'], ['transmissao','cast','Transmissão'], ['rede','net','Rede']]],
+  ['App', [['aparencia','palette','Aparência'], ['voz','mic','Voz'], ['atalhos','keyb','Atalhos'], ['video','cam','Vídeo'], ['transmissao','cast','Transmissão'], ['rede','net','Rede']]],
 ];
 function openSettings(sec){
-  SET.mode='user'; SET.sec = sec || (['perfil','conta','aparencia','voz','video','transmissao','rede'].includes(SET.sec)?SET.sec:'perfil'); SET.draft=null;
+  SET.mode='user'; SET.sec = sec || (['perfil','conta','aparencia','voz','atalhos','video','transmissao','rede'].includes(SET.sec)?SET.sec:'perfil'); SET.draft=null;
   closePop(); $('#settings').classList.remove('hidden');
   renderSettings();
 }
@@ -2025,9 +2087,10 @@ async function renderSettings(){
   if(SET.mode==='server') return renderServerSettings();
   const nav=$('#setNav');
   nav.innerHTML = SECTIONS.map(([g,items])=>`<h4>${g}</h4>`+items.map(([k,i,l])=>`<button data-s="${k}" class="${SET.sec===k?'on':''}">${ic(i,'sm')}${l}</button>`).join('')).join('')
-    + `<div class="sp"></div><button data-logout>${ic('out','sm')}Sair da conta</button>`;
+    + `<div class="sp"></div>${DESK?'':`<button data-dl>${ic('down','sm')}Baixar app para PC</button>`}<button data-logout>${ic('out','sm')}Sair da conta</button>`;
   nav.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ SET.sec=b.dataset.s; SET.draft=null; renderSettings(); });
   nav.querySelector('[data-logout]').onclick=logout;
+  nav.querySelector('[data-dl]')?.addEventListener('click', ()=>{ SET.sec='atalhos'; renderSettings(); });
   const body=$('#setBody'); body.parentElement.scrollTop=0;
   if(SET.sec==='perfil') return renderProfileEditor(body);
   let devs=[]; try{ devs=await navigator.mediaDevices.enumerateDevices(); }catch{}
@@ -2065,6 +2128,43 @@ async function renderSettings(){
       const { error } = await sb.auth.resend({ type:'signup', email:user?.email||S.me.email, options:{ emailRedirectTo:redirect } }); busy(btn,false);
       emailMsg(error ? authMsg(error) : 'Link de verificação enviado para '+(user?.email||S.me.email)+'.', !error); });
     $('#stOut').onclick=logout;
+  }
+
+  else if(SET.sec==='atalhos'){
+    const pttLabel = DESK ? (p.pttKey?.label || 'Nenhuma') : (p.pttWeb ? p.pttWeb.replace(/^Key/,'').replace(/^Digit/,'') : 'Nenhuma');
+    body.innerHTML = `<h2>Atalhos e push-to-talk</h2><p class="sub">${DESK?'Funcionam em qualquer lugar do PC, inclusive dentro do jogo.':'No navegador, só funcionam com a aba do CONCORD em foco. No app para PC, funcionam dentro do jogo.'}</p>
+      ${DESK?'':`<div class="sc" style="background:linear-gradient(135deg,#17171a,#0e0e10)"><h3>${ic('down','sm')} CONCORD para PC</h3><p>Atalhos e push-to-talk dentro do jogo, seletor de tela com som do PC, ícone perto do relógio e notificações. Usa a mesma conta e conversa com quem está no navegador.</p>
+        <div class="row" style="margin:0"><a class="btn auto" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Baixar para Windows</a></div>
+        <p class="hint">Se o Windows avisar "O Windows protegeu o computador", clique em <b>Mais informações → Executar assim mesmo</b> (o app não tem assinatura paga).</p></div>`}
+      <div class="sc"><h3>Modo de voz</h3><p>Como seu microfone abre.</p>
+        ${seg('voiceMode', [['vad','Detecção de voz'],['ptt','Apertar para falar']])}
+        <div id="pttBox" style="margin-top:14px;${p.voiceMode==='ptt'?'':'display:none'}">
+          <div class="srow"><div><b>Tecla do push-to-talk</b><small>Segure para falar. ${DESK?'Vale tecla do teclado ou botão lateral do mouse.':'Use uma tecla do teclado.'}</small></div><button class="btn sec auto" id="pttSet">${esc(pttLabel)}</button></div>
+          <div class="srow" style="display:block"><div class="slab"><span>Tempo para soltar o microfone</span><b id="lbRel">${p.pttRelease} ms</b></div><input class="slider" type="range" min="0" max="800" step="20" value="${p.pttRelease}" id="pttRel"><small class="hint">Evita cortar o fim da última palavra.</small></div>
+        </div></div>
+      <div class="sc"><h3>Atalhos</h3><p>${DESK?'Clique e aperte a combinação (use Ctrl, Alt ou Shift, ou uma tecla F).':'Fixos no navegador.'}</p>
+        <div class="srow"><div><b>Mutar / desmutar</b></div>${DESK?`<button class="btn sec auto" data-acc="keyMute">${esc(p.keyMute||'Nenhum')}</button>`:'<span><span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">M</span></span>'}</div>
+        <div class="srow"><div><b>Ensurdecer</b></div>${DESK?`<button class="btn sec auto" data-acc="keyDeaf">${esc(p.keyDeaf||'Nenhum')}</button>`:'<span><span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">D</span></span>'}</div></div>
+      <div class="sc"><h3>Notificações</h3>
+        ${sw('notify','Avisar mensagens novas','Mostra uma notificação quando chega mensagem e o CONCORD não está em foco.')}</div>`;
+    body.querySelector('[data-seg=voiceMode]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('voiceMode', b.dataset.v); S.pttHeld=false; updateMicEnabled(); syncDesktop(); renderSettings();
+      if(b.dataset.v==='ptt' && !(DESK?P().pttKey:P().pttWeb)) toast('Agora escolha a tecla do push-to-talk.'); });
+    $('#pttRel')?.addEventListener('input', e=>{ setPref('pttRelease', +e.target.value); $('#lbRel').textContent=e.target.value+' ms'; });
+    $('#pttSet')?.addEventListener('click', async ()=>{
+      const btn=$('#pttSet'); btn.textContent='Aperte uma tecla…';
+      if(DESK){ const k=await DESK.capturePtt(); if(k){ setPref('pttKey', k); syncDesktop(); toast('Push-to-talk: '+k.label); } renderSettings(); }
+      else { const h=e=>{ e.preventDefault(); document.removeEventListener('keydown', h, true); if(e.key!=='Escape'){ setPref('pttWeb', e.code); toast('Push-to-talk: '+e.code.replace(/^Key|^Digit/,'')); } renderSettings(); }; document.addEventListener('keydown', h, true); }
+    });
+    body.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{
+      b.textContent='Aperte a combinação…';
+      const h=e=>{ e.preventDefault(); e.stopPropagation(); if(e.key==='Escape'){ document.removeEventListener('keydown', h, true); renderSettings(); return; }
+        if(e.key==='Backspace'){ document.removeEventListener('keydown', h, true); setPref(b.dataset.acc, ''); syncDesktop(); renderSettings(); return; }
+        const a=accelFromEvent(e); if(!a) return; if(a==='NEEDMOD'){ b.textContent='Use Ctrl, Alt ou Shift junto'; return; }
+        document.removeEventListener('keydown', h, true); setPref(b.dataset.acc, a); syncDesktop(); renderSettings(); };
+      document.addEventListener('keydown', h, true);
+    });
+    body.querySelectorAll('[data-pref]').forEach(inp=>inp.onchange=async()=>{ setPref(inp.dataset.pref, inp.checked);
+      if(inp.dataset.pref==='notify' && inp.checked && 'Notification' in window && Notification.permission==='default'){ try{ await Notification.requestPermission(); }catch{} } });
   }
 
   else if(SET.sec==='aparencia'){
@@ -2532,6 +2632,7 @@ window.addEventListener('beforeunload', ()=>{ if(V){ try{ V.rt.untrack(); }catch
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && document.body.classList.contains('theater') && !document.fullscreenElement){ setTheater(false); return; }
   if(e.key==='Escape'){ if($('#modalRoot').innerHTML) closeModal(); else if(!$('#settings').classList.contains('hidden')) closeSettings(); }
+  if(DESK) return;
   if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='m'){ e.preventDefault(); setMuted(!(S.muted||S.deaf)); }
   if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='d'){ e.preventDefault(); setDeaf(!S.deaf); }
 });
