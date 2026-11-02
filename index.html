@@ -640,18 +640,18 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const DEFAULT_SERVER = 'AMIGOS';
 const COLORS = ['#6366f1','#ec4899','#ef4444','#f59e0b','#22c55e','#14b8a6','#3b82f6','#a855f7','#f97316','#71717a'];
 const SHARE_Q = {
-  jogo1080: {label:'Jogo · 1080p 60 fps', w:1920,h:1080,fps:60, br:8000000,  motion:true,  hint:'Fluido para jogos. Recomendado.'},
-  jogo720:  {label:'Jogo leve · 720p 60 fps', w:1280,h:720, fps:60, br:4500000,  motion:true,  hint:'Para internet ou PC mais fracos'},
-  jogo1440: {label:'Jogo · 1440p 60 fps', w:2560,h:1440,fps:60, br:14000000, motion:true,  hint:'Precisa de muito upload (≈15 Mbps por amigo)'},
-  cinema:   {label:'Cinema · filme em 1080p', w:1920,h:1080,fps:30, br:12000000, motion:true, cinema:true, hint:'Máxima qualidade de imagem e som (AV1/VP9, áudio estéreo 320 kbps). Abre em modo cinema para quem assiste.'},
-  cinema4k: {label:'Cinema 4K · até 2160p', w:3840,h:2160,fps:30, br:22000000, motion:true, cinema:true, hint:'Só com PC forte e upload alto (≈25 Mbps por amigo)'},
-  texto:    {label:'Texto nítido · 1080p 30 fps', w:1920,h:1080,fps:30, br:5000000, motion:false, hint:'Navegador, código, planilhas'},
-  nativo:   {label:'Nativo · resolução da tela, 30 fps', w:0,h:0,fps:30, br:9000000, motion:false, hint:'Nitidez máxima, sem reduzir'},
+  jogo1080: {label:'Jogo · 1080p 60 fps', w:1920,h:1080,fps:60, br:10000000, motion:true,  hint:'Fluido para jogos. Recomendado.'},
+  jogo720:  {label:'Jogo leve · 720p 60 fps', w:1280,h:720, fps:60, br:5500000,  motion:true,  hint:'Para internet ou PC mais fracos'},
+  jogo1440: {label:'Jogo · 1440p 60 fps', w:2560,h:1440,fps:60, br:18000000, motion:true,  hint:'Precisa de muito upload (≈18 Mbps por amigo)'},
+  cinema:   {label:'Cinema · filme em 1080p', w:1920,h:1080,fps:30, br:15000000, motion:true, cinema:true, hint:'Máxima qualidade de imagem e som (AV1/VP9, áudio estéreo 320 kbps). Abre em modo cinema para quem assiste.'},
+  cinema4k: {label:'Cinema 4K · até 2160p', w:3840,h:2160,fps:30, br:28000000, motion:true, cinema:true, hint:'Só com PC forte e upload alto (≈25 Mbps por amigo)'},
+  texto:    {label:'Texto nítido · 1080p 30 fps', w:1920,h:1080,fps:30, br:6000000, motion:false, hint:'Navegador, código, planilhas'},
+  nativo:   {label:'Nativo · resolução da tela, 30 fps', w:0,h:0,fps:30, br:12000000, motion:false, hint:'Nitidez máxima, sem reduzir'},
 };
 const CAM_Q = { '480':{w:854,h:480,br:700000}, '720':{w:1280,h:720,br:1500000}, '1080':{w:1920,h:1080,br:2800000} };
 const PREF_DEFAULTS = {
   micId:'', outId:'', camId:'', inGain:1, outVol:1,
-  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true,
+  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true,
   camRes:'720', camFps:30,
   shareQ:'jogo1080', shareCodec:'auto', uploadMbps:20, lowLatency:false, showStats:false,
   turnUrl:'', turnUser:'', turnPass:'',
@@ -1272,7 +1272,7 @@ class MicPipeline{
    WebRTC: otimizações de codec, bitrate e SDP
    ===================================================================== */
 const VIDEO_CODECS = new Set(['VP8','VP9','H264','AV1','H265']);
-const VIDEO_FMTP = {'x-google-start-bitrate':'3000', 'x-google-min-bitrate':'300', 'x-google-max-bitrate':'16000'};
+const VIDEO_FMTP = {'x-google-start-bitrate':'4000', 'x-google-min-bitrate':'400', 'x-google-max-bitrate':'30000'};
 function mungeSdp(sdp){
   try{
     const lines = sdp.split('\r\n'); const pts = {}; const hasFmtp = new Set();
@@ -1295,12 +1295,29 @@ function mungeSdp(sdp){
     return out.join('\r\n');
   }catch{ return sdp; }
 }
+/* Detecta quais codecs a placa de vídeo codifica (eficiente = hardware) */
+const HW = { AV1:null, H264:null, VP9:null, checked:false };
+async function detectHW(){
+  if(HW.checked || !navigator.mediaCapabilities?.encodingInfo) return; HW.checked=true;
+  for(const c of ['AV1','H264','VP9']){
+    try{ const r = await navigator.mediaCapabilities.encodingInfo({ type:'webrtc', video:{ contentType:'video/'+c, width:1920, height:1080, bitrate:8000000, framerate:60 } });
+      HW[c] = r.supported ? { smooth:r.smooth, power:r.powerEfficient } : false; }catch{ HW[c]=null; }
+  }
+}
+detectHW();
+const hwOk = c => !!(HW[c] && HW[c].power);
 function codecOrder(){
   const caps = window.RTCRtpReceiver?.getCapabilities?.('video'); if(!caps) return null;
   const p=P(), Q=SHARE_Q[p.shareQ]||SHARE_Q.jogo1080;
   let pref;
   if(V?.noAV1 && p.shareCodec==='AV1') pref = ['video/VP9','video/H264','video/VP8'];
-  else if(p.shareCodec==='auto') pref = Q.cinema ? (V?.noAV1 ? ['video/VP9','video/H264','video/VP8'] : ['video/AV1','video/VP9','video/H264','video/VP8']) : Q.motion ? ['video/H264','video/VP9','video/VP8'] : ['video/VP9','video/H264','video/VP8'];
+  else if(p.shareCodec==='auto'){
+    const av1 = !V?.noAV1;
+    if(Q.cinema) pref = av1 ? ['video/AV1','video/VP9','video/H264'] : ['video/VP9','video/H264'];
+    else if(Q.motion) pref = [ ...(av1&&hwOk('AV1')?['video/AV1']:[]), ...(hwOk('H264')?['video/H264']:[]), ...(hwOk('VP9')?['video/VP9']:[]), 'video/H264','video/VP9' ];   // jogo: o que a placa de vídeo codifica
+    else pref = [ ...(av1&&hwOk('AV1')?['video/AV1']:[]), 'video/VP9','video/H264' ];                                               // texto: nitidez
+    pref.push('video/VP8');
+  }
   else pref = ['video/'+p.shareCodec, 'video/H264', 'video/VP9', 'video/VP8'];
   const rank = c => { const i=pref.findIndex(m=>m.toLowerCase()===c.mimeType.toLowerCase()); return i<0?99:i; };
   return caps.codecs.slice().sort((a,b)=>rank(a)-rank(b));
@@ -1369,9 +1386,17 @@ function onVoicePresence(){
   renderTiles();
 }
 function sendSig(to, data){ V?.rt?.send({type:'broadcast', event:'sig', payload:{...data, to, from:S.sid}}); }
+function audioOrder(red){
+  const caps = window.RTCRtpReceiver?.getCapabilities?.('audio'); if(!caps) return null;
+  const pref = red ? ['audio/red','audio/opus'] : ['audio/opus'];
+  const rank = c => { const i=pref.findIndex(m=>m.toLowerCase()===c.mimeType.toLowerCase()); return i<0?99:i; };
+  return caps.codecs.slice().sort((a,b)=>rank(a)-rank(b));
+}
 function addStreamToPeer(peer, stream, kind){
   for(const t of stream.getTracks()){
     const sender = peer.pc.addTrack(t, stream);
+    if(t.kind==='audio'){ const tr=peer.pc.getTransceivers().find(x=>x.sender===sender); const order=audioOrder(kind==='mic' && P().voiceRed);
+      if(tr && order && tr.setCodecPreferences){ try{ tr.setCodecPreferences(order); }catch(e){ console.warn('audio pref', e); } } }
     if(kind==='screen' && t.kind==='video'){
       const tr = peer.pc.getTransceivers().find(x=>x.sender===sender); const order=codecOrder();
       if(tr && order && tr.setCodecPreferences){ try{ tr.setCodecPreferences(order); }catch(e){ console.warn('codec pref', e); } }
@@ -1453,7 +1478,7 @@ async function tuneSenders(pc){
     const e=prm.encodings[0];
     if(t.kind==='audio'){
       const scr = V.screen?.getAudioTracks().includes(t);
-      e.maxBitrate = scr ? (Q.cinema ? 320000 : 160000) : 64000; e.priority='high'; e.networkPriority='high';
+      e.maxBitrate = scr ? (Qs.cinema ? 320000 : 192000) : (P().voiceKbps||96)*1000; e.priority='high'; e.networkPriority='high';
     } else {
       const scr = V.screen?.getVideoTracks().includes(t);
       if(scr){
@@ -1639,12 +1664,16 @@ async function collectStats(){
       if(r.type==='inbound-rtp' && r.kind==='video'){
         const prev=peer.prev[r.id]; const kbps = prev ? (r.bytesReceived-prev.b)*8/((now-prev.t)/1000) : 0; peer.prev[r.id]={b:r.bytesReceived,t:now};
         const loss = r.packetsLost && r.packetsReceived ? r.packetsLost/(r.packetsLost+r.packetsReceived) : 0;
-        peer.stats[r.trackIdentifier] = { w:r.frameWidth, h:r.frameHeight, fps:r.framesPerSecond, br:kbps, codec:codecs[r.codecId], loss };
+        peer.stats[r.trackIdentifier] = { w:r.frameWidth, h:r.frameHeight, fps:r.framesPerSecond, br:kbps, codec:codecs[r.codecId], loss, hw:r.powerEfficientDecoder, freezes:r.freezeCount||0 };
+      }
+      if(r.type==='inbound-rtp' && r.kind==='audio'){
+        const prev=peer.prev[r.id]; const kbps = prev ? (r.bytesReceived-prev.b)*8/((now-prev.t)/1000) : 0; peer.prev[r.id]={b:r.bytesReceived,t:now};
+        peer.stats['a:'+r.trackIdentifier] = { br:kbps, codec:codecs[r.codecId], conceal: r.totalSamplesReceived ? (r.concealedSamples||0)/r.totalSamplesReceived : 0 };
       }
       if(r.type==='outbound-rtp' && r.kind==='video' && V.screen){
         const prev=peer.prev[r.id]; if(prev) outBytes += (r.bytesSent-prev.b)*8/((now-prev.t)/1000); peer.prev[r.id]={b:r.bytesSent,t:now};
         const st = r.mediaSourceId && rep.get(r.mediaSourceId);
-        if(st?.trackIdentifier===V.screen.getVideoTracks()[0]?.id || (r.frameWidth && !V.cam)){ outFps=r.framesPerSecond; outRes=r.frameWidth&&`${r.frameWidth}×${r.frameHeight}`; outCodec=codecs[r.codecId];
+        if(st?.trackIdentifier===V.screen.getVideoTracks()[0]?.id || (r.frameWidth && !V.cam)){ outFps=r.framesPerSecond; outRes=r.frameWidth&&`${r.frameWidth}×${r.frameHeight}`; outCodec=codecs[r.codecId]; V.outHw=r.powerEfficientEncoder; V.outImpl=r.encoderImplementation;
           if(r.qualityLimitationReason && r.qualityLimitationReason!=='none') outLimit=r.qualityLimitationReason; }
       }
     });
@@ -1661,14 +1690,16 @@ function renderStats(){
     const [kind, sid] = key.split(':');
     if(sid===S.sid){
       if(kind==='screen' && V.outStats){ const o=V.outStats;
-        txt = `${o.res||'—'} · ${o.fps?Math.round(o.fps):'—'} fps\n${(o.codec||'').toUpperCase()} · ${fmtBr(o.br)} total`;
+        txt = `${o.res||'—'} · ${o.fps?Math.round(o.fps):'—'} fps\n${(o.codec||'').toUpperCase()} · ${fmtBr(o.br)} total\ncodificação: ${V.outHw===true?'placa de vídeo':V.outHw===false?'processador':'—'}`;
         if(o.limit) warn = o.limit==='cpu' ? 'Limitado pela CPU' : o.limit==='bandwidth' ? 'Limitado pela internet' : ''; }
     } else {
       const peer=V.peers.get(sid); const vt = el.querySelector('video')?.srcObject?.getVideoTracks()[0];
       const st = vt && peer?.stats[vt.id];
       const ping = peer?.rtt!=null ? Math.round(peer.rtt*1000)+' ms'+(peer.relay?' (TURN)':'') : '';
-      if(st && st.w) txt = `${st.w}×${st.h} · ${st.fps?Math.round(st.fps):'—'} fps\n${(st.codec||'').toUpperCase()} · ${fmtBr(st.br)}${st.loss>0.02?' · perda '+Math.round(st.loss*100)+'%':''}\nping ${ping}`;
-      else if(ping) txt = 'ping '+ping;
+      const at = el.querySelector('video')?.srcObject?.getAudioTracks()[0]; const as = at && peer?.stats['a:'+at.id];
+      if(st && st.w) txt = `${st.w}×${st.h} · ${st.fps?Math.round(st.fps):'—'} fps\n${(st.codec||'').toUpperCase()} · ${fmtBr(st.br)}${st.loss>0.02?' · perda '+Math.round(st.loss*100)+'%':''}${as?`\nsom ${(as.codec||'').toUpperCase()} · ${fmtBr(as.br)}`:''}\nping ${ping}${st.freezes?` · ${st.freezes} travadas`:''}`;
+      else if(ping && peer){ const ma = peer.audio.srcObject?.getAudioTracks()[0]; const ms = ma && peer.stats['a:'+ma.id]; txt = (ms?`voz ${(ms.codec||'').toUpperCase()} · ${fmtBr(ms.br)}${ms.conceal>0.03?' · cortes '+Math.round(ms.conceal*100)+'%':''}\n`:'')+'ping '+ping; }
+
     }
     let s=el.querySelector('.stats'); if(show && txt){ if(!s){ s=document.createElement('div'); s.className='stats'; el.appendChild(s); } s.textContent=txt; } else if(s) s.remove();
     let w=el.querySelector('.warnchip'); if(warn){ if(!w){ w=document.createElement('div'); w.className='warnchip'; el.appendChild(w); } w.textContent=warn; } else if(w) w.remove();
@@ -1845,6 +1876,9 @@ async function renderSettings(){
         <div class="meter ${p.sensMode!=='manual'?'auto':''}" id="meter"><div class="fill"></div><div class="th"></div><input type="range" min="-90" max="-10" step="1" value="${p.sensDb}" id="stSens"></div></div>
         <div class="row" style="margin-top:14px"><button class="btn sec auto" id="stTest">${ic('mic','sm')} ${V?'Ouvir meu microfone':'Testar microfone'}</button></div>
         <p class="hint" id="testHint">${V?'Você está numa sala: o medidor mostra seu microfone ao vivo.':'O teste toca sua voz de volta. Use fone para não dar eco.'}</p></div>
+      <div class="sc"><h3>Qualidade da voz</h3><p>Quanto mais alto, mais natural a voz (e mais internet usada).</p>
+        ${seg('voiceKbps', [[48,'48 kbps'],[64,'64'],[96,'96 · recomendado'],[128,'128 · estúdio']])}
+        ${sw('voiceRed','Proteção contra cortes (RED)','Envia cada trecho de voz duas vezes. Se a internet perder pacotes, sua voz não picota. Usa o dobro de upload da voz.')}</div>
       <div class="sc"><h3>Processamento de voz</h3><p>Filtros do navegador, aplicados antes da transmissão.</p>
         ${sw('ns','Supressão de ruído','Remove barulho constante do fundo (ventilador, ar-condicionado).')}
         ${sw('ec','Cancelamento de eco','Evita que o som das caixas volte pelo microfone. Pode desligar se usar fone.')}
@@ -1876,7 +1910,8 @@ async function renderSettings(){
     body.querySelector('[data-seg=sensMode]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('sensMode', b.dataset.v); livePipes(pp=>pp.applyParams());
       b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); meter.classList.toggle('auto', b.dataset.v!=='manual');
       $('#lbSens').textContent = b.dataset.v==='manual' ? P().sensDb+' dB' : ''; if(b.dataset.v==='off') thEl.style.left='0'; });
-    body.querySelectorAll('[data-pref]').forEach(inp=>inp.onchange=async()=>{ setPref(inp.dataset.pref, inp.checked); if(['ns','ec','agc'].includes(inp.dataset.pref)) await restartMicInputs(); });
+    body.querySelectorAll('[data-pref]').forEach(inp=>inp.onchange=async()=>{ setPref(inp.dataset.pref, inp.checked); if(['ns','ec','agc'].includes(inp.dataset.pref)) await restartMicInputs(); if(inp.dataset.pref==='voiceRed' && V) toast('Vale a partir da próxima vez que você entrar numa sala.'); });
+    body.querySelector('[data-seg=voiceKbps]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('voiceKbps', +b.dataset.v); b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); V?.peers.forEach(pp=>tuneSenders(pp.pc)); });
   }
 
   else if(SET.sec==='video'){
