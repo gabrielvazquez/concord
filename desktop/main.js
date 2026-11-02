@@ -1,6 +1,7 @@
 // CONCORD para PC — janela que carrega o site + recursos que só um app nativo tem:
 // atalhos globais, push-to-talk dentro do jogo, seletor de tela com som do PC, bandeja e inicialização com o Windows.
 const { app, BrowserWindow, session, desktopCapturer, ipcMain, Tray, Menu, nativeImage, shell, nativeTheme, globalShortcut, screen } = require('electron');
+let autoUpdater = null; try { autoUpdater = require('electron-updater').autoUpdater; } catch (e) { console.warn('updater indisponível', e.message); }
 const path = require('path');
 const fs = require('fs');
 
@@ -13,6 +14,12 @@ app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('force_high_performance_gpu');
+// Economia de memória: um processo de página só (o app carrega apenas o CONCORD), V8 compacto e sem recursos que não usamos
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+app.commandLine.appendSwitch('renderer-process-limit', '2');
+app.commandLine.appendSwitch('js-flags', '--optimize-for-size --max-old-space-size=512');
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,CalculateNativeWinOcclusion,MediaRouter,Translate,AutofillServerCommunication');
+app.disableDomainBlockingFor3DAPIs?.();
 
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 app.setAppUserModelId('com.gabrielvazquez.concord');
@@ -66,9 +73,9 @@ function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   win = new BrowserWindow({
     width: Math.min(1480, width), height: Math.min(940, height), minWidth: 940, minHeight: 600,
-    backgroundColor: '#000000', title: 'CONCORD', show: false, autoHideMenuBar: true,
+    backgroundColor: '#000000', title: 'CONCORD', show: false, autoHideMenuBar: true, frame: false, thickFrame: true, roundedCorners: true,
     icon: path.join(__dirname, 'build', 'icon.png'),
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false, spellcheck: true }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false, spellcheck: false, enableWebSQL: false, v8CacheOptions: 'bypassHeatCheck' }
   });
   win.removeMenu();
   win.once('ready-to-show', () => win.show());
@@ -86,6 +93,11 @@ function createWindow() {
     }
   });
   win.on('focus', () => win.flashFrame(false));
+  const sendState = () => send('window-state', { maximized: win.isMaximized(), fullscreen: win.isFullScreen() });
+  ['maximize','unmaximize','enter-full-screen','leave-full-screen'].forEach(ev => win.on(ev, sendState));
+  win.webContents.on('did-finish-load', () => { sendState(); if (pendingUpdate) send('update', pendingUpdate); });
+  // Ao esconder na bandeja, libera caches da página (imagens decodificadas, código não usado)
+  win.on('hide', () => { setTimeout(() => { if (win && !win.isVisible()) { send('trim-memory'); } }, 15000); });
 }
 
 /* ---------------- Bandeja ---------------- */
@@ -153,6 +165,36 @@ ipcMain.handle('concord:capturePtt', () => new Promise(resolve => {
 ipcMain.on('concord:attention', () => { if (win && !win.isFocused()) win.flashFrame(true); });
 ipcMain.on('concord:focus', () => { if (win) { win.show(); win.focus(); } });
 ipcMain.handle('concord:openExternal', (_e, url) => { if (/^https?:/.test(url)) shell.openExternal(url); });
+ipcMain.on('win:minimize', () => win?.minimize());
+ipcMain.on('win:maximize', () => { if (!win) return; win.isMaximized() ? win.unmaximize() : win.maximize(); });
+ipcMain.on('win:close', () => win?.close());
+ipcMain.handle('concord:metrics', () => {
+  const list = app.getAppMetrics();
+  const mb = list.reduce((a, m) => a + (m.memory?.workingSetSize || 0), 0) / 1024;
+  return { mb: Math.round(mb), processes: list.length, version: app.getVersion() };
+});
+
+/* ---------------- Atualizações do app ---------------- */
+let pendingUpdate = null;
+function setUpdate(state) { pendingUpdate = state; send('update', state); if (tray) tray.setToolTip(state.status === 'ready' ? 'CONCORD — atualização pronta' : 'CONCORD'); }
+if (autoUpdater) {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('checking-for-update', () => setUpdate({ status: 'checking' }));
+  autoUpdater.on('update-available', i => setUpdate({ status: 'downloading', version: i.version, percent: 0 }));
+  autoUpdater.on('update-not-available', () => setUpdate({ status: 'latest', version: app.getVersion() }));
+  autoUpdater.on('download-progress', p => setUpdate({ status: 'downloading', version: pendingUpdate?.version, percent: Math.round(p.percent) }));
+  autoUpdater.on('update-downloaded', i => setUpdate({ status: 'ready', version: i.version }));
+  autoUpdater.on('error', e => setUpdate({ status: 'error', message: String(e?.message || e).slice(0, 200) }));
+}
+const portable = !!process.env.PORTABLE_EXECUTABLE_FILE;
+ipcMain.handle('update:check', async () => {
+  if (!autoUpdater || !app.isPackaged) return { status: 'unsupported', reason: app.isPackaged ? 'updater' : 'dev' };
+  if (portable) return { status: 'unsupported', reason: 'portable' };
+  try { await autoUpdater.checkForUpdates(); } catch (e) { setUpdate({ status: 'error', message: String(e?.message || e).slice(0, 200) }); }
+  return pendingUpdate;
+});
+ipcMain.handle('update:install', () => { if (pendingUpdate?.status === 'ready') { quitting = true; autoUpdater.quitAndInstall(false, true); } });
 
 app.whenReady().then(() => {
   const ses = session.defaultSession;
@@ -172,6 +214,7 @@ app.whenReady().then(() => {
   createWindow();
   buildTray();
   registerShortcuts();
+  if (autoUpdater && app.isPackaged && !portable) { setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 8000); setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 3600 * 1000); }
   if (process.argv.includes('--hidden')) win.once('ready-to-show', () => win.hide());
 });
 

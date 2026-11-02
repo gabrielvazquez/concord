@@ -8,5 +8,9 @@ contextBridge.exposeInMainWorld('concordDesktop', {
   attention: () => ipcRenderer.send('concord:attention'),
   focus: () => ipcRenderer.send('concord:focus'),
   openExternal: (url) => ipcRenderer.invoke('concord:openExternal', url),
+  win: { minimize: () => ipcRenderer.send('win:minimize'), maximize: () => ipcRenderer.send('win:maximize'), close: () => ipcRenderer.send('win:close') },
+  metrics: () => ipcRenderer.invoke('concord:metrics'),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
   onEvent: (cb) => { const h = (_e, msg) => cb(msg.ev, msg.data); ipcRenderer.on('concord:event', h); return () => ipcRenderer.removeListener('concord:event', h); },
 });

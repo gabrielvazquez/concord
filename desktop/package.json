@@ -12,7 +12,8 @@
     "dist": "electron-builder --win nsis portable --publish never"
   },
   "dependencies": {
-    "uiohook-napi": "latest"
+    "uiohook-napi": "latest",
+    "electron-updater": "latest"
   },
   "devDependencies": {
     "electron": "latest",
@@ -24,11 +25,25 @@
     "copyright": "CONCORD",
     "npmRebuild": false,
     "asar": true,
-    "files": ["main.js", "preload.js", "picker.html", "picker-preload.js", "offline.html", "build/**/*", "package.json"],
-    "directories": { "output": "dist", "buildResources": "build" },
+    "files": [
+      "main.js",
+      "preload.js",
+      "picker.html",
+      "picker-preload.js",
+      "offline.html",
+      "build/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
     "win": {
       "icon": "build/icon.ico",
-      "target": ["nsis", "portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "nsis": {
       "oneClick": true,
@@ -37,10 +52,17 @@
       "createStartMenuShortcut": true,
       "shortcutName": "CONCORD",
       "artifactName": "CONCORD-Setup.exe",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": false
     },
     "portable": {
       "artifactName": "CONCORD-Portatil.exe"
-    }
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/gabrielvazquez/concord/releases/latest/download"
+      }
+    ]
   }
 }

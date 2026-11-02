@@ -472,6 +472,70 @@ body.theater.ui #cineBar{opacity:1;pointer-events:auto}
 #cineVol input{width:110px;accent-color:#fff}
 .cine-badge{background:#fff;color:#000;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:.05em}
 
+
+/* ---------- App para PC: barra de título ---------- */
+#titlebar{display:none}
+html.is-desktop #titlebar{display:flex;position:fixed;top:0;left:0;right:0;height:34px;z-index:90;background:#000;align-items:stretch;-webkit-app-region:drag;user-select:none;border-bottom:1px solid #141416}
+#titlebar .tb-l{display:flex;align-items:center;gap:8px;padding-left:12px;font-size:12px;font-weight:800;letter-spacing:.18em;color:var(--tx2);flex:1;min-width:0}
+#titlebar .tb-l svg{width:18px;height:18px}
+#tbUpdate{-webkit-app-region:no-drag;margin-left:10px;letter-spacing:0;font-weight:700;font-size:11.5px;border-radius:999px;padding:3px 10px;background:var(--card2);color:var(--tx2);border:1px solid var(--line2);cursor:default;white-space:nowrap}
+#tbUpdate.ready{background:var(--ac);color:var(--act);border-color:var(--ac);cursor:pointer}
+#titlebar .tb-b{display:flex;-webkit-app-region:no-drag}
+#titlebar .tb-b button{width:46px;height:100%;display:grid;place-items:center;color:var(--tx2);transition:background .1s}
+#titlebar .tb-b button:hover{background:#1c1c1f;color:var(--tx)}
+#titlebar .tb-b button.x:hover{background:#e81123;color:#fff}
+#titlebar .tb-b svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.4}
+html.is-desktop #app{height:calc(100vh - 34px);height:calc(100dvh - 34px);margin-top:34px}
+html.is-desktop #auth,html.is-desktop #settings{top:34px}
+html.is-desktop .set-close{top:56px}
+html.is-desktop body.theater #tiles .tile.big{height:calc(100dvh - 34px)!important}
+html.is-desktop body.theater .ctrls,html.is-desktop body.theater #cineBar{top:auto}
+html.is-desktop body.theater #cineBar{top:34px}
+html.is-desktop.win-full #titlebar{display:none}
+html.is-desktop.win-full #app{height:100dvh;margin-top:0}
+html.is-desktop.win-full body.theater #tiles .tile.big{height:100dvh!important}
+html.is-desktop.win-full body.theater #cineBar{top:0}
+
+/* ---------- Layout contínuo (sem cartões/bordas) ---------- */
+body.flat #app{padding:0;gap:0}
+body.flat #drawer{gap:0}
+body.flat .panel{border-radius:0;border:0}
+body.flat #rail{background:#000;border-right:1px solid var(--line)}
+body.flat #side{background:#08080a;border-right:1px solid var(--line)}
+body.flat #main{background:#050506}
+body.flat #members{background:#08080a;border-left:1px solid var(--line)}
+body.flat .side-head{border-radius:0}
+body.flat .main-head{padding-top:14px}
+body.flat #settings{padding:0;gap:0}
+body.flat .set-nav{border-right:1px solid var(--line);background:#08080a}
+body.flat .set-body{background:#050506}
+body.flat #auth{padding:0;gap:0}
+body.flat #auth .hero{border-right:1px solid var(--line)}
+
+/* ---------- Painel de membros recolhível ---------- */
+body.hide-members #members{display:none}
+#membersBtn.on{background:var(--card2);color:var(--tx)}
+@media (max-width:1100px){
+  body.show-members-drawer #members{display:flex!important;position:fixed;right:0;top:0;bottom:0;z-index:31;width:300px;box-shadow:-20px 0 40px #000c;border-radius:0}
+  html.is-desktop body.show-members-drawer #members{top:34px}
+}
+
+/* ---------- Monitor em pé (tela vertical) ---------- */
+@media (orientation:portrait) and (min-width:761px){
+  #members{display:none}
+  body.show-members-drawer #members{display:flex!important;position:fixed;right:0;top:0;bottom:0;z-index:31;width:300px;box-shadow:-20px 0 40px #000c;border-radius:0}
+  html.is-desktop body.show-members-drawer #members{top:34px}
+  #tiles{grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));align-content:center}
+  #tiles.focus .tile.big{height:auto!important;aspect-ratio:16/9;max-height:none}
+  #tiles.focus{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .ctrls{padding-bottom:22px}
+  .welcome{margin-left:16px;margin-right:16px}
+  .pgrid{grid-template-columns:1fr}.pgrid .prev{position:static;order:-1}
+  .smodes{grid-template-columns:1fr}.smode{flex-direction:row;justify-content:flex-start;text-align:left;padding:12px}
+}
+/* animações pausadas quando a janela não está visível (economiza CPU/GPU) */
+body.page-hidden *,body.page-hidden *::before,body.page-hidden *::after{animation-play-state:paused!important}
+
 /* ---------- Sugestão do app para PC ---------- */
 #appBanner{display:flex;align-items:center;gap:12px;margin:12px 16px 0;padding:10px 12px 10px 14px;border-radius:14px;background:linear-gradient(110deg,#1a1a1f,#111114 60%);border:1px solid var(--line2);flex-shrink:0;animation:tin .25s}
 #appBanner .ab-ico{width:34px;height:34px;border-radius:10px;background:var(--ac);color:var(--act);display:grid;place-items:center;flex-shrink:0}
@@ -656,6 +720,8 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
 </svg>
 
 <!-- ============ Entrada ============ -->
+<div id="titlebar"><div class="tb-l"><svg><use href="#i-logo"/></svg>CONCORD<span id="tbUpdate" class="hidden"></span></div>
+  <div class="tb-b"><button data-w="min" title="Minimizar"><svg viewBox="0 0 12 12"><path d="M1.5 6h9"/></svg></button><button data-w="max" title="Maximizar"><svg viewBox="0 0 12 12" id="tbMaxIco"><rect x="1.5" y="1.5" width="9" height="9" rx="1"/></svg></button><button data-w="close" class="x" title="Fechar"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8"/></svg></button></div></div>
 <div id="auth" class="hidden">
   <section class="hero panel">
     <div class="brand"><svg><use href="#i-logo"/></svg><b>CONCORD</b></div>
@@ -725,7 +791,8 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
       <div class="t"><h1 id="mainTitle"></h1><small id="mainSub"></small></div>
       <div class="sp"></div>
       <button class="hbtn hidden" id="statsBtn" title="Mostra em cada vídeo: resolução, fps, codec, velocidade e ping. Útil para ver por que algo está travando."><svg class="i sm"><use href="#i-signal"/></svg><span>Estatísticas</span></button>
-      <button class="hbtn" id="inviteBtn"><svg class="i sm"><use href="#i-users"/></svg><span>Convidar</span></button>
+      <button class="hbtn" id="inviteBtn"><svg class="i sm"><use href="#i-plus"/></svg><span>Convidar</span></button>
+      <button class="ibtn" id="membersBtn" title="Mostrar/ocultar membros"><svg class="i"><use href="#i-users"/></svg></button>
     </div>
     <div id="appBanner" class="hidden"></div>
     <section id="chat" class="hidden">
@@ -784,7 +851,7 @@ const SHARE_Q = {
 const CAM_Q = { '480':{w:854,h:480,br:700000}, '720':{w:1280,h:720,br:1500000}, '1080':{w:1920,h:1080,br:2800000} };
 const PREF_DEFAULTS = {
   micId:'', outId:'', camId:'', inGain:1, outVol:1,
-  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
+  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
   camRes:'720', camFps:30,
   shareQ:'jogo1080', shareCodec:'auto', uploadMbps:20, lowLatency:false, showStats:false,
   turnUrl:'', turnUser:'', turnPass:'',
@@ -806,6 +873,8 @@ function applyAppearance(){
   const n=parseInt(c.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255; const lum=(0.299*r+0.587*g+0.114*b)/255;
   const root=document.documentElement.style; root.setProperty('--ac', c); root.setProperty('--act', lum>0.6?'#000000':'#ffffff'); document.body.style.zoom = String(PREFS.fontScale||1);
   document.body.classList.toggle('compact', !!PREFS.compact); document.body.classList.toggle('reduce', !!PREFS.reduce);
+  const lay = PREFS.layout || (window.concordDesktop ? 'flat' : 'cards'); document.body.classList.toggle('flat', lay==='flat');
+  document.body.classList.toggle('hide-members', PREFS.showMembers===false);
 }
 function setPref(k, v){ PREFS[k]=v; ls.set('cc_prefs', PREFS); }
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1367,6 +1436,7 @@ function appendMsg(m, live){
   if(S.isAdmin){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem (ADM)'; del.innerHTML=ic('trash','sm');
     del.onclick=async e=>{ e.stopPropagation(); const { error } = await sb.from('dc_messages').delete().eq('id', m.id); if(error) return toast('Erro: '+error.message, true); el.remove(); }; el.appendChild(del); }
   box.appendChild(el); S.lastAuthor=who; S.lastTime=+d;
+  const all=box.querySelectorAll('.msg'); if(all.length>400) for(let i=0;i<all.length-350;i++) all[i].remove();
   if(!live || nearBottom || m.user_id===S.me.id) box.scrollTop=box.scrollHeight;
 }
 let typingSent=0;
@@ -2050,6 +2120,29 @@ function syncDesktop(){
     .then(r=>{ const bad=Object.entries(r||{}).filter(([,ok])=>!ok).map(([k])=>k==='mute'?'mutar':'ensurdecer'); if(bad.length) toast('O atalho de '+bad.join(' e ')+' já está em uso por outro programa. Escolha outro em Configurações → Atalhos.', true); })
     .catch(()=>{});
 }
+let UPD = null;
+function renderUpdateBadge(){
+  const el=$('#tbUpdate'); if(!el) return; const u=UPD;
+  if(!u || !['downloading','ready'].includes(u.status)){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden'); el.classList.toggle('ready', u.status==='ready');
+  el.textContent = u.status==='ready' ? `Atualização ${u.version||''} pronta · Reiniciar` : `Baixando atualização${u.percent?` ${u.percent}%`:''}`;
+  el.onclick = u.status==='ready' ? ()=>DESK.installUpdate() : null;
+}
+function trimMemory(){
+  fxCache.clear();
+  const box=$('#msgs'); if(box){ const msgs=box.querySelectorAll('.msg'); const extra=msgs.length-120; for(let i=0;i<extra;i++) msgs[i].remove(); }
+}
+document.addEventListener('visibilitychange', ()=>document.body.classList.toggle('page-hidden', document.hidden));
+if(DESK){
+  document.querySelectorAll('#titlebar [data-w]').forEach(b=>b.onclick=()=>({min:DESK.win.minimize, max:DESK.win.maximize, close:DESK.win.close})[b.dataset.w]());
+  DESK.onEvent((ev, data)=>{
+    if(ev==='window-state'){ document.documentElement.classList.toggle('win-full', !!data?.fullscreen);
+      $('#tbMaxIco').innerHTML = data?.maximized ? '<rect x="3" y="1.5" width="7.5" height="7.5" rx="1"/><path d="M1.5 4v6.5H8"/>' : '<rect x="1.5" y="1.5" width="9" height="9" rx="1"/>';
+      $('[data-w=max]').title = data?.maximized ? 'Restaurar' : 'Maximizar'; return; }
+    if(ev==='update'){ UPD=data; renderUpdateBadge(); if(data?.status==='ready') toast(`Atualização ${data.version||''} baixada. Clique no aviso no topo para reiniciar.`); if(!$('#settings').classList.contains('hidden') && SET.sec==='app') renderSettings(); return; }
+    if(ev==='trim-memory'){ trimMemory(); return; }
+  });
+}
 if(DESK){
   DESK.onEvent((ev)=>{
     if(ev==='mute') setMuted(!(S.muted||S.deaf));
@@ -2090,10 +2183,10 @@ function accelFromEvent(e){
 const SET = { sec:'perfil', mode:'user', test:null, camStream:null, unsub:null, draft:null };
 const SECTIONS = [
   ['Usuário', [['perfil','palette','Meu perfil'], ['conta','user','Minha conta']]],
-  ['App', [['aparencia','palette','Aparência'], ['voz','mic','Voz'], ['atalhos','keyb','Atalhos'], ['video','cam','Vídeo'], ['transmissao','cast','Transmissão'], ['rede','net','Rede']]],
+  ['App', [ ...(window.concordDesktop?[['app','down','App para PC']]:[]), ['aparencia','palette','Aparência'], ['voz','mic','Voz'], ['atalhos','keyb','Atalhos'], ['video','cam','Vídeo'], ['transmissao','cast','Transmissão'], ['rede','net','Rede']]],
 ];
 function openSettings(sec){
-  SET.mode='user'; SET.sec = sec || (['perfil','conta','aparencia','voz','atalhos','video','transmissao','rede'].includes(SET.sec)?SET.sec:'perfil'); SET.draft=null;
+  SET.mode='user'; SET.sec = sec || (['perfil','conta','app','aparencia','voz','atalhos','video','transmissao','rede'].includes(SET.sec)?SET.sec:'perfil'); SET.draft=null;
   closePop(); $('#settings').classList.remove('hidden');
   renderSettings();
 }
@@ -2155,6 +2248,26 @@ async function renderSettings(){
     $('#stOut').onclick=logout;
   }
 
+  else if(SET.sec==='app' && DESK){
+    const u=UPD||{}; const st = { checking:'Procurando atualização…', downloading:`Baixando versão ${u.version||''}… ${u.percent||0}%`, ready:`Versão ${u.version||''} pronta para instalar`, latest:'Você está na versão mais recente', error:'Não deu para verificar agora', unsupported:'' }[u.status] || '';
+    body.innerHTML = `<h2>App para PC</h2><p class="sub">Atualizações e desempenho do CONCORD no Windows.</p>
+      <div class="sc"><h3>Atualizações</h3><p>O conteúdo do CONCORD se atualiza sozinho. Aqui ficam as atualizações do próprio programa (atalhos, janela, seletor de tela).</p>
+        <div class="srow"><div><b>Versão instalada: <span id="appVer">…</span></b><small id="updSt">${esc(st)}${u.status==='error'&&u.message?' — '+esc(u.message):''}</small></div>
+          ${u.status==='ready' ? `<button class="btn auto" id="updGo">Reiniciar e atualizar</button>` : `<button class="btn sec auto" id="updChk" ${u.status==='checking'||u.status==='downloading'?'disabled':''}>Verificar atualizações</button>`}</div>
+        <p class="hint" id="updHint"></p></div>
+      <div class="sc"><h3>Memória</h3><p>O app usa um processo de página só, V8 compacto, libera caches quando fica na bandeja e pausa animações quando a janela não está visível.</p>
+        <div class="srow"><div><b>Uso de memória agora</b><small>Somando todos os processos do app</small></div><b id="memMb" style="font-size:20px">…</b></div>
+        <div class="srow"><div><b>Liberar memória agora</b><small>Limpa efeitos em cache e mensagens antigas da tela</small></div><button class="btn sec auto" id="memTrim">Liberar</button></div>
+        <p class="hint">Dicas para gastar menos: Aparência → <b>Reduzir animações</b> e <b>Esconder efeitos dos outros</b>.</p></div>`;
+    const upd=async()=>{ try{ const m=await DESK.metrics(); $('#memMb') && ($('#memMb').textContent = m.mb+' MB'); $('#appVer') && ($('#appVer').textContent = m.version); }catch{} };
+    upd(); const t=setInterval(()=>{ if($('#settings').classList.contains('hidden') || SET.sec!=='app') return clearInterval(t); upd(); }, 2000);
+    $('#memTrim').onclick=()=>{ trimMemory(); toast('Memória liberada.'); setTimeout(upd, 1500); };
+    $('#updGo')?.addEventListener('click', ()=>DESK.installUpdate());
+    $('#updChk')?.addEventListener('click', async()=>{ const b=$('#updChk'); busy(b,true); const r=await DESK.checkUpdate(); busy(b,false);
+      if(r?.status==='unsupported') $('#updHint').innerHTML = r.reason==='portable' ? 'A versão portátil não se atualiza sozinha: baixe a nova em Releases.' : r.reason==='dev' ? 'Modo de desenvolvimento.' : 'Atualizador indisponível nesta versão — baixe o instalador novo uma vez em Releases.';
+      else if(r?.status==='latest') toast('Você já está na versão mais recente.'); UPD=r||UPD; renderSettings(); });
+  }
+
   else if(SET.sec==='atalhos'){
     const pttLabel = DESK ? (p.pttKey?.label || 'Nenhuma') : (p.pttWeb ? p.pttWeb.replace(/^Key/,'').replace(/^Digit/,'') : 'Nenhuma');
     body.innerHTML = `<h2>Atalhos e push-to-talk</h2><p class="sub">${DESK?'Funcionam em qualquer lugar do PC, inclusive dentro do jogo.':'No navegador, só funcionam com a aba do CONCORD em foco. No app para PC, funcionam dentro do jogo.'}</p>
@@ -2198,6 +2311,7 @@ async function renderSettings(){
       <div class="sc"><h3>Cor de destaque</h3><p>Botões, itens selecionados e indicadores.</p>
         <div class="colorrow">${ACS.map(c=>`<button class="sw ${P().accent===c?'on':''}" data-ac="${c}" style="background:${c}"></button>`).join('')}
           <label class="cpick" title="Outra cor" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"><input type="color" id="acPick" value="${P().accent}"></label></div></div>
+      <div class="sc"><h3>Layout</h3><p>Contínuo deixa os painéis colados, sem bordas arredondadas (padrão no app para PC).</p>${seg('layout', [['flat','Contínuo'],['cards','Cartões']]).replace(`class=""`, '')}</div>
       <div class="sc"><h3>Tamanho da interface</h3><p>Aumenta ou diminui texto, botões e ícones juntos.</p>${seg('fontScale', [[0.9,'Pequeno'],[1,'Normal'],[1.1,'Grande'],[1.2,'Enorme']])}</div>
       <div class="sc"><h3>Chat e animações</h3><p></p>
         ${sw('compact','Modo compacto','Mensagens mais juntas e avatares menores no chat.')}
@@ -2205,6 +2319,7 @@ async function renderSettings(){
         ${sw('reduce','Reduzir animações','Para tudo que se mexe. Bom para PC fraco ou para quem enjoa com movimento.')}</div>`;
     body.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ setPref('accent', b.dataset.ac); applyAppearance(); renderSettings(); });
     $('#acPick').oninput=e=>{ setPref('accent', e.target.value); applyAppearance(); };
+    { const cur = P().layout || (DESK?'flat':'cards'); const g=body.querySelector('[data-seg=layout]'); g.querySelectorAll('button').forEach(b=>{ b.classList.toggle('on', b.dataset.v===cur); b.onclick=()=>{ setPref('layout', b.dataset.v); applyAppearance(); g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); }; }); }
     body.querySelector('[data-seg=fontScale]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('fontScale', +b.dataset.v); applyAppearance(); b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
     body.querySelectorAll('[data-pref]').forEach(inp=>inp.onchange=()=>{ setPref(inp.dataset.pref, inp.checked); applyAppearance(); fxCache.clear(); renderMembers(); renderChannels(); if(V) renderTiles(); });
   }
@@ -2647,11 +2762,17 @@ $('#ubSet').onclick=()=>openSettings('voz');
 $('#setClose').onclick=closeSettings;
 $('#statsBtn').onclick=()=>{ setPref('showStats', !P().showStats); renderControls(); renderStats(); if(P().showStats) toast('Estatísticas ligadas: resolução, fps, codec, velocidade e ping aparecem em cada vídeo.'); };
 $('#inviteBtn').onclick=()=>S.server&&openInvite();
+$('#membersBtn').onclick=()=>{
+  const narrow = window.innerWidth<=1100 || matchMedia('(orientation:portrait)').matches;
+  if(narrow){ const on=document.body.classList.toggle('show-members-drawer'); $('#scrim').classList.toggle('hidden', !on); }
+  else { setPref('showMembers', P().showMembers===false); applyAppearance(); }
+  $('#membersBtn').classList.toggle('on', document.body.classList.contains('show-members-drawer') || (!narrow && P().showMembers!==false));
+};
 $('#srvCode').onclick=e=>{ e.stopPropagation(); S.server&&copy(S.server.code); };
 $('.side-head').onclick=e=>openServerMenu(e);
 function closeDrawer(){ $('#drawer').classList.remove('open'); $('#scrim').classList.add('hidden'); }
 $('#menuBtn').onclick=()=>{ $('#drawer').classList.add('open'); $('#scrim').classList.remove('hidden'); };
-$('#scrim').onclick=closeDrawer;
+$('#scrim').onclick=()=>{ closeDrawer(); document.body.classList.remove('show-members-drawer'); };
 document.addEventListener('click', ()=>{ if(V){ V.peers.forEach(p=>{ if(p.audio.srcObject && p.audio.paused) p.audio.play().catch(()=>{}); }); if(V.audioCtx?.state==='suspended') V.audioCtx.resume().catch(()=>{}); if(V.pipe?.ctx?.state==='suspended') V.pipe.ctx.resume().catch(()=>{}); } });
 window.addEventListener('beforeunload', ()=>{ if(V){ try{ V.rt.untrack(); }catch{} V.peers.forEach(p=>p.pc.close()); } });
 document.addEventListener('keydown', e=>{
