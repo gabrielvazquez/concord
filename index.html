@@ -432,6 +432,9 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .memrow:first-child{border-top:0}
 .memrow .av{width:36px;height:36px;font-size:14px}
 .memrow small{color:var(--tx3);font-size:12px;display:block}
+.adm{font-size:9.5px;font-weight:800;background:linear-gradient(135deg,#fff,#d4d4d8);color:#000;border-radius:6px;padding:2px 5px;margin-left:6px;vertical-align:middle;letter-spacing:.06em;font-family:'Plus Jakarta Sans',sans-serif;-webkit-text-fill-color:#000}
+.msg .del{position:absolute;right:16px;top:-12px;opacity:0;background:var(--card2);border:1px solid var(--line2);border-radius:9px;width:30px;height:30px;display:grid;place-items:center;color:var(--red)}
+.msg:hover .del{opacity:1}
 .badge{font-size:10.5px;font-weight:800;background:#fff;color:#000;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:middle}
 .tile .fxw{position:absolute;inset:0;z-index:0;pointer-events:none}.tile .fx{z-index:0}
 .tile .avwrap{position:relative;z-index:1}
@@ -761,7 +764,7 @@ function profileCardHtml(p, opts={}){
   return `<div class="pcard" style="--tp:${tp};--ta:${ta};--bc:${bc}">${fxHtml(p.effect, opts.fxKey||null, 22, 520)}
     <div class="bn" style="${bn?`background-image:url('${esc(bn)}')`:''}"></div>
     <div class="pav">${avatarP(p, 84, {status:opts.status||'online'})}</div>
-    <div class="pb"><h3>${nameP(p, shown)}</h3>
+    <div class="pb"><h3>${nameP(p, shown)}${p.id?admBadge(p.id):""}</h3>
       <div class="un">${esc(p.display_name||'')}${p.pronouns?' · '+esc(p.pronouns):''}</div>
       ${p.status_text?`<div class="stt">${esc(p.status_text)}</div>`:''}
       <div class="pin">${p.bio?`<div class="lbl">Sobre mim</div><div class="bio">${linkify(p.bio)}</div>`:''}
@@ -785,7 +788,9 @@ function showProfile(uid, ev){
   pop.querySelector('[data-edit]')?.addEventListener('click', ()=>{ closePop(); openSettings('perfil'); });
 }
 document.addEventListener('click', e=>{ const t=e.target.closest('[data-pu]'); if(t && t.dataset.pu && !e.target.closest('.tools')){ e.stopPropagation(); showProfile(t.dataset.pu, e); } }, true);
-function canEditServer(){ return !!S.server && (!S.server.owner_id || S.server.owner_id===S.me?.id); }
+function canEditServer(){ return !!S.server && !!S.isAdmin; }
+const admBadge = uid => S.admins?.has(uid) ? '<span class="adm" title="Administrador do CONCORD">ADM</span>' : '';
+async function loadAdmins(){ const { data } = await sb.from('dc_admins').select('user_id'); S.admins=new Set((data||[]).map(r=>r.user_id)); S.isAdmin=S.admins.has(S.me?.id); }
 
 /* Recorte de imagem (arrastar + zoom), sem dependências */
 function cropImage(file, aspect, outW, round){
@@ -942,6 +947,7 @@ async function afterLogin(session){
   if(error){ return showAuth('login', {text:'Erro ao carregar perfil: '+error.message}); }
   if(!prof) return showAuth('profile');
   S.profiles.set(prof.id, prof);
+  S.me = { id:session.user.id }; await loadAdmins();
   S.me = { id:session.user.id, email:session.user.email, name:prof.display_name, color:prof.color };
   $('#auth').classList.add('hidden');
   if(!S.started){ S.started=true; start(); } else { renderMe(); }
@@ -986,7 +992,7 @@ function renderRail(){
     b.className='srv'+(S.server?.id===s.id?' on':'')+(img?' has-img':''); b.title=s.name;
     if(img) b.innerHTML=`<img src="${esc(img)}" alt="">`; else b.textContent = s.icon || initial(s.name);
     b.onclick=()=>{ selectServer(s); closeDrawer(); }; r.appendChild(b); });
-  const add=document.createElement('button'); add.className='srv add'; add.title='Criar ou entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal('create'); r.appendChild(add);
+  const add=document.createElement('button'); add.className='srv add'; add.title=S.isAdmin?'Criar ou entrar em servidor':'Entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal(S.isAdmin?'create':'join'); r.appendChild(add);
 }
 function renderServerHead(){
   const s=S.server; if(!s) return; const head=$('.side-head'); const bn=safeUrl(s.banner_url); const ac=safeColor(s.accent);
@@ -1048,7 +1054,9 @@ function subscribeMessages(){
     .on('postgres_changes', {event:'INSERT', schema:'public', table:'dc_messages', filter:'channel_id=in.('+ids.join(',')+')'}, ({new:m})=>{
       if(S.view?.type==='text' && S.view.ch.id===m.channel_id) appendMsg(m, true);
       else { S.unread.add(m.channel_id); renderChannels(); }
-    }).subscribe();
+    })
+    .on('postgres_changes', {event:'DELETE', schema:'public', table:'dc_messages'}, ({old})=>{ if(old?.id!=null) document.querySelector(`#msgs [data-id="${old.id}"]`)?.remove(); })
+    .subscribe();
 }
 function onlineList(){
   const seen=new Set(); const out=[];
@@ -1105,7 +1113,7 @@ function renderMembers(){
   }
   const row = (uid, fbName, fbColor, sub, on, extra='') => {
     const p=S.profiles.get(uid)||{}; const st = on ? statusOf(uid) : null;
-    return `<div class="mem ${on?'':'offl'}" data-pu="${esc(uid||'')}">${avatarU(uid, 34, {name:fbName,color:fbColor}, {status: st && st!=='offline' ? st : undefined})}<div style="min-width:0"><div class="nm">${nameHtml(uid, dname(uid, fbName))}${S.server.owner_id===uid?ic('crown','sm'):''}</div>${sub?`<small>${sub}</small>`:(p.status_text?`<span class="st">${esc(p.status_text)}</span>`:'')}</div>${extra}</div>`;
+    return `<div class="mem ${on?'':'offl'}" data-pu="${esc(uid||'')}">${avatarU(uid, 34, {name:fbName,color:fbColor}, {status: st && st!=='offline' ? st : undefined})}<div style="min-width:0"><div class="nm">${nameHtml(uid, dname(uid, fbName))}${admBadge(uid)}</div>${sub?`<small>${sub}</small>`:(p.status_text?`<span class="st">${esc(p.status_text)}</span>`:'')}</div>${extra}</div>`;
   };
   html += `<div class="mtitle">Online — ${list.length}</div><div>` + list.map(p=>{
     const ch = p.voice && S.channels.find(c=>c.id===p.voice);
@@ -1158,7 +1166,9 @@ function appendMsg(m, live){
   const pu = m.user_id && S.profiles.has(m.user_id) ? ` data-pu="${esc(m.user_id)}"` : '';
   el.innerHTML = grouped
     ? `<div class="gut">${fmtTime(d)}</div><div class="body"><div class="txt">${linkify(m.content)}</div></div>`
-    : `<div${pu}>${avatarU(m.user_id, null, {name:m.author,color:m.author_color}, {noDeco:false})}</div><div class="body"><div class="hd"><b${pu}>${m.user_id&&S.profiles.has(m.user_id)?nameHtml(m.user_id):esc(m.author)}</b><time>${fmtDay(d)==='Hoje'?'Hoje às '+fmtTime(d):fmtDay(d)+' '+fmtTime(d)}</time></div><div class="txt">${linkify(m.content)}</div></div>`;
+    : `<div${pu}>${avatarU(m.user_id, null, {name:m.author,color:m.author_color}, {noDeco:false})}</div><div class="body"><div class="hd"><b${pu}>${m.user_id&&S.profiles.has(m.user_id)?nameHtml(m.user_id):esc(m.author)}</b>${admBadge(m.user_id)}<time>${fmtDay(d)==='Hoje'?'Hoje às '+fmtTime(d):fmtDay(d)+' '+fmtTime(d)}</time></div><div class="txt">${linkify(m.content)}</div></div>`;
+  if(S.isAdmin){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem (ADM)'; del.innerHTML=ic('trash','sm');
+    del.onclick=async e=>{ e.stopPropagation(); const { error } = await sb.from('dc_messages').delete().eq('id', m.id); if(error) return toast('Erro: '+error.message, true); el.remove(); }; el.appendChild(del); }
   box.appendChild(el); S.lastAuthor=who; S.lastTime=+d;
   if(!live || nearBottom || m.user_id===S.me.id) box.scrollTop=box.scrollHeight;
 }
@@ -2028,11 +2038,11 @@ function renderServerSettings(){
   const s=S.server, edit=canEditServer(); const nav=$('#setNav'), body=$('#setBody'); body.parentElement.scrollTop=0;
   const items=[['geral','gear','Visão geral'],['canais','hash','Canais'],['membros','users','Membros'],['convite','copy','Convites']];
   nav.innerHTML = `<h4>${esc(s.name)}</h4>`+items.map(([k,i,l])=>`<button data-s="${k}" class="${SET.sec===k?'on':''}">${ic(i,'sm')}${l}</button>`).join('')
-    + `<h4>Você</h4><button data-me>${ic('palette','sm')}Meu perfil no servidor</button><div class="sp"></div>${s.owner_id!==S.me.id?`<button data-leave style="color:var(--red)">${ic('out','sm')}Sair do servidor</button>`:''}`;
+    + `<h4>Você</h4><button data-me>${ic('palette','sm')}Meu perfil no servidor</button><div class="sp"></div>${!S.isAdmin?`<button data-leave style="color:var(--red)">${ic('out','sm')}Sair do servidor</button>`:''}`;
   nav.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ SET.sec=b.dataset.s; SET.draft=null; renderServerSettings(); });
   nav.querySelector('[data-me]').onclick=()=>openSettings('perfil');
   nav.querySelector('[data-leave]')?.addEventListener('click', leaveServer);
-  const ro = edit ? '' : `<div class="ok-box" style="background:var(--card);border-color:var(--line2);color:var(--tx2)">Só o dono do servidor pode mudar estas configurações.</div>`;
+  const ro = edit ? '' : `<div class="ok-box" style="background:var(--card);border-color:var(--line2);color:var(--tx2)">Só o administrador do CONCORD pode mudar estas configurações.</div>`;
 
   if(SET.sec==='geral'){
     const D = SET.draft || (SET.draft = {...s});
@@ -2103,8 +2113,8 @@ function renderServerSettings(){
     const on=new Set(onlineList().map(p=>p.uid));
     const mem=(S.members||[]).slice().sort((a,b)=>(on.has(b.user_id)-on.has(a.user_id)) || dname(a.user_id).localeCompare(dname(b.user_id)));
     body.innerHTML = `<h2>Membros</h2><p class="sub">${mem.length} ${mem.length===1?'pessoa':'pessoas'} em ${esc(s.name)}.</p>
-      <div class="sc">${mem.map(m=>{ const p=S.profiles.get(m.user_id)||{}; const owner=s.owner_id===m.user_id;
-        return `<div class="memrow">${avatarU(m.user_id, 36, null, {status: on.has(m.user_id)?statusOf(m.user_id):undefined})}<div style="flex:1;min-width:0"><b>${nameHtml(m.user_id)}</b>${owner?'<span class="badge">DONO</span>':''}<small>${m.nickname?esc(p.display_name)+' · ':''}entrou em ${new Date(m.joined_at).toLocaleDateString('pt-BR')}</small></div>
+      <div class="sc">${mem.map(m=>{ const p=S.profiles.get(m.user_id)||{}; const owner=S.admins.has(m.user_id);
+        return `<div class="memrow">${avatarU(m.user_id, 36, null, {status: on.has(m.user_id)?statusOf(m.user_id):undefined})}<div style="flex:1;min-width:0"><b>${nameHtml(m.user_id)}</b>${owner?'<span class="adm">ADM</span>':''}<small>${m.nickname?esc(p.display_name)+' · ':''}entrou em ${new Date(m.joined_at).toLocaleDateString('pt-BR')}</small></div>
         ${edit && m.user_id!==S.me.id && !owner ? `<button class="btn danger auto" data-kick="${m.user_id}">Remover</button>`:''}</div>`; }).join('')}</div>`;
     body.querySelectorAll('[data-kick]').forEach(b=>b.onclick=async()=>{ const uid=b.dataset.kick;
       if(!await confirmBox('Remover '+dname(uid)+'?', 'A pessoa sai do servidor, mas pode voltar com o código de convite.', 'Remover')) return;
@@ -2133,7 +2143,7 @@ function openServerMenu(ev){
     <button data-a="settings">Configurações do servidor ${ic('gear','sm')}</button>
     ${edit?`<button data-a="channel">Criar canal ${ic('plus','sm')}</button>`:''}
     <button data-a="profile">Editar perfil no servidor ${ic('palette','sm')}</button>
-    ${S.server.owner_id!==S.me.id?`<hr><button class="danger" data-a="leave">Sair do servidor ${ic('out','sm')}</button>`:''}`;
+    ${!S.isAdmin?`<hr><button class="danger" data-a="leave">Sair do servidor ${ic('out','sm')}</button>`:''}`;
   const bg=document.createElement('div'); bg.className='pop-bg'; bg.onclick=closePop; document.body.append(bg, m);
   const r=$('.side-head').getBoundingClientRect(); m.style.left=(r.left+10)+'px'; m.style.top=(r.bottom-4)+'px'; m.style.width=(r.width-20)+'px';
   m.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ closePop(); const a=b.dataset.a;
@@ -2157,7 +2167,8 @@ function modal(html, onClose){
 }
 function closeModal(){ $('#modalRoot').innerHTML=''; }
 function openServerModal(tab){
-  const m=modal(`<div class="tabs"><button data-t="create">Criar servidor</button><button data-t="join">Entrar com código</button></div><div id="tabBody"></div>`);
+  if(!S.isAdmin) tab='join';
+  const m=modal(`${S.isAdmin?'<div class="tabs"><button data-t="create">Criar servidor</button><button data-t="join">Entrar com código</button></div>':''}<div id="tabBody"></div>`);
   const body=m.querySelector('#tabBody');
   const show=t=>{
     m.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
