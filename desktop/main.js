@@ -17,8 +17,8 @@ app.commandLine.appendSwitch('force_high_performance_gpu');
 // Economia de memória: um processo de página só (o app carrega apenas o CONCORD), V8 compacto e sem recursos que não usamos
 app.commandLine.appendSwitch('disable-site-isolation-trials');
 app.commandLine.appendSwitch('renderer-process-limit', '2');
-app.commandLine.appendSwitch('js-flags', '--optimize-for-size --max-old-space-size=512');
-app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,CalculateNativeWinOcclusion,MediaRouter,Translate,AutofillServerCommunication');
+app.commandLine.appendSwitch('js-flags', '--optimize-for-size --max-old-space-size=384 --expose-gc');
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,CalculateNativeWinOcclusion,MediaRouter,DialMediaRouteProvider,GlobalMediaControls,HardwareMediaKeyHandling,Translate,AutofillServerCommunication,BackForwardCache,OptimizationHints,OptimizationGuideModelDownloading,InterestFeedContentSuggestions,WebOTP,PrivacySandboxSettings4');
 app.disableDomainBlockingFor3DAPIs?.();
 
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
@@ -98,6 +98,7 @@ function createWindow() {
   win.webContents.on('did-finish-load', () => { sendState(); if (pendingUpdate) send('update', pendingUpdate); });
   // Ao esconder na bandeja, libera caches da página (imagens decodificadas, código não usado)
   win.on('hide', () => { setTimeout(() => { if (win && !win.isVisible()) { send('trim-memory'); } }, 15000); });
+  win.on('minimize', () => { setTimeout(() => { if (win && win.isMinimized()) send('trim-memory'); }, 15000); });
 }
 
 /* ---------------- Bandeja ---------------- */
@@ -166,12 +167,17 @@ ipcMain.on('concord:attention', () => { if (win && !win.isFocused()) win.flashFr
 ipcMain.on('concord:focus', () => { if (win) { win.show(); win.focus(); } });
 ipcMain.handle('concord:openExternal', (_e, url) => { if (/^https?:/.test(url)) shell.openExternal(url); });
 ipcMain.on('win:minimize', () => win?.minimize());
+ipcMain.handle('concord:trim', async () => { try { await win?.webContents.session.clearHostResolverCache(); } catch {} return true; });
 ipcMain.on('win:maximize', () => { if (!win) return; win.isMaximized() ? win.unmaximize() : win.maximize(); });
 ipcMain.on('win:close', () => win?.close());
 ipcMain.handle('concord:metrics', () => {
+  // Memória privada (a mesma coluna do Gerenciador de Tarefas); o "working set" soma memória compartilhada e assusta
   const list = app.getAppMetrics();
-  const mb = list.reduce((a, m) => a + (m.memory?.workingSetSize || 0), 0) / 1024;
-  return { mb: Math.round(mb), processes: list.length, version: app.getVersion() };
+  const kb = m => (m.memory?.privateBytes || m.memory?.workingSetSize || 0);
+  const by = { page: 0, gpu: 0, other: 0 };
+  for (const m of list) { const k = m.type === 'Tab' || m.type === 'Renderer' ? 'page' : m.type === 'GPU' ? 'gpu' : 'other'; by[k] += kb(m); }
+  const mb = v => Math.round(v / 1024);
+  return { mb: mb(by.page + by.gpu + by.other), page: mb(by.page), gpu: mb(by.gpu), other: mb(by.other), processes: list.length, version: app.getVersion() };
 });
 
 /* ---------------- Atualizações do app ---------------- */

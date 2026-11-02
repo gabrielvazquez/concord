@@ -535,7 +535,9 @@ body.hide-members #members{display:none}
   .smodes{grid-template-columns:1fr}.smode{flex-direction:row;justify-content:flex-start;text-align:left;padding:12px}
 }
 /* animações pausadas quando a janela não está visível (economiza CPU/GPU) */
-body.page-hidden *,body.page-hidden *::before,body.page-hidden *::after{animation-play-state:paused!important}
+body.page-hidden *,body.page-hidden *::before,body.page-hidden *::after,body.eco.blurred *,body.eco.blurred *::before,body.eco.blurred *::after{animation-play-state:paused!important}
+body.eco.blurred .fx{display:none!important}
+.memsplit{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 8px}.memsplit span{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--tx2)}.memsplit b{color:var(--tx);margin-left:4px}
 
 /* ---------- Acervo 3 ---------- */
 .dk-rgb::before{inset:-10%;border-radius:50%;padding:7%;background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 1.2s linear infinite;filter:drop-shadow(0 0 6px #a855f7)}
@@ -598,6 +600,51 @@ body.page-hidden *,body.page-hidden *::before,body.page-hidden *::after{animatio
 #ssum .hint,.hint.keep{display:block!important}
 .srow{padding:10px 0}
 
+/* ---------- Contas salvas (tela de bloqueio) ---------- */
+#who{position:fixed;inset:0;z-index:55;overflow:hidden;color:var(--tx);user-select:none;background:var(--bg)}
+#who.hidden{display:none}
+.who-wall{position:absolute;inset:0;background:
+  radial-gradient(900px 520px at 50% -10%,#1b1b20 0,transparent 70%),
+  radial-gradient(700px 420px at 50% 115%,color-mix(in srgb,var(--ac) 7%,transparent) 0,transparent 70%);
+  }
+.who-wall::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;opacity:.35;mask-image:radial-gradient(60% 55% at 50% 45%,#000,transparent 75%);-webkit-mask-image:radial-gradient(60% 55% at 50% 45%,#000,transparent 75%)}
+.who-logo{position:absolute;top:28px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:1;font-weight:800;letter-spacing:.34em;font-size:12px;color:var(--tx2)}
+.who-logo svg{width:22px;height:22px}
+.who-time{position:absolute;top:12vh;left:0;right:0;text-align:center;z-index:1}
+.who-date{font-size:clamp(13px,1.2vw,16px);font-weight:500;color:var(--tx2);letter-spacing:.04em}
+.who-clock{font-size:clamp(76px,10vw,132px);font-weight:200;letter-spacing:-.04em;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums;color:#fff}
+.who-users{position:absolute;left:0;right:0;bottom:21vh;z-index:1;display:flex;flex-direction:column;align-items:center;gap:22px}
+.who-row{display:flex;gap:14px;padding:7px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
+.who-u{width:44px;height:44px;border-radius:50%;opacity:.45;transition:.15s;filter:grayscale(.5)}
+.who-u.on,.who-u:hover{opacity:1;filter:none}
+.who-u.on{box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--tx)}
+.who-u .av,.who-big .av{width:100%!important;height:100%!important;border-radius:50%!important}
+.who-u .av .avi,.who-big .av .avi{border-radius:50%!important}
+.who-u .av .avi{font-size:17px}
+.who-me{display:flex;flex-direction:column;align-items:center;gap:10px}
+.who-big{width:104px;height:104px;border-radius:50%;padding:4px;border:1px solid var(--line2);background:var(--bg)}
+.who-big .av .avi{font-size:40px}
+.who-me>b{font-size:17px;font-weight:700;margin-top:6px}
+.who-pill{height:40px;min-width:180px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;color:var(--tx);font-size:14px;font-weight:600;transition:.15s}
+button.who-pill{justify-content:space-between;cursor:pointer}
+button.who-pill:hover,button.who-pill:focus-visible{border-color:var(--tx2);outline:none}
+.who-pill:focus-within{border-color:var(--tx2)}
+.who-pill span,.who-pill button{width:30px;height:30px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center;flex-shrink:0}
+.who-pill .i{width:15px;height:15px;transform:rotate(-90deg)}
+.who-pill input{flex:1;min-width:0;width:170px;background:none;border:0;outline:none;color:var(--tx);font-size:14px}
+.who-pill input::placeholder{color:var(--tx3)}
+.who-pill.busy span,.who-pill.busy button{animation:pulseav 1s infinite}
+.who-pill.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes pulseav{50%{opacity:.4}}
+.who-msg{font-size:12px;color:var(--tx3)}
+.who-bottom{position:absolute;bottom:5vh;left:0;right:0;z-index:1;display:flex;justify-content:center;gap:30px}
+.who-bottom button{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--tx2);font-size:12px;font-weight:500}
+.who-bottom button:hover{color:var(--tx)}
+.who-bottom span{width:40px;height:40px;border-radius:50%;background:var(--panel);border:1px solid var(--line2);display:grid;place-items:center;transition:.15s}
+.who-bottom button:hover span{border-color:var(--tx2)}
+.who-bottom .i{width:16px;height:16px}
+html.is-desktop #who{top:34px}
 /* ---------- Markdown ---------- */
 .msg .txt b{font-weight:700;color:#fff}
 .mdc{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.88em;background:var(--card2);border:1px solid var(--line2);border-radius:6px;padding:1px 5px}
@@ -823,6 +870,7 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
   .cbtn{width:44px;height:44px}
 }
 @media (min-width: 761px){ #scrim{display:none!important} }
+body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fixed;inset:0;z-index:29;background:#0008}
 .sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
 </style>
 </head>
@@ -1004,7 +1052,7 @@ const SHARE_Q = {
 const CAM_Q = { '480':{w:854,h:480,br:700000}, '720':{w:1280,h:720,br:1500000}, '1080':{w:1920,h:1080,br:2800000} };
 const PREF_DEFAULTS = {
   micId:'', outId:'', camId:'', inGain:1, outVol:1,
-  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, appTheme:'oled', themeBase:'#1a1a2e', bgGlow:false, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
+  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, ecoMem:true, sfxVol:0.8, sfx:{}, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, appTheme:'oled', themeBase:'#1a1a2e', bgGlow:false, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
   camRes:'720', camFps:30,
   shareQ:'jogo1080', shareCodec:'auto', uploadMbps:20, lowLatency:false, showStats:false,
   turnUrl:'', turnUser:'', turnPass:'',
@@ -1096,10 +1144,60 @@ function setIcon(el, name){ el.innerHTML = ic(name); }
 const fmtBr = b => b>=1e6 ? (b/1e6).toFixed(1)+' Mbps' : Math.round(b/1e3)+' kbps';
 
 let ctxBeep;
-function beep(up){ if(!P().joinSound) return; try{ ctxBeep = ctxBeep || new AudioContext(); const o=ctxBeep.createOscillator(), g=ctxBeep.createGain();
-  o.frequency.setValueAtTime(up?520:640, ctxBeep.currentTime); o.frequency.linearRampToValueAtTime(up?780:420, ctxBeep.currentTime+.12);
-  g.gain.setValueAtTime(.05, ctxBeep.currentTime); g.gain.exponentialRampToValueAtTime(.0001, ctxBeep.currentTime+.18);
-  o.connect(g).connect(ctxBeep.destination); o.start(); o.stop(ctxBeep.currentTime+.2); }catch{} }
+function beep(up){ sfx(up?'peerJoin':'peerLeave'); }
+let sfxBus=null;
+function sfxCtx(){
+  ctxBeep = ctxBeep || new AudioContext();
+  if(!sfxBus){ const c=ctxBeep; const comp=c.createDynamicsCompressor(); comp.threshold.value=-10; comp.knee.value=6; comp.ratio.value=8; comp.attack.value=.002; comp.release.value=.12;
+    const g=c.createGain(); g.connect(comp).connect(c.destination); sfxBus=g; }
+  sfxBus.gain.value = 5*(+P().sfxVol||0);
+  if(ctxBeep.setSinkId && ctxBeep._sink!==(P().outId||'')){ ctxBeep._sink=P().outId||''; ctxBeep.setSinkId(P().outId||'').catch(()=>{}); }
+  if(ctxBeep.state==='suspended') ctxBeep.resume().catch(()=>{});
+  return ctxBeep;
+}
+const SFX_EVENTS = [['join','Você entra na sala','up'],['leave','Você sai da sala','down'],['peerJoin','Alguém entra','up'],['peerLeave','Alguém sai','down'],['mute','Mutar microfone','mute'],['unmute','Desmutar microfone','unmute'],['deaf','Ensurdecer','deaf'],['undeaf','Desensurdecer','undeaf'],['msg','Mensagem direta','soft'],['call','Toque de chamada','ring']];
+const SFX_LIB = [['up','Subida'],['down','Descida'],['mute','Clique grave'],['unmute','Clique agudo'],['deaf','Fechar'],['undeaf','Abrir'],['soft','Suave'],['ring','Telefone'],['bell','Campainha'],['bubble','Bolha'],['drop','Gota'],['click','Clique'],['double','Duplo'],['whoosh','Vento'],['chime','Sino'],['arcade','Arcade'],['bass','Grave'],['sparkle','Brilho'],['pop','Pop'],['fanfare','Fanfarra'],['scifi','Sci-fi'],['coin','Moeda'],['laser','Laser'],['harp','Harpa'],['chord','Acorde'],['blip','Blip'],['none','Sem som']];
+function sfxPlay(key){
+  if(!key || key==='none') return;
+  try{ const c=sfxCtx(), t0=c.currentTime, out=sfxBus;
+    const tone=(f1,f2,start,dur,type='sine',vol=.06)=>{ const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(f1,t0+start); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t0+start+dur);
+      g.gain.setValueAtTime(0.0001,t0+start); g.gain.exponentialRampToValueAtTime(vol,t0+start+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t0+start+dur); o.connect(g).connect(out); o.start(t0+start); o.stop(t0+start+dur+.02); };
+    const noise=(start,dur,f,vol=.05)=>{ const b=c.createBuffer(1, Math.ceil(c.sampleRate*dur), c.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+      const src=c.createBufferSource(); src.buffer=b; const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.setValueAtTime(f,t0+start); bp.frequency.exponentialRampToValueAtTime(f*4,t0+start+dur); const g=c.createGain();
+      g.gain.setValueAtTime(0.0001,t0+start); g.gain.exponentialRampToValueAtTime(vol,t0+start+dur*.3); g.gain.exponentialRampToValueAtTime(0.0001,t0+start+dur); src.connect(bp).connect(g).connect(out); src.start(t0+start); };
+    const L={
+      up:()=>{ tone(523,0,0,.12,'sine',.07); tone(784,0,.09,.2,'sine',.07); },
+      down:()=>{ tone(784,0,0,.12,'sine',.07); tone(523,0,.09,.22,'sine',.06); },
+      mute:()=>{ tone(440,300,0,.09,'triangle',.08); },
+      unmute:()=>{ tone(500,760,0,.09,'triangle',.08); },
+      deaf:()=>{ tone(600,0,0,.07,'triangle',.07); tone(400,0,.07,.07,'triangle',.07); tone(280,0,.14,.12,'triangle',.07); },
+      undeaf:()=>{ tone(280,0,0,.07,'triangle',.07); tone(400,0,.07,.07,'triangle',.07); tone(600,0,.14,.12,'triangle',.07); },
+      soft:()=>{ tone(988,0,0,.25,'sine',.05); tone(1319,0,.06,.3,'sine',.035); },
+      ring:()=>{ tone(880,0,0,.18,'sine',.07); tone(660,0,.22,.2,'sine',.07); },
+      bell:()=>{ [1,2.76,5.4].forEach((m,i)=>tone(660*m,0,0,.9-i*.2,'sine',.06/(i+1))); },
+      bubble:()=>{ tone(300,1200,0,.12,'sine',.08); },
+      drop:()=>{ tone(1400,500,0,.14,'sine',.08); },
+      click:()=>{ tone(2000,0,0,.025,'square',.04); },
+      double:()=>{ tone(1000,0,0,.05,'sine',.07); tone(1000,0,.1,.05,'sine',.07); },
+      whoosh:()=>{ noise(0,.35,300,.12); },
+      chime:()=>{ tone(880,0,0,.5,'sine',.05); tone(1320,0,.08,.5,'sine',.04); },
+      arcade:()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,0,i*.06,.09,'square',.03)); },
+      bass:()=>{ tone(110,55,0,.35,'sawtooth',.05); tone(220,110,0,.25,'sine',.04); },
+      sparkle:()=>{ [1568,2093,2637,3136].forEach((f,i)=>tone(f,0,i*.05,.18,'triangle',.025)); },
+      pop:()=>{ tone(400,900,0,.08,'sine',.07); },
+      fanfare:()=>{ [[392,0],[523,.12],[659,.24],[784,.36]].forEach(([f,st])=>tone(f,0,st,.22,'sawtooth',.03)); },
+      scifi:()=>{ tone(200,1600,0,.35,'sine',.05); tone(1600,400,.3,.3,'triangle',.03); },
+      coin:()=>{ tone(988,0,0,.08,'square',.035); tone(1319,0,.08,.3,'square',.035); },
+      laser:()=>{ tone(1800,200,0,.25,'sawtooth',.035); },
+      harp:()=>{ [523,659,784,988,1175].forEach((f,i)=>tone(f,0,i*.045,.5,'triangle',.03)); },
+      chord:()=>{ [262,330,392,523].forEach(f=>tone(f,0,0,.6,'sine',.025)); },
+      blip:()=>{ tone(1200,0,0,.05,'sine',.06); tone(1600,0,.07,.05,'sine',.05); },
+    };
+    (L[key]||L.up)();
+  }catch{}
+}
+function sfxKey(ev){ const d=SFX_EVENTS.find(e=>e[0]===ev); return (P().sfx||{})[ev] || d?.[2]; }
+function sfx(ev){ if(!P().joinSound && ev!=='call') return; sfxPlay(sfxKey(ev)); }
 
 /* =====================================================================
    Estado
@@ -1217,27 +1315,11 @@ function profileCardHtml(p, opts={}){
     </div></div>`;
 }
 /* Som de entrada na call (sintetizado, sem arquivos) */
-function playJoinSound(key){
-  if(!P().joinSound || key==='none') return;
-  try{ ctxBeep = ctxBeep || new AudioContext(); const c=ctxBeep, t0=c.currentTime;
-    const tone=(f1,f2,start,dur,type='sine',vol=.06)=>{ const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(f1,t0+start); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t0+start+dur);
-      g.gain.setValueAtTime(0.0001,t0+start); g.gain.exponentialRampToValueAtTime(vol,t0+start+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t0+start+dur); o.connect(g).connect(c.destination); o.start(t0+start); o.stop(t0+start+dur+.02); };
-    const S2={
-      chime:()=>{ tone(880,0,0,.5,'sine',.05); tone(1320,0,.08,.5,'sine',.04); },
-      arcade:()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,0,i*.06,.09,'square',.03)); },
-      bass:()=>{ tone(110,55,0,.35,'sawtooth',.05); tone(220,110,0,.25,'sine',.04); },
-      sparkle:()=>{ [1568,2093,2637,3136].forEach((f,i)=>tone(f,0,i*.05,.18,'triangle',.025)); },
-      pop:()=>{ tone(400,900,0,.08,'sine',.07); },
-      fanfare:()=>{ [[392,0],[523,.12],[659,.24],[784,.36]].forEach(([f,s])=>tone(f,0,s,.22,'sawtooth',.03)); },
-      scifi:()=>{ tone(200,1600,0,.35,'sine',.05); tone(1600,400,.3,.3,'triangle',.03); },
-      coin:()=>{ tone(988,0,0,.08,'square',.035); tone(1319,0,.08,.3,'square',.035); },
-      laser:()=>{ tone(1800,200,0,.25,'sawtooth',.035); },
-      harp:()=>{ [523,659,784,988,1175].forEach((f,i)=>tone(f,0,i*.045,.5,'triangle',.03)); },
-      chord:()=>{ [262,330,392,523].forEach(f=>tone(f,0,0,.6,'sine',.025)); },
-      blip:()=>{ tone(1200,0,0,.05,'sine',.06); tone(1600,0,.07,.05,'sine',.05); },
-    };
-    (S2[key] || (()=>{ tone(520,780,0,.15,'sine',.05); }))();
-  }catch{}
+function playJoinSound(key, ev='peerJoin'){
+  if(!P().joinSound) return;
+  if(key==='none') return;
+  if(key && SFX_LIB.some(x=>x[0]===key)) return sfxPlay(key);
+  sfx(ev);
 }
 function closePop(){ document.querySelectorAll('.pop,.pop-bg,.menu').forEach(e=>e.remove()); }
 function placePop(pop, ev){
@@ -1270,7 +1352,7 @@ function cropImage(file, aspect, outW, round){
     const url=URL.createObjectURL(file); const img=new Image();
     img.onerror=()=>{ toast('Não consegui abrir essa imagem.', true); res(null); };
     img.onload=()=>{
-      const m=modal(`<h3>Ajustar imagem</h3><p class="sub">Arraste para posicionar e use o zoom.</p>
+      const m=modal(`<h3>Ajustar imagem</h3>
         <div class="crop${round?' round':''}" style="aspect-ratio:${aspect}"><canvas></canvas></div>
         <div class="slab"><span>Zoom</span></div><input class="slider" type="range" min="1" max="4" step="0.01" value="1">
         <div class="row" style="margin-top:14px"><button class="btn sec" data-x>Cancelar</button><button class="btn" data-ok>Aplicar</button></div>`, ()=>res(null));
@@ -1329,7 +1411,8 @@ const AUTH_ERR = {
 function authMsg(e){ return AUTH_ERR[e?.code] || (e?.message?.includes('Email address') && e?.message?.includes('invalid') ? AUTH_ERR.email_address_invalid : null) || e?.message || 'Algo deu errado. Tente de novo.'; }
 function heroBars(){ const b=$('#heroBars'); if(!b || b.childElementCount) return; for(let i=0;i<36;i++){ const s=document.createElement('i'); s.style.animationDelay=(Math.random()*1.1).toFixed(2)+'s'; s.style.animationDuration=(0.8+Math.random()*.7).toFixed(2)+'s'; b.appendChild(s); } }
 
-function showAuth(view, msg){
+function showAuth(view, msg, fromWho, prefill){
+  $('#who')?.classList.add('hidden');
   $('#auth').classList.remove('hidden'); $('#app').classList.add('hidden'); heroBars();
   const f=$('#af'); const mini=`<div class="mini"><svg><use href="#i-logo"/></svg><b>CONCORD</b></div>`;
   const box = msg ? `<div class="${msg.ok?'ok-box':'err-box'}">${esc(msg.text)}</div>` : '';
@@ -1398,6 +1481,7 @@ function showAuth(view, msg){
         <button class="btn" type="submit">Entrar ${ic('send','sm')}</button>
       </form>
       <div class="alt">Primeira vez aqui? <button data-go="signup">Criar conta</button></div>
+      ${accList().length?`<div class="alt" style="margin-top:6px"><button data-who>${ic('users','sm')} Voltar para as contas</button></div>`:''}
       ${IS_WIN_PC?`<a class="dlapp" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Prefere app? <b>Baixar para Windows</b></a>`:''}`;
     $('#fLogin').onsubmit = async e=>{ e.preventDefault(); const fd=new FormData(e.target); const btn=e.target.querySelector('button[type=submit]'); busy(btn,true);
       const { data, error } = await sb.auth.signInWithPassword({ email:fd.get('email').trim(), password:fd.get('pass') });
@@ -1406,8 +1490,76 @@ function showAuth(view, msg){
     };
   }
   f.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>showAuth(b.dataset.go));
+  f.querySelector('[data-who]')?.addEventListener('click', ()=>showWho());
+  if(prefill){ const em=f.querySelector('input[name=email]'); if(em){ em.value=prefill; setTimeout(()=>f.querySelector('input[name=pass]')?.focus(),60); } }
   f.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{ const i=b.previousElementSibling; i.type=i.type==='password'?'text':'password'; b.textContent=i.type==='password'?'Mostrar':'Ocultar'; });
   const first=f.querySelector('input'); if(first && window.innerWidth>760) setTimeout(()=>first.focus(),40);
+}
+/* ---- Contas salvas neste aparelho (entrar com um clique) ---- */
+const ACC_KEY='dc_accounts';
+const accList = ()=>{ const a=ls.get(ACC_KEY, []); return Array.isArray(a)?a:[]; };
+function accSave(session, prof){
+  if(!session?.user) return; const a=accList(); const i=a.findIndex(x=>x.id===session.user.id); const old=i>=0?a[i]:{};
+  const p=prof||S.profiles.get(session.user.id)||{};
+  const row={ ...old, id:session.user.id, email:session.user.email||old.email, at:session.access_token||old.at, rt:session.refresh_token||old.rt, last:Date.now(),
+    name:p.display_name||old.name, color:p.color||old.color, avatar_url:p.avatar_url!==undefined?p.avatar_url:old.avatar_url, decoration:p.decoration!==undefined?p.decoration:old.decoration, avatar_shape:p.avatar_shape!==undefined?p.avatar_shape:old.avatar_shape, theme_accent:p.theme_accent??old.theme_accent };
+  if(i>=0) a[i]=row; else a.push(row); ls.set(ACC_KEY, a);
+}
+function accProfileSync(){ if(!S.me) return; const a=accList(); const r=a.find(x=>x.id===S.me.id); if(!r) return; const p=S.profiles.get(S.me.id)||{};
+  if(r.name!==p.display_name || r.avatar_url!==p.avatar_url || r.color!==p.color || r.decoration!==p.decoration || r.avatar_shape!==p.avatar_shape){ Object.assign(r,{name:p.display_name,avatar_url:p.avatar_url,color:p.color,decoration:p.decoration,avatar_shape:p.avatar_shape}); ls.set(ACC_KEY, a); } }
+function accForget(id){ ls.set(ACC_KEY, accList().filter(x=>x.id!==id)); }
+function clearLocalSession(){
+  try{ sb.auth.stopAutoRefresh?.(); }catch{}
+  for(const st of [localStorage, sessionStorage]) for(const k of Object.keys(st)) if(k==='concord-auth' || /^concord-auth/.test(k) || /^sb-.*-auth-token/.test(k)) st.removeItem(k);
+}
+let whoClock=null;
+function showWho(selId, msg){
+  const a=accList().sort((x,y)=>(y.last||0)-(x.last||0));
+  if(!a.length) return showAuth('login');
+  $('#app').classList.add('hidden'); $('#auth').classList.add('hidden');
+  let w=$('#who'); if(!w){ w=document.createElement('div'); w.id='who'; document.body.appendChild(w); }
+  w.classList.remove('hidden');
+  let sel = a.find(x=>x.id===selId) || a[0]; let needPass = !!msg;
+  const av = r=>avatarP({display_name:r.name, color:r.color, avatar_url:r.avatar_url, avatar_shape:'', theme_accent:r.theme_accent}, null, {noDeco:true});
+  const draw=()=>{
+    w.innerHTML = `<div class="who-wall"></div><div class="who-logo"><svg><use href="#i-logo"/></svg>CONCORD</div>
+      <div class="who-time"><div class="who-date" id="whoDate"></div><div class="who-clock" id="whoClock"></div></div>
+      <div class="who-users">
+        ${a.length>1?`<div class="who-row">${a.map(r=>`<button class="who-u ${r.id===sel.id?'on':''}" data-acc="${r.id}" title="${esc(r.name||'')}">${av(r)}</button>`).join('')}</div>`:''}
+        <div class="who-me"><div class="who-big">${av(sel)}</div><b>${esc(sel.name||sel.email||'Conta')}</b>
+          ${needPass
+            ? `<form class="who-pill" id="whoPass"><input type="password" placeholder="Senha" autocomplete="current-password" required><button type="submit" title="Entrar">${ic('chev')}</button></form>${msg?`<small class="who-msg">${esc(msg)}</small>`:''}`
+            : `<button class="who-pill go" id="whoGo">Entrar <span>${ic('chev')}</span></button>`}
+        </div>
+      </div>
+      <div class="who-bottom">
+        <button data-add><span>${ic('plus')}</span>Outra conta</button>
+        <button data-rm><span>${ic('x')}</span>Remover</button>
+      </div>`;
+    const tick=()=>{ const d=new Date(); const c=$('#whoClock'); if(!c) return; c.textContent=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); const ds=d.toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'}); $('#whoDate').textContent=ds.charAt(0).toUpperCase()+ds.slice(1); };
+    tick(); clearInterval(whoClock); whoClock=setInterval(()=>{ if(w.classList.contains('hidden')) return clearInterval(whoClock); tick(); }, 10000);
+    w.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{ if(b.dataset.acc===sel.id) return go(); sel=a.find(x=>x.id===b.dataset.acc); needPass=false; msg=null; draw(); });
+    w.querySelector('[data-add]').onclick=()=>{ clearInterval(whoClock); w.classList.add('hidden'); showAuth('login'); };
+    w.querySelector('[data-rm]').onclick=async()=>{ if(!await confirmBox('Remover '+(sel.name||sel.email)+' deste aparelho?', '', 'Remover')) return;
+      try{ if(sel.rt){ const { error } = await sb.auth.setSession({ access_token:sel.at, refresh_token:sel.rt }); if(!error) await sb.auth.signOut({scope:'local'}); } }catch{}
+      clearLocalSession(); accForget(sel.id); if(accList().length) showWho(); else { w.classList.add('hidden'); showAuth('login'); } };
+    $('#whoGo')?.addEventListener('click', go);
+    const f=$('#whoPass'); if(f){ const i=f.querySelector('input'); setTimeout(()=>i.focus(), 60);
+      f.onsubmit=async e=>{ e.preventDefault(); f.classList.add('busy');
+        const { data, error } = await sb.auth.signInWithPassword({ email:sel.email, password:i.value });
+        f.classList.remove('busy');
+        if(error){ f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); i.value=''; return; }
+        enter(data.session); }; }
+    else setTimeout(()=>$('#whoGo')?.focus(), 60);
+  };
+  const enter=sess=>{ clearInterval(whoClock); w.classList.add('hidden'); accSave(sess); afterLogin(sess); };
+  const go=async()=>{
+    const b=$('#whoGo'); b?.classList.add('busy');
+    let res=null; try{ res = sel.rt ? await sb.auth.setSession({ access_token:sel.at, refresh_token:sel.rt }) : null; }catch(e){ res={error:e}; }
+    if(!res || res.error || !res.data?.session){ needPass=true; msg='Sessão expirada. Digite sua senha.'; return draw(); }
+    enter(res.data.session);
+  };
+  draw();
 }
 function busy(btn, on){ if(!btn) return; btn.disabled=on; if(on){ btn.dataset.h=btn.innerHTML; btn.innerHTML='<span class="spin"></span>'; } else if(btn.dataset.h){ btn.innerHTML=btn.dataset.h; } }
 function swatchPicker(el, color, onPick){
@@ -1422,7 +1574,8 @@ async function afterLogin(session){
   S.profiles.set(prof.id, prof);
   S.me = { id:session.user.id }; await loadAdmins();
   S.me = { id:session.user.id, email:session.user.email, name:prof.display_name, color:prof.color };
-  $('#auth').classList.add('hidden');
+  accSave(session, prof);
+  $('#auth').classList.add('hidden'); $('#who')?.classList.add('hidden');
   if(!S.started){ S.started=true; start(); } else { renderMe(); }
 }
 /* =====================================================================
@@ -1480,7 +1633,7 @@ function renderRail(){
     b.onclick=()=>{ selectServer(s); closeDrawer(); }; r.appendChild(b); });
   const add=document.createElement('button'); add.className='srv add'; add.title=S.isAdmin?'Criar ou entrar em servidor':'Entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal(S.isAdmin?'create':'join'); r.appendChild(add);
   const sp=document.createElement('div'); sp.style.flex='1'; r.appendChild(sp);
-  const out=document.createElement('button'); out.className='srv logout'; out.title='Sair da conta'; out.innerHTML=ic('out'); out.onclick=async()=>{ if(await confirmBox('Sair da conta?', '', 'Sair')) logout(); }; r.appendChild(out);
+  const out=document.createElement('button'); out.className='srv logout'; out.title='Sair da conta'; out.innerHTML=ic('out'); out.onclick=async()=>{ if(await confirmBox('Trocar de conta?', '', 'Sair')) logout(); }; r.appendChild(out);
 }
 function renderServerHead(){
   if(S.home) return renderHomeHead();
@@ -1643,7 +1796,7 @@ function renderMembers(){
   const j=$('#mpJoin'); if(j) j.onclick=()=>openVoice(feat.c);
 }
 function renderMe(){
-  if(!S.me) return;
+  if(!S.me) return; accProfileSync();
   const p=S.profiles.get(S.me.id)||{}; S.me.name=p.display_name||S.me.name; S.me.color=p.color||S.me.color;
   $('#meAvW').dataset.pu=S.me.id;
   $('#meAvW').innerHTML = avatarU(S.me.id, 34, null, {status: p.presence_status||'online'});
@@ -1688,7 +1841,7 @@ function appendMsg(m, live){
   if(S.isAdmin && !m.dm_id){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem (ADM)'; del.innerHTML=ic('trash','sm');
     del.onclick=async e=>{ e.stopPropagation(); const { error } = await sb.from('dc_messages').delete().eq('id', m.id); if(error) return toast('Erro: '+error.message, true); el.remove(); }; el.appendChild(del); }
   box.appendChild(el); S.lastAuthor=who; S.lastTime=+d;
-  const all=box.querySelectorAll('.msg'); if(all.length>400) for(let i=0;i<all.length-350;i++) all[i].remove();
+  const all=box.querySelectorAll('.msg'); const cap=document.body.classList.contains('eco')?200:400; if(all.length>cap) for(let i=0;i<all.length-cap+50;i++) all[i].remove();
   if(!live || nearBottom || m.user_id===S.me.id) box.scrollTop=box.scrollHeight;
 }
 let typingSent=0;
@@ -1887,7 +2040,7 @@ function showStage(){ $('#joinCta').classList.add('hidden'); $('#tiles').classLi
 
 async function joinVoice(ch){
   if(!ch.dm && ch.user_limit && !S.isAdmin && voiceUsers(ch.id).filter(u=>u.uid!==S.me.id).length>=ch.user_limit){ toast('Sala cheia ('+ch.user_limit+').', true); if(S.view?.type==='voice') renderJoinCta(); return; }
-  V = { cineSeen:new Set(), noAV1:false, cpuStrikes:0, ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
+  V = { jt:Date.now(), cineSeen:new Set(), noAV1:false, cpuStrikes:0, ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
   showStage(); $('#voicecard').classList.remove('hidden'); $('#vbChan').textContent = ch.dm ? ch.name+' / Chamada' : ch.name+' / '+(S.server?.name||'');
   try{
     V.pipe = new MicPipeline();
@@ -1904,16 +2057,20 @@ async function joinVoice(ch){
     .on('presence', {event:'sync'}, onVoicePresence)
     .subscribe(st=>{
       if(!V) return;
-      if(st==='SUBSCRIBED'){ V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound); }
+      if(st==='SUBSCRIBED'){ V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join'); }
       if(st==='CHANNEL_ERROR' || st==='TIMED_OUT') toast('Falha na conexão com a sala de voz. Tente de novo.', true);
     });
   renderControls(); renderTiles();
 }
-function myVoiceMeta(){ return { uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, screenMode:V?.screen && SHARE_Q[V.screenQ]?.cinema ? 'cinema' : null, muted:S.muted, deaf:S.deaf }; }
+function myVoiceMeta(){ return { jt:V?.jt||0, uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, screenMode:V?.screen && SHARE_Q[V.screenQ]?.cinema ? 'cinema' : null, muted:S.muted, deaf:S.deaf }; }
 function onVoicePresence(){
   if(!V) return;
   const state=V.rt.presenceState(); V.meta={};
   for(const [k,arr] of Object.entries(state)) V.meta[k]=arr[0];
+  // mesma conta em outro aparelho (site + app): fica só a entrada mais recente
+  for(const [k,m] of Object.entries(V.meta)){ if(k===S.sid || m?.uid!==S.me.id) continue;
+    if((m.jt||0) > (V.jt||0) || ((m.jt||0)===(V.jt||0) && k>S.sid)){ toast('Você entrou nesta chamada em outro aparelho.'); leaveVoice(); return; }
+    delete V.meta[k]; if(V.peers.has(k)) closePeer(k); }
   let changed=false;
   for(const k of Object.keys(V.meta)) if(k!==S.sid && !V.peers.has(k)) { createPeer(k); playJoinSound(S.profiles.get(V.meta[k]?.uid)?.join_sound); changed=true; }
   for(const k of [...V.peers.keys()]) if(!V.meta[k]) { closePeer(k); beep(false); changed=true; }
@@ -2046,7 +2203,7 @@ async function leaveVoice(){
   try{ await v.rt?.untrack(); }catch{} if(v.rt) sb.removeChannel(v.rt);
   try{ v.audioCtx?.close(); }catch{}
   setTheater(false); $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
-  trackServerPresence(); renderMe(); renderMembers(); beep(false);
+  trackServerPresence(); renderMe(); renderMembers(); sfx('leave');
   if(v.ch.dm){ endCallUi(v.ch.dm); if(S.view?.type==='voice' && S.view.ch.id===v.ch.id){ const d=DM.list.find(x=>x.id===v.ch.dm); if(d && S.home) return openDm(d); } }
   if(S.view?.type==='voice') renderJoinCta();
 }
@@ -2057,9 +2214,9 @@ function renderVoiceState(){
 }
 
 /* ---- Controles ---- */
-function setMuted(m){ S.muted=m; if(!m && S.deaf) setDeaf(false, true);
+function setMuted(m){ if(S.deaf && !m) sfx('undeaf'); else if(m!==S.muted) sfx(m?'mute':'unmute'); S.muted=m; if(!m && S.deaf) setDeaf(false, true);
   updateMicEnabled(); afterToggle(); }
-function setDeaf(d, silent){ S.deaf=d;
+function setDeaf(d, silent){ if(!silent && d!==S.deaf) sfx(d?'deaf':'undeaf'); S.deaf=d;
   if(V){ for(const p of V.peers.values()) p.audio.muted=d; document.querySelectorAll('#tiles .tile[data-kind=screen] video').forEach(v=>{ if(!v.dataset.local) v.muted=d; });
     updateMicEnabled(); }
   if(!silent) afterToggle(); }
@@ -2150,16 +2307,16 @@ function fallbackFromAV1(){
 /* ---- Seletor de transmissão: o quê + qualidade ---- */
 const SHARE_MODES = {
   jogo:  { label:'Jogo', desc:'Movimento fluido a 60 fps', icon:'gamer', q:{ leve:'jogo720', alta:'jogo1080', max:'jogo1440' },
-           tip:'Escolha <b>Tela inteira</b> e marque <b>"Compartilhar áudio do sistema"</b> para levar o som do jogo.' },
+           tip:'Marque <b>"Compartilhar áudio do sistema"</b> para levar o som.' },
   filme: { label:'Filme', desc:'Imagem e som no máximo', icon:'cine', q:{ leve:'cinema720', alta:'cinema', max:'cinema4k' },
-           tip:'Escolha a <b>aba do player</b> e marque <b>"Compartilhar áudio da aba"</b>. Netflix, Prime e Disney+ aparecem pretos (proteção contra cópia).' },
+           tip:'Marque <b>"Compartilhar áudio da aba"</b>.' },
   tela:  { label:'Tela / texto', desc:'Nítido para ler', icon:'code', q:{ leve:'texto720', alta:'texto', max:'nativo' },
-           tip:'Escolha a janela ou a aba que quer mostrar. Para levar som, marque <b>"Compartilhar áudio"</b>.' },
+           tip:'' },
 };
 const LEVELS = [['leve','Leve'],['alta','Alta'],['max','Máxima']];
 function modeOfPreset(k){ for(const [m,o] of Object.entries(SHARE_MODES)) for(const [l,v] of Object.entries(o.q)) if(v===k) return [m,l]; return ['jogo','alta']; }
 function shareChooserHtml(){
-  return `<div class="smodes">${Object.entries(SHARE_MODES).map(([k,o])=>`<button class="smode" data-mode="${k}"><svg viewBox="0 0 24 24" class="i lg">${BADGE_ICONS[o.icon]}</svg><b>${o.label}</b><small>${o.desc}</small></button>`).join('')}</div>
+  return `<div class="smodes">${Object.entries(SHARE_MODES).map(([k,o])=>`<button class="smode" data-mode="${k}"><svg viewBox="0 0 24 24" class="i lg">${BADGE_ICONS[o.icon]}</svg><b>${o.label}</b></button>`).join('')}</div>
     <div class="slab" style="margin:16px 0 8px"><span>Qualidade</span></div>
     <div class="seg" id="slevel">${LEVELS.map(([k,l])=>`<button data-lv="${k}">${l}</button>`).join('')}</div>
     <div class="ssum" id="ssum"></div>`;
@@ -2170,10 +2327,9 @@ function wireShareChooser(root, onChange){
     root.querySelectorAll('.smode').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
     root.querySelectorAll('[data-lv]').forEach(b=>b.classList.toggle('on', b.dataset.lv===level));
     const key=SHARE_MODES[mode].q[level], Q=SHARE_Q[key];
-    const n=Math.max(1, V?.peers.size||1), per=P().uploadMbps*1e6*0.85/n;
-    const res = Q.w ? (Q.h>=2160?'4K':Q.h+'p') : 'resolução da tela';
-    const warn = per < Q.br*0.8 ? `<div class="swarn">Seu upload (${P().uploadMbps} Mbps) dá ≈${fmtBr(per)} por amigo. A qualidade se ajusta sozinha para não travar.</div>` : '';
-    root.querySelector('#ssum').innerHTML = `<div class="sline"><b>${res} · ${Q.fps} fps</b><span>até ${fmtBr(Q.br)} por amigo${Q.cinema?' · som estéreo 320 kbps':''}</span></div>${warn}<p class="hint" style="margin-top:10px">${SHARE_MODES[mode].tip}</p>`;
+    const res = Q.w ? (Q.h>=2160?'4K':Q.h+'p') : 'Nativa';
+    const tip = !DESK && SHARE_MODES[mode].tip;
+    root.querySelector('#ssum').innerHTML = `<div class="sline"><b>${res} · ${Q.fps} fps</b>${Q.cinema?'<span>Som estéreo</span>':''}</div>${tip?`<p class="hint" style="margin-top:10px">${tip}</p>`:''}`;
     onChange && onChange(key);
   };
   root.querySelectorAll('.smode').forEach(b=>b.onclick=()=>{ mode=b.dataset.mode; upd(); });
@@ -2183,7 +2339,7 @@ function wireShareChooser(root, onChange){
 }
 function pickQuality(){
   return new Promise(res=>{
-    const m = modal(`<h3>Transmitir</h3><p class="sub">O que você vai mostrar?</p>${shareChooserHtml()}
+    const m = modal(`<h3>Transmitir</h3>${shareChooserHtml()}
       <div class="row" style="margin-top:16px"><button class="btn sec" data-x>Cancelar</button><button class="btn" data-ok>${ic('cast','sm')} Escolher tela</button></div>`, ()=>res(null));
     const get = wireShareChooser(m);
     m.querySelector('[data-x]').onclick=()=>{ closeModal(); res(null); };
@@ -2397,11 +2553,20 @@ function renderUpdateBadge(){
   el.textContent = u.status==='ready' ? `Atualização ${u.version||''} pronta · Reiniciar` : `Baixando atualização${u.percent?` ${u.percent}%`:''}`;
   el.onclick = u.status==='ready' ? ()=>DESK.installUpdate() : null;
 }
-function trimMemory(){
+function trimMemory(deep=true){
   fxCache.clear();
+  // contexto de áudio dos sons parado à toa ocupa um processo de áudio
+  if(ctxBeep && !V){ try{ ctxBeep.close(); }catch{} ctxBeep=null; sfxBus=null; }
+  if(DM.ringCtx && !DM.ringT){ try{ DM.ringCtx.close(); }catch{} DM.ringCtx=null; }
+  if(deep){ try{ DESK?.trim?.(); }catch{} }
+  setTimeout(()=>{ try{ window.gc?.(); }catch{} }, 50);
   const box=$('#msgs'); if(box){ const msgs=box.querySelectorAll('.msg'); const extra=msgs.length-120; for(let i=0;i<extra;i++) msgs[i].remove(); }
 }
 document.addEventListener('visibilitychange', ()=>document.body.classList.toggle('page-hidden', document.hidden));
+function applyEco(){ document.body.classList.toggle('eco', !!(DESK && P().ecoMem)); }
+window.addEventListener('blur', ()=>document.body.classList.add('blurred'));
+window.addEventListener('focus', ()=>document.body.classList.remove('blurred'));
+if(DESK){ applyEco(); setInterval(()=>{ if(P().ecoMem && !document.hasFocus()) trimMemory(); }, 180000); }
 if(DESK){
   document.querySelectorAll('#titlebar [data-w]').forEach(b=>b.onclick=()=>({min:DESK.win.minimize, max:DESK.win.maximize, close:DESK.win.close})[b.dataset.w]());
   DESK.onEvent((ev, data)=>{
@@ -2452,10 +2617,10 @@ function accelFromEvent(e){
 const SET = { sec:'perfil', mode:'user', test:null, camStream:null, unsub:null, draft:null };
 const SECTIONS = [
   ['Usuário', [['perfil','palette','Meu perfil'], ['conta','user','Minha conta']]],
-  ['App', [ ...(window.concordDesktop?[['app','down','App para PC']]:[]), ['aparencia','palette','Aparência'], ['voz','mic','Voz'], ['atalhos','keyb','Atalhos'], ['video','cam','Vídeo'], ['transmissao','cast','Transmissão'], ['rede','net','Rede']]],
+  ['App', [ ...(window.concordDesktop?[['app','down','App para PC']]:[]), ['aparencia','palette','Aparência'], ['voz','mic','Voz'], ['sons','vol','Sons'], ['atalhos','keyb','Atalhos'], ['video','cam','Vídeo'], ['transmissao','cast','Transmissão'], ['rede','net','Rede']]],
 ];
 function openSettings(sec){
-  SET.mode='user'; SET.sec = sec || (['perfil','conta','app','aparencia','voz','atalhos','video','transmissao','rede'].includes(SET.sec)?SET.sec:'perfil'); SET.draft=null;
+  SET.mode='user'; SET.sec = sec || (['perfil','conta','app','aparencia','voz','sons','atalhos','video','transmissao','rede'].includes(SET.sec)?SET.sec:'perfil'); SET.draft=null;
   closePop(); $('#settings').classList.remove('hidden');
   renderSettings();
 }
@@ -2525,16 +2690,32 @@ async function renderSettings(){
           ${u.status==='ready' ? `<button class="btn auto" id="updGo">Reiniciar e atualizar</button>` : `<button class="btn sec auto" id="updChk" ${u.status==='checking'||u.status==='downloading'?'disabled':''}>Verificar atualizações</button>`}</div>
         <p class="hint" id="updHint"></p></div>
       <div class="sc"><h3>Memória</h3><p>O app usa um processo de página só, V8 compacto, libera caches quando fica na bandeja e pausa animações quando a janela não está visível.</p>
-        <div class="srow"><div><b>Uso de memória agora</b><small>Somando todos os processos do app</small></div><b id="memMb" style="font-size:20px">…</b></div>
-        <div class="srow"><div><b>Liberar memória agora</b><small>Limpa efeitos em cache e mensagens antigas da tela</small></div><button class="btn sec auto" id="memTrim">Liberar</button></div>
-        <p class="hint">Dicas para gastar menos: Aparência → <b>Reduzir animações</b> e <b>Esconder efeitos dos outros</b>.</p></div>`;
-    const upd=async()=>{ try{ const m=await DESK.metrics(); $('#memMb') && ($('#memMb').textContent = m.mb+' MB'); $('#appVer') && ($('#appVer').textContent = m.version); }catch{} };
+        <div class="srow"><div><b>Memória</b></div><div style="display:flex;align-items:center;gap:12px"><b id="memMb" style="font-size:20px">…</b><button class="btn sec auto" id="memTrim">Liberar</button></div></div>
+        <div class="memsplit" id="memSplit"></div>
+        ${sw('ecoMem','Modo leve','')}</div>`;
+    const upd=async()=>{ try{ const m=await DESK.metrics(); $('#memMb') && ($('#memMb').textContent = m.mb+' MB'); if($('#memSplit') && m.page!=null) $('#memSplit').innerHTML=`<span>Página <b>${m.page} MB</b></span><span>Vídeo <b>${m.gpu} MB</b></span><span>Sistema <b>${m.other} MB</b></span>`; $('#appVer') && ($('#appVer').textContent = m.version); }catch{} };
     upd(); const t=setInterval(()=>{ if($('#settings').classList.contains('hidden') || SET.sec!=='app') return clearInterval(t); upd(); }, 2000);
-    $('#memTrim').onclick=()=>{ trimMemory(); toast('Memória liberada.'); setTimeout(upd, 1500); };
+    $('#memTrim').onclick=()=>{ trimMemory(); setTimeout(upd, 1500); };
+    body.querySelectorAll('[data-pref=ecoMem]').forEach(inp=>inp.onchange=()=>{ setPref('ecoMem', inp.checked); applyEco(); });
     $('#updGo')?.addEventListener('click', ()=>DESK.installUpdate());
     $('#updChk')?.addEventListener('click', async()=>{ const b=$('#updChk'); busy(b,true); const r=await DESK.checkUpdate(); busy(b,false);
       if(r?.status==='unsupported') $('#updHint').innerHTML = r.reason==='portable' ? 'A versão portátil não se atualiza sozinha: baixe a nova em Releases.' : r.reason==='dev' ? 'Modo de desenvolvimento.' : 'Atualizador indisponível nesta versão — baixe o instalador novo uma vez em Releases.';
       else if(r?.status==='latest') toast('Você já está na versão mais recente.'); UPD=r||UPD; renderSettings(); });
+  }
+
+  else if(SET.sec==='sons'){
+    const cur=P().sfx||{};
+    body.innerHTML = `<h2>Sons</h2>
+      <div class="sc">${sw('joinSound','Sons do app','Entrar, sair, mutar, mensagens.')}
+        <div style="margin-top:10px"><div class="slab"><span>Volume dos sons</span><b id="lbSfx">${Math.round((p.sfxVol??.8)*100)}%</b></div><input class="slider" type="range" min="0" max="1.5" step="0.05" value="${p.sfxVol??.8}" id="sfxVol"></div></div>
+      <div class="sc">${SFX_EVENTS.map(([k,l,d])=>`<div class="srow"><div><b>${l}</b></div><div style="display:flex;gap:6px;align-items:center"><select class="inp" data-sfx="${k}" style="width:170px;height:36px">${SFX_LIB.map(([sk,sl])=>`<option value="${sk}" ${(cur[k]||d)===sk?'selected':''}>${sl}${sk===d?' · padrão':''}</option>`).join('')}</select><button class="ibtn" data-play="${k}" title="Ouvir">${ic('vol','sm')}</button></div></div>`).join('')}
+        <div class="row" style="margin-top:10px"><button class="btn sec auto" id="sfxReset">Restaurar padrão</button></div></div>`;
+    body.querySelectorAll('[data-pref]').forEach(inp=>inp.onchange=()=>setPref(inp.dataset.pref, inp.checked));
+    $('#sfxVol').oninput=e=>{ setPref('sfxVol', +e.target.value); $('#lbSfx').textContent=Math.round(e.target.value*100)+'%'; };
+    $('#sfxVol').onchange=()=>sfxPlay(sfxKey('join'));
+    body.querySelectorAll('[data-sfx]').forEach(sl=>sl.onchange=()=>{ const m={...(P().sfx||{})}; m[sl.dataset.sfx]=sl.value; setPref('sfx', m); sfxPlay(sl.value); });
+    body.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>sfxPlay(sfxKey(b.dataset.play)));
+    $('#sfxReset').onclick=()=>{ setPref('sfx', {}); setPref('sfxVol', .8); renderSettings(); };
   }
 
   else if(SET.sec==='atalhos'){
@@ -2631,7 +2812,6 @@ async function renderSettings(){
         ${sw('ns','Supressão de ruído','Remove barulho constante do fundo (ventilador, ar-condicionado).')}
         ${sw('ec','Cancelamento de eco','Evita que o som das caixas volte pelo microfone. Pode desligar se usar fone.')}
         ${sw('agc','Ganho automático','Ajusta o volume da sua voz sozinho. Desligue para controlar pelo slider.')}
-        ${sw('joinSound','Sons de entrada e saída','Toca um aviso quando alguém entra ou sai da sala.')}
       </div>
       <div class="sc"><h3>Atalhos</h3><p>Funcionam com o CONCORD aberto e em foco.</p>
         <div class="srow"><div><b>Silenciar microfone</b></div><span><span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">M</span></span></div>
@@ -2730,8 +2910,8 @@ const AV_SHAPES=[
   '<path d="M64 18 76 52h36L83 73l11 35-30-21-30 21 11-35-29-21h36z" fill="#fff" opacity=".92"/>'];
 const AV_PRESETS = AV_SHAPES.flatMap((sh,k)=>AV_PAL.map(([a,b],i)=>'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="128" height="128" fill="url(#g)"/>${sh}</svg>`)));
 function lockCardHtml(){
-  return `<div class="lockcard"><h3>${ic('palette','sm')} Personalização completa no app para PC</h3>
-    <div class="chips">${['Avatares prontos','Banners','Temas','Decorações','Efeitos','Estilo do nome','Placas de nome','Insígnias','Formato do avatar','Sons de entrada','Cores do app'].map(x=>`<span class="chip2">${x}</span>`).join('')}</div>
+  return `<div class="lockcard"><h3>${ic('palette','sm')} Temas do app no CONCORD para PC</h3>
+    <div class="chips">${['Temas do app','Cor de destaque','Layout','Tamanho do texto','Modo compacto'].map(x=>`<span class="chip2">${x}</span>`).join('')}</div>
     <a class="btn auto" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Baixar para Windows</a></div>`;
 }
 function renderProfileEditor(body){
@@ -2740,10 +2920,10 @@ function renderProfileEditor(body){
   const cp = (k, def, title) => `<label class="cpick" title="${title}" style="background:${hex6(D[k],def)}"><input type="color" data-c="${k}" value="${hex6(D[k],def)}"></label>`;
   body.innerHTML = `<h2>Meu perfil</h2>
   <div class="pgrid"><div>
-    <div class="sc"><h3>${ic('img','sm')} ${DESK?'Foto e banner':'Foto'}</h3><p>PNG, JPG, WEBP ou <b>GIF animado</b> (até 8 MB). A foto aparece no chat, na lista e na call.</p>
+    <div class="sc"><h3>${ic('img','sm')} Foto e banner</h3><p>PNG, JPG, WEBP ou <b>GIF animado</b> (até 8 MB). A foto aparece no chat, na lista e na call.</p>
       <div class="imgrow"><button class="btn sec auto" data-up="avatar">${ic('img','sm')} ${D.avatar_url?'Trocar foto':'Enviar foto'}</button>${D.avatar_url?`<button class="btn danger auto" data-rm="avatar_url">${ic('trash','sm')}</button>`:''}
         <span class="hint" style="margin:0 4px 0 8px">Cor do avatar</span><div class="swatches" id="pfSw"></div></div>
-${DESK?`      <div class="imgrow" style="margin-top:12px"><button class="btn sec auto" data-up="banner">${ic('img','sm')} ${D.banner_url?'Trocar banner':'Enviar banner'}</button>${D.banner_url?`<button class="btn danger auto" data-rm="banner_url">${ic('trash','sm')}</button>`:''}
+${true?`      <div class="imgrow" style="margin-top:12px"><button class="btn sec auto" data-up="banner">${ic('img','sm')} ${D.banner_url?'Trocar banner':'Enviar banner'}</button>${D.banner_url?`<button class="btn danger auto" data-rm="banner_url">${ic('trash','sm')}</button>`:''}
         <span class="hint" style="margin:0 4px 0 8px">ou cor sólida</span>${cp('banner_color', hex6(D.color,'#27272a'), 'Cor do banner')}</div>`:''}</div>
     <div class="sc"><h3>${ic('user','sm')} Sobre você</h3><p></p>
       <div class="grid2"><label class="field"><span>Nome de exibição</span><input class="inp" data-f="display_name" maxlength="24" value="${esc(D.display_name||'')}"></label>
@@ -2752,7 +2932,7 @@ ${DESK?`      <div class="imgrow" style="margin-top:12px"><button class="btn sec
       <div class="grid2"><label class="field"><span>Status</span><select class="inp" data-f="presence_status">${Object.entries(STATUS).map(([k,[l]])=>`<option value="${k}" ${(D.presence_status||'online')===k?'selected':''}>${l}</option>`).join('')}</select></label>
         <label class="field"><span>Status personalizado</span><input class="inp" data-f="status_text" maxlength="80" placeholder="Jogando Valorant" value="${esc(D.status_text||'')}"></label></div>
       <label class="field" style="margin:0"><span>Sobre mim</span><textarea class="inp" data-f="bio" maxlength="300" rows="3" placeholder="Conte algo sobre você">${esc(D.bio||'')}</textarea></label></div>
-${DESK?`    <div class="sc"><h3>${ic('img','sm')} Avatares prontos</h3><p></p>
+${true?`    <div class="sc"><h3>${ic('img','sm')} Avatares prontos</h3><p></p>
       <div class="avgrid">${AV_PRESETS.map((u,i)=>`<button data-avp="${i}" class="${D.avatar_url===u?'on':''}"><img src="${u}" alt=""></button>`).join('')}</div></div>
     <div class="sc"><h3>${ic('palette','sm')} Tema do perfil</h3><p>Duas cores formam o fundo do seu cartão de perfil.</p>
       <div class="colorrow">${cp('theme_primary','#18181b','Cor principal')}${cp('theme_accent','#0d0d10','Cor de destaque')}
@@ -3149,7 +3329,7 @@ async function onDmMessage(m){
   if(S.view?.type==='dm' && S.view.dm.id===m.dm_id){ appendMsg(m, true); if(document.hasFocus() || m.user_id===S.me.id){ if(S.home) renderDmSide(); return; } }
   if(m.user_id===S.me.id) return;
   if(!(S.view?.type==='dm' && S.view.dm.id===m.dm_id)){ DM.unread.add(m.dm_id); saveDmUnread(); }
-  renderRail(); if(S.home) renderDmSide();
+  renderRail(); if(S.home) renderDmSide(); sfx('msg');
   if(!P().notify) return; DESK?.attention();
   if(!('Notification' in window) || Notification.permission!=='granted' || document.hasFocus()) return;
   try{ const n=new Notification(dname(m.user_id), { body:String(m.content).slice(0,160), tag:'concord-dm-'+m.dm_id });
@@ -3178,11 +3358,11 @@ function endCallUi(dmId){
 }
 function ringtone(on){
   clearInterval(DM.ringT); DM.ringT=null; if(!on) return;
-  const play=()=>{ try{ DM.ringCtx=DM.ringCtx||new AudioContext(); const c=DM.ringCtx; [0,.22].forEach(off=>{ const o=c.createOscillator(), g=c.createGain(); o.frequency.value=off?660:880; g.gain.setValueAtTime(0,c.currentTime+off); g.gain.linearRampToValueAtTime(.12,c.currentTime+off+.02); g.gain.linearRampToValueAtTime(0,c.currentTime+off+.2); o.connect(g).connect(c.destination); o.start(c.currentTime+off); o.stop(c.currentTime+off+.22); }); }catch{} };
-  play(); DM.ringT=setInterval(play, 1800);
+  const play=()=>sfxPlay(sfxKey('call')); play(); DM.ringT=setInterval(play, 1800);
 }
 function closeCallPop(){ $('#callPop')?.remove(); ringtone(false); DM.incoming=null; }
 async function onCallSignal(p){
+  if(p.t==='answered'){ if(p.sid!==S.sid && DM.incoming?.dm===p.dm) closeCallPop(); return; }
   if(!p.dm || p.from===S.me.id) return;
   let d=DM.list.find(x=>x.id===p.dm); if(!d){ await loadDms(); d=DM.list.find(x=>x.id===p.dm); } if(!d || dmOther(d)!==p.from) return;
   if(p.t==='ring'){
@@ -3193,8 +3373,8 @@ async function onCallSignal(p){
       <div class="row"><button class="btn danger" data-no>${ic('phone-off','sm')} Recusar</button><button class="btn go" data-yes>${ic('phone','sm')} Atender</button></div>`;
     document.body.appendChild(el); ringtone(true); DESK?.attention(); DESK?.focus?.();
     if('Notification' in window && Notification.permission==='granted' && !document.hasFocus()){ try{ new Notification(dname(p.from)+' está ligando', { tag:'concord-call' }); }catch{} }
-    el.querySelector('[data-no]').onclick=()=>{ closeCallPop(); sendToUser(p.from, { t:'decline', dm:d.id, from:S.me.id }); };
-    el.querySelector('[data-yes]').onclick=async()=>{ closeCallPop(); if(V) await leaveVoice(); await openDm(d); openVoice(dmVoiceCh(d)); };
+    el.querySelector('[data-no]').onclick=()=>{ closeCallPop(); sendToUser(S.me.id, { t:'answered', dm:d.id, sid:S.sid }); sendToUser(p.from, { t:'decline', dm:d.id, from:S.me.id }); };
+    el.querySelector('[data-yes]').onclick=async()=>{ closeCallPop(); sendToUser(S.me.id, { t:'answered', dm:d.id, sid:S.sid }); if(V) await leaveVoice(); await openDm(d); openVoice(dmVoiceCh(d)); };
     clearTimeout(DM.inT); DM.inT=setTimeout(()=>{ if(DM.incoming?.dm===d.id) closeCallPop(); }, 40000);
   }
   else if(p.t==='cancel'){ if(DM.incoming?.dm===d.id){ closeCallPop(); toast('Chamada perdida de '+dname(p.from)+'.'); } }
@@ -3254,7 +3434,11 @@ function openChannelOptions(c){
     toast('Canal atualizado.'); };
 }
 
-async function logout(){ if(V) await leaveVoice(); await sb.auth.signOut(); location.hash=''; location.reload(); }
+async function logout(){
+  if(V) await leaveVoice();
+  try{ const { data } = await sb.auth.getSession(); if(data?.session) accSave(data.session); }catch{}
+  clearLocalSession(); location.hash=''; location.reload();
+}
 
 /* =====================================================================
    Modais
@@ -3272,7 +3456,7 @@ function openServerModal(tab){
   const show=t=>{
     m.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
     if(t==='create'){
-      body.innerHTML=`<h3>Crie seu servidor</h3><p class="sub">Vem com #geral, #clipes e duas salas de voz.</p>
+      body.innerHTML=`<h3>Crie seu servidor</h3>
         <label class="field"><span>Nome</span><input class="inp" id="nsName" maxlength="40" placeholder="Servidor do Gabriel"></label>
         <label class="field"><span>Ícone (1–2 letras, opcional)</span><input class="inp" id="nsIcon" maxlength="4" placeholder="GB"></label>
         <button class="btn" id="nsGo">Criar servidor</button>`;
@@ -3286,7 +3470,7 @@ function openServerModal(tab){
       };
       setTimeout(()=>body.querySelector('#nsName').focus(),30);
     } else {
-      body.innerHTML=`<h3>Entrar em um servidor</h3><p class="sub">Peça o código de convite para quem criou.</p>
+      body.innerHTML=`<h3>Entrar em um servidor</h3>
         <label class="field"><span>Código</span><input class="inp" id="jsCode" maxlength="12" placeholder="Ex.: K7P2QX" style="text-transform:uppercase;letter-spacing:.1em"></label>
         <button class="btn" id="jsGo">Entrar</button>`;
       body.querySelector('#jsGo').onclick=async()=>{
@@ -3317,7 +3501,7 @@ function openChannelModal(kind, after){
 function openInvite(){
   const s=S.server; const isWeb = location.protocol.startsWith('http');
   const link = location.origin+location.pathname+'#'+s.code;
-  const m=modal(`<h3>Convide a galera</h3><p class="sub">Para ${esc(s.name)}. Eles abrem o link, criam a conta e já caem no servidor.</p>
+  const m=modal(`<h3>Convide a galera</h3>
     ${isWeb?`<label class="field"><span>Link de convite</span><div class="row" style="margin:0"><input class="inp" readonly value="${esc(link)}"><button class="btn auto" data-l>${ic('copy','sm')}</button></div></label>`:''}
     <label class="field"><span>Código</span><div class="row" style="margin:0"><input class="inp" readonly value="${esc(s.code)}" style="font-weight:800;letter-spacing:.14em"><button class="btn sec auto" data-c>${ic('copy','sm')}</button></div></label>
     <div class="row"><button class="btn sec" data-x>Fechar</button></div>`);
@@ -3352,6 +3536,7 @@ $('.side-head').onclick=e=>openServerMenu(e);
 function closeDrawer(){ $('#drawer').classList.remove('open'); $('#scrim').classList.add('hidden'); }
 $('#menuBtn').onclick=()=>{ $('#drawer').classList.add('open'); $('#scrim').classList.remove('hidden'); };
 $('#scrim').onclick=()=>{ closeDrawer(); document.body.classList.remove('show-members-drawer'); };
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.body.classList.contains('show-members-drawer') && !document.querySelector('.pop,.modal')){ document.body.classList.remove('show-members-drawer'); $('#scrim').classList.add('hidden'); $('#membersBtn').classList.remove('on'); } });
 document.addEventListener('click', ()=>{ if(V){ V.peers.forEach(p=>{ if(p.audio.srcObject && p.audio.paused) p.audio.play().catch(()=>{}); }); if(V.audioCtx?.state==='suspended') V.audioCtx.resume().catch(()=>{}); if(V.pipe?.ctx?.state==='suspended') V.pipe.ctx.resume().catch(()=>{}); } });
 window.addEventListener('beforeunload', ()=>{ if(V){ try{ V.rt.untrack(); }catch{} V.peers.forEach(p=>p.pc.close()); } });
 document.addEventListener('keydown', e=>{
@@ -3379,6 +3564,7 @@ applyAppearance();
     if(ev==='PASSWORD_RECOVERY'){ recovering=true; showAuth('recovery'); }
     else if(ev==='USER_UPDATED' && session && S.me){ if(session.user.email && session.user.email!==S.me.email){ S.me.email=session.user.email; toast('Email atualizado para '+S.me.email); renderMembers(); } }
     else if(ev==='SIGNED_OUT'){ S.started=false; }
+    if((ev==='TOKEN_REFRESHED' || ev==='SIGNED_IN') && session && S.me?.id===session.user.id) accSave(session);
   });
   const { data:{ session } } = await sb.auth.getSession();
   if(/access_token|type=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname+location.search);
@@ -3386,7 +3572,7 @@ applyAppearance();
   if(hashErr) setTimeout(()=>toast('Link inválido ou expirado: '+hashErr, true), 600);
   else if(emailFlow==='signup') setTimeout(()=>toast('Email verificado! Bem-vindo ao CONCORD.'), 600);
   else if(emailFlow) setTimeout(()=>toast('Email confirmado.'), 600);
-  if(session) afterLogin(session); else showAuth('login');
+  if(session) afterLogin(session); else if(accList().length) showWho(); else showAuth('login');
 })();
 </script>
 </body>
