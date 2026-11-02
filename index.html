@@ -641,6 +641,25 @@ button.who-pill:hover,button.who-pill:focus-visible{border-color:var(--tx2);outl
 .who-bottom button{display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:10px;color:var(--tx3);font-size:13px;font-weight:500}
 .who-bottom button:hover{color:var(--tx);background:var(--card)}
 html.is-desktop #who{top:34px}
+/* ---------- Status e atividade ---------- */
+#meAvW{cursor:pointer;border-radius:50%}
+#userbar .who{cursor:pointer;min-width:0}
+#userbar .who small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stmenu button{display:flex;align-items:center;justify-content:space-between}
+.stmenu .stl{display:flex;align-items:center;gap:10px}
+.stmenu button.on{background:var(--card2);color:var(--tx)}
+.stmenu .sdot{position:static;width:10px;height:10px;border-radius:50%;border:0;display:block}
+.stmenu .sdot.online{background:#3ddc84}
+.actl{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.actl b{font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis}
+.actl .i{flex-shrink:0}
+.actl.mus .i{color:#1ed760}
+.actc{margin-top:12px}
+.actb{display:flex;align-items:center;gap:10px;background:#ffffff08;border:1px solid var(--line);border-radius:12px;padding:10px}
+.actb b{display:block;font-size:13.5px;line-height:1.3}
+.actb small{display:block;color:var(--tx3);font-size:12px}
+.acti{width:40px;height:40px;border-radius:10px;background:var(--card2);display:grid;place-items:center;flex-shrink:0}
+.acti.mus{background:#1ed76022;color:#1ed760}
 /* ---------- Markdown ---------- */
 .msg .txt b{font-weight:700;color:#fff}
 .mdc{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.88em;background:var(--card2);border:1px solid var(--line2);border-radius:6px;padding:1px 5px}
@@ -902,6 +921,8 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-1.2-1-1.5-1-2.5s.8-1.5 2-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></symbol>
   <symbol id="i-keyb" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><rect x="2" y="6" width="20" height="12" rx="6"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
   <symbol id="i-phone-off" viewBox="0 0 24 24"><path d="M10.7 13.3a11 11 0 0 0 3.8 2.2L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 6.6 15.4M4.2 11.6A16 16 0 0 1 3 6a2 2 0 0 1 2-2h4l2 5-2.5 1.5M3 21 21 3"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
@@ -972,7 +993,7 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
         </div>
       </div>
       <div id="userbar">
-        <div id="meAvW" data-pu=""></div>
+        <div id="meAvW" title="Status"></div>
         <div class="who"><b id="meName"></b><small id="meStatus">Online</small></div>
         <button class="ibtn" id="ubMute" title="Silenciar microfone (Ctrl+Shift+M)"></button>
         <button class="ibtn" id="ubDeaf" title="Ensurdecer (Ctrl+Shift+D)"></button>
@@ -1048,7 +1069,7 @@ const SHARE_Q = {
 const CAM_Q = { '480':{w:854,h:480,br:700000}, '720':{w:1280,h:720,br:1500000}, '1080':{w:1920,h:1080,br:2800000} };
 const PREF_DEFAULTS = {
   micId:'', outId:'', camId:'', inGain:1, outVol:1,
-  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, ecoMem:true, sfxVol:0.8, sfx:{}, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, appTheme:'oled', themeBase:'#1a1a2e', bgGlow:false, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
+  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, ecoMem:true, showActivity:true, sfxVol:0.8, sfx:{}, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, appTheme:'oled', themeBase:'#1a1a2e', bgGlow:false, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
   camRes:'720', camFps:30,
   shareQ:'jogo1080', shareCodec:'auto', uploadMbps:20, lowLatency:false, showStats:false,
   turnUrl:'', turnUser:'', turnPass:'',
@@ -1232,7 +1253,7 @@ const BADGE_ICONS = { gamer:'<path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><rect 
   book:'<path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/>', pizza:'<path d="M12 2 2 20h20zM12 2c4 0 8 2 10 6M9 12h.01M13 15h.01M12 9h.01"/>',
   paw:'<circle cx="7" cy="9" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="9" r="2"/><path d="M8 17c0-3 2-5 4-5s4 2 4 5-2 3-4 3-4 0-4-3z"/>', skull:'<path d="M12 3a8 8 0 0 0-8 8c0 3 2 5 3 6v3h10v-3c1-1 3-3 3-6a8 8 0 0 0-8-8zM9 12h.01M15 12h.01M10 20v-2M14 20v-2"/>' };
 const BADGES = [['gamer','Gamer'],['cine','Cinéfilo'],['music','Música'],['night','Coruja'],['stream','Streamer'],['code','Dev'],['art','Artista'],['sport','Esporte'],['coffee','Café'],['star','Estrela'],['heart','Coração'],['bolt','Rápido'],['ghost','Fantasma'],['trophy','Campeão'],['crown','Coroa'],['fire','Fogo'],['diamond','Diamante'],['shield','Escudo'],['rocket','Foguete'],['camera','Câmera'],['book','Leitor'],['pizza','Pizza'],['paw','Pet'],['skull','Caveira']];
-const STATUS = { online:['Online','#3ddc84'], idle:['Ausente','#fbbf24'], dnd:['Não perturbe','#ff4d5e'], invisible:['Invisível','#52525b'] };
+const STATUS = { online:['Online','#3ddc84'], dnd:['Ocupado','#ff4d5e'], idle:['Ausente','#fbbf24'], invisible:['Offline','#52525b'] };
 const keysOf = a => new Set(a.map(d=>d[0]).filter(Boolean));
 const DECO_KEYS=keysOf(DECOS), FX_KEYS=keysOf(EFFECTS), FONT_KEYS=keysOf(FONTS), SHAPE_KEYS=keysOf(SHAPES), PLATE_KEYS=keysOf(PLATES), BANNER_KEYS=keysOf(BANNERS), CARD_KEYS=keysOf(CARDS), NAMEFX_KEYS=keysOf(NAME_FX);
 const safeColor = c => (typeof c==='string' && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : null;
@@ -1290,10 +1311,21 @@ function fxHtml(e, key, n=18, h=480){
     html=`<div class="fx fx-${e}" style="--h:${h}px">${s}</div>`; }
   if(key) fxCache.set(ck, html); return html;
 }
+function myStatus(){ const ps=S.profiles.get(S.me?.id)?.presence_status||'online'; if(ps==='invisible') return 'invisible'; if(ps==='online' && S.autoIdle) return 'idle'; return ps; }
+function presenceOf(uid){ return onlineList().find(o=>o.uid===uid); }
 function statusOf(uid){
-  const on = onlineList().find(o=>o.uid===uid); if(!on) return 'offline';
-  const ps = S.profiles.get(uid)?.presence_status || 'online'; return ps==='invisible' ? (uid===S.me?.id?'invisible':'offline') : ps;
+  if(uid===S.me?.id) return myStatus();
+  const on = presenceOf(uid); if(!on) return 'offline';
+  const ps = on.st || S.profiles.get(uid)?.presence_status || 'online'; return ps==='invisible' ? 'offline' : ps;
 }
+function activityOf(uid){ if(uid===S.me?.id) return (myStatus()!=='invisible' && P().showActivity) ? S.activity : null; return presenceOf(uid)?.act || null; }
+const fmtSince = t => { const m=Math.max(0, Math.round((Date.now()-t)/60000)); return m<1?'agora':m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':''); };
+function actLine(a){ if(!a) return ''; if(a.game) return `<span class="actl">${ic('game','sm')}Jogando <b>${esc(a.game.name)}</b></span>`; if(a.music) return `<span class="actl mus">${ic('music','sm')}Ouvindo <b>${esc(a.music.title)}</b></span>`; return ''; }
+function actCard(a){ if(!a || (!a.game && !a.music)) return '';
+  let h='';
+  if(a.game) h+=`<div class="actc"><div class="lbl">Jogando agora</div><div class="actb"><div class="acti">${ic('game')}</div><div><b>${esc(a.game.name)}</b>${a.game.since?`<small>há ${fmtSince(a.game.since)}</small>`:''}</div></div></div>`;
+  if(a.music) h+=`<div class="actc"><div class="lbl">Ouvindo no Spotify</div><div class="actb"><div class="acti mus">${ic('music')}</div><div><b>${esc(a.music.title)}</b><small>${esc(a.music.artist||'')}</small></div></div></div>`;
+  return h; }
 function profileCardHtml(p, opts={}){
   p=p||{}; const tp=safeColor(p.theme_primary)||'#18181b', ta=safeColor(p.theme_accent)||'#0d0d10', bc=safeColor(p.banner_color)||safeColor(p.color)||'#27272a';
   const bn=safeUrl(p.banner_url); const shown = opts.nick || p.display_name || '';
@@ -1329,7 +1361,7 @@ function showProfile(uid, ev){
   const bg=document.createElement('div'); bg.className='pop-bg'; bg.onclick=closePop;
   const pop=document.createElement('div'); pop.className='pop';
   pop.innerHTML=profileCardHtml(p, { nick:S.nicks.get(uid), status:statusOf(uid), fxKey:'card-'+uid,
-    extra: (!S.home && userRoles(uid).length ? `<div class="lbl" style="margin-top:12px">Cargos</div><div>${userRoles(uid).map(r=>`<span class="rchip on" style="--rc:${safeColor(r.color)||'#a1a1aa'}"><i></i>${r.icon?esc(r.icon)+' ':''}${esc(r.name)}</span>`).join('')}</div>` : '')
+    extra: actCard(activityOf(uid)) + (!S.home && userRoles(uid).length ? `<div class="lbl" style="margin-top:12px">Cargos</div><div>${userRoles(uid).map(r=>`<span class="rchip on" style="--rc:${safeColor(r.color)||'#a1a1aa'}"><i></i>${r.icon?esc(r.icon)+' ':''}${esc(r.name)}</span>`).join('')}</div>` : '')
       + (uid===S.me.id ? `<button class="btn sec" style="margin-top:14px" data-edit>${ic('user','sm')} Editar perfil</button>`
         : `<div class="row" style="margin-top:14px;gap:8px"><button class="btn sec" data-dm>${ic('chat','sm')} Mensagem</button><button class="btn sec auto" data-call title="Ligar">${ic('phone','sm')}</button></div>`) });
   document.body.append(bg, pop); placePop(pop, ev);
@@ -1580,7 +1612,7 @@ async function start(){
   if(P().notify && !DESK && 'Notification' in window && Notification.permission==='default') setTimeout(()=>{ try{ Notification.requestPermission(); }catch{} }, 4000);
   const hashCode = (location.hash||'').replace('#','').trim().toUpperCase();
   await loadServers();
-  loadDms().then(startDmRealtime);
+  loadDms().then(startDmRealtime); syncActivity();
   let joinedNew=null;
   if(/^[A-Z0-9-]{3,24}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
   if(hashCode) history.replaceState(null, '', location.pathname+location.search);
@@ -1672,7 +1704,7 @@ async function selectServer(s){
 function trackServerPresence(){
   if(!S.me) return;
   const p=S.profiles.get(S.me.id)||{};
-  const meta={ uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, voice:V?.ch.id||null, muted:S.muted, deaf:S.deaf, cam:!!V?.cam, screen:!!V?.screen, since:S.since, inv:p.presence_status==='invisible', ts:Date.now() };
+  const st=myStatus(); const meta={ uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, voice:V?.ch.id||null, muted:S.muted, deaf:S.deaf, cam:!!V?.cam, screen:!!V?.screen, since:S.since, inv:st==='invisible', st, act: st==='invisible' ? null : activityOf(S.me.id), ts:Date.now() };
   try{ S.srvRt?.track(meta); }catch{}
   try{ if(S.voiceSrvRt && S.voiceSrvRt!==S.srvRt) S.voiceSrvRt.track(meta); }catch{}
 }
@@ -1764,7 +1796,7 @@ function renderMembers(){
   const busiest = S.channels.filter(c=>c.kind==='voice').map(c=>({c, u:voiceUsers(c.id)})).sort((a,b)=>b.u.length-a.u.length)[0];
   const feat = live ? {c:S.channels.find(c=>c.id===live.voice), u:voiceUsers(live.voice), live} : (busiest && busiest.u.length ? busiest : null);
   const me=S.profiles.get(S.me.id)||{};
-  let html = `<div class="mcard profile" data-pu="${S.me.id}" style="cursor:pointer">${avatarU(S.me.id, 40, null, {status:me.presence_status||'online'})}<div style="min-width:0"><b>${nameHtml(S.me.id)}</b><small>${esc(me.status_text||S.me.email||'')}</small></div><button class="ibtn" id="mpEdit" title="Editar perfil">${ic('chev')}</button></div>`;
+  let html = `<div class="mcard profile" data-pu="${S.me.id}" style="cursor:pointer">${avatarU(S.me.id, 40, null, {status:myStatus()})}<div style="min-width:0"><b>${nameHtml(S.me.id)}</b><small>${actLine(activityOf(S.me.id)) || esc(me.status_text||STATUS[myStatus()][0])}</small></div><button class="ibtn" id="mpEdit" title="Editar perfil">${ic('chev')}</button></div>`;
   if(feat && feat.c){
     html += `<div class="mcard live-card"><div class="tag"><div class="vc-ico">${ic(feat.live?'radio':'vol','sm')}</div><div>${feat.live?'Transmissão ao vivo':'Sala de voz'}<br><b style="color:#fff">${esc(feat.c.name)}</b></div></div>
       <h3>${feat.live?esc(dname(feat.live.uid, feat.live.name))+' está transmitindo a tela':feat.u.length+' '+(feat.u.length>1?'pessoas conversando':'pessoa na sala')}</h3>
@@ -1779,7 +1811,7 @@ function renderMembers(){
   const onRow = p=>{
     const ch = p.voice && S.channels.find(c=>c.id===p.voice);
     const mins = p.since ? Math.max(0, Math.round((Date.now()-p.since)/60000)) : null;
-    const sub = ch ? (p.screen?ic('radio','sm')+'Transmitindo':ic('vol','sm')+esc(ch.name)) : '';
+    const sub = ch ? (p.screen?ic('radio','sm')+'Transmitindo':ic('vol','sm')+esc(ch.name)) : actLine(p.act);
     return row(p.uid, p.name, p.color, sub, true, `<span class="when">${mins==null?'':mins<1?'agora':mins<60?mins+' min':Math.floor(mins/60)+' h'}</span>`);
   };
   const groups=new Map(); const rest=[];
@@ -1794,10 +1826,9 @@ function renderMembers(){
 function renderMe(){
   if(!S.me) return; accProfileSync();
   const p=S.profiles.get(S.me.id)||{}; S.me.name=p.display_name||S.me.name; S.me.color=p.color||S.me.color;
-  $('#meAvW').dataset.pu=S.me.id;
-  $('#meAvW').innerHTML = avatarU(S.me.id, 34, null, {status: p.presence_status||'online'});
+  $('#meAvW').innerHTML = avatarU(S.me.id, 34, null, {status: myStatus()});
   $('#meName').innerHTML = nameHtml(S.me.id, dname(S.me.id));
-  $('#meStatus').textContent = V ? (P().voiceMode==='ptt' ? (S.pttHeld?'Falando…':'Push-to-talk') : 'Em voz · '+V.ch.name) : (p.status_text || STATUS[p.presence_status||'online'][0]);
+  $('#meStatus').textContent = V ? (P().voiceMode==='ptt' ? (S.pttHeld?'Falando…':'Push-to-talk') : 'Em voz · '+V.ch.name) : (S.activity && P().showActivity && myStatus()!=='invisible' ? (S.activity.game ? 'Jogando '+S.activity.game.name : 'Ouvindo '+S.activity.music.title) : (p.status_text || STATUS[myStatus()][0]));
   setIcon($('#ubMute'), S.muted||S.deaf ? 'mic-off' : 'mic'); $('#ubMute').classList.toggle('off', S.muted||S.deaf);
   setIcon($('#ubDeaf'), S.deaf ? 'head-off' : 'head'); $('#ubDeaf').classList.toggle('off', S.deaf);
 }
@@ -2578,6 +2609,7 @@ if(DESK){
       $('[data-w=max]').title = data?.maximized ? 'Restaurar' : 'Maximizar'; return; }
     if(ev==='update'){ UPD=data; renderUpdateBadge(); if(data?.status==='ready') toast(`Atualização ${data.version||''} baixada. Clique no aviso no topo para reiniciar.`); if(!$('#settings').classList.contains('hidden') && SET.sec==='app') renderSettings(); return; }
     if(ev==='trim-memory'){ trimMemory(); return; }
+    if(ev==='activity'){ const a = data && (data.game||data.music) ? data : null; if(JSON.stringify(a)!==JSON.stringify(S.activity)){ S.activity=a; trackServerPresence(); renderMe(); renderMembers(); } return; }
   });
 }
 if(DESK){
@@ -2596,7 +2628,7 @@ document.addEventListener('keyup', e=>{ if(!DESK && P().voiceMode==='ptt' && P()
 window.addEventListener('blur', ()=>{ if(!DESK && S.pttHeld) pttPress(false); });
 
 function notifyMessage(m){
-  if(!P().notify || m.user_id===S.me?.id) return;
+  if(!P().notify || m.user_id===S.me?.id || myStatus()==='dnd') return;
   const ch=S.channels.find(c=>c.id===m.channel_id); if(!ch) return;
   const focusedHere = document.hasFocus() && S.view?.ch?.id===m.channel_id;
   if(focusedHere) return;
@@ -2695,11 +2727,13 @@ async function renderSettings(){
       <div class="sc"><h3>Memória</h3><p>O app usa um processo de página só, V8 compacto, libera caches quando fica na bandeja e pausa animações quando a janela não está visível.</p>
         <div class="srow"><div><b>Memória</b></div><div style="display:flex;align-items:center;gap:12px"><b id="memMb" style="font-size:20px">…</b><button class="btn sec auto" id="memTrim">Liberar</button></div></div>
         <div class="memsplit" id="memSplit"></div>
-        ${sw('ecoMem','Modo leve','')}</div>`;
+        ${sw('ecoMem','Modo leve','')}</div>
+      <div class="sc"><h3>Atividade</h3>${sw('showActivity','Mostrar o que estou jogando ou ouvindo','')}</div>`;
     const upd=async()=>{ try{ const m=await DESK.metrics(); $('#memMb') && ($('#memMb').textContent = m.mb+' MB'); if($('#memSplit') && m.page!=null) $('#memSplit').innerHTML=`<span>Página <b>${m.page} MB</b></span><span>Vídeo <b>${m.gpu} MB</b></span><span>Sistema <b>${m.other} MB</b></span>`; $('#appVer') && ($('#appVer').textContent = m.version); }catch{} };
     upd(); const t=setInterval(()=>{ if($('#settings').classList.contains('hidden') || SET.sec!=='app') return clearInterval(t); upd(); }, 2000);
     $('#memTrim').onclick=()=>{ trimMemory(); setTimeout(upd, 1500); };
     body.querySelectorAll('[data-pref=ecoMem]').forEach(inp=>inp.onchange=()=>{ setPref('ecoMem', inp.checked); applyEco(); });
+    body.querySelectorAll('[data-pref=showActivity]').forEach(inp=>inp.onchange=()=>{ setPref('showActivity', inp.checked); syncActivity(); });
     $('#updGo')?.addEventListener('click', ()=>DESK.installUpdate());
     $('#updChk')?.addEventListener('click', async()=>{ const b=$('#updChk'); busy(b,true); const r=await DESK.checkUpdate(); busy(b,false);
       if(r?.status==='unsupported') $('#updHint').innerHTML = r.reason==='portable' ? 'A versão portátil não se atualiza sozinha: baixe a nova em Releases.' : r.reason==='dev' ? 'Modo de desenvolvimento.' : 'Atualizador indisponível nesta versão — baixe o instalador novo uma vez em Releases.';
@@ -3239,6 +3273,38 @@ async function restartMicInputs(){
   catch(e){ toast('Não foi possível trocar o microfone: '+(e.name||e.message), true); }
 }
 /* =====================================================================
+   Status (online, ocupado, ausente, offline) e ausência automática
+   ===================================================================== */
+async function setMyStatus(st){
+  const p=S.profiles.get(S.me.id); if(!p || p.presence_status===st) return;
+  p.presence_status=st; S.autoIdle=false; trackServerPresence(); renderMe(); renderMembers(); if(S.home) renderDmSide();
+  const { error } = await sb.from('dc_profiles').update({ presence_status:st }).eq('id', S.me.id);
+  if(error) toast('Erro: '+error.message, true);
+}
+function openStatusMenu(ev){
+  closePop(); const cur=S.profiles.get(S.me.id)?.presence_status||'online';
+  const m=document.createElement('div'); m.className='menu stmenu';
+  m.innerHTML = Object.entries(STATUS).map(([k,[l]])=>`<button data-st="${k}" class="${cur===k?'on':''}"><span class="stl"><i class="sdot ${k}"></i>${l}</span></button>`).join('')
+    + `<hr><button data-act="profile">Editar perfil ${ic('user','sm')}</button>`;
+  const bg=document.createElement('div'); bg.className='pop-bg'; bg.onclick=closePop; document.body.append(bg, m);
+  const r=$('#userbar').getBoundingClientRect(); m.style.left=(r.left)+'px'; m.style.width=Math.max(220, r.width)+'px'; m.style.top=(r.top-m.offsetHeight-8)+'px';
+  m.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ closePop(); setMyStatus(b.dataset.st); });
+  m.querySelector('[data-act]').onclick=()=>{ closePop(); openSettings('perfil'); };
+}
+$('#meAvW').onclick=e=>{ e.stopPropagation(); openStatusMenu(e); };
+document.querySelector('#userbar .who')?.addEventListener('click', e=>{ e.stopPropagation(); openStatusMenu(e); });
+// Ausente sozinho depois de 10 min sem mexer (no app: sem mexer no PC inteiro, então jogando conta como ativo)
+let lastInput=Date.now();
+['pointermove','keydown','pointerdown','wheel'].forEach(t=>addEventListener(t, ()=>{ lastInput=Date.now(); if(S.autoIdle){ S.autoIdle=false; trackServerPresence(); renderMe(); renderMembers(); } }, {passive:true, capture:true}));
+setInterval(async()=>{
+  if(!S.me) return; let idleMs = Date.now()-lastInput;
+  if(DESK?.idle){ try{ idleMs = (await DESK.idle())*1000; }catch{} }
+  const idle = idleMs > 10*60*1000 && !V;
+  if(idle!==!!S.autoIdle){ S.autoIdle=idle; trackServerPresence(); renderMe(); renderMembers(); }
+}, 30000);
+function syncActivity(){ if(DESK?.activity) DESK.activity(!!P().showActivity); if(!P().showActivity){ S.activity=null; trackServerPresence(); renderMe(); renderMembers(); } }
+
+/* =====================================================================
    Mensagens diretas e chamadas 1:1
    ===================================================================== */
 const DM = { list:[], unread:new Set(ls.get('dc_dm_unread', [])), rt:null, ring:null, incoming:null, outgoing:null, ringT:null, ringCtx:null };
@@ -3290,7 +3356,7 @@ function renderDmMembers(){
   const d = S.view?.type==='dm' ? S.view.dm : DM.list.find(x=>x.id===S.view?.ch?.dm);
   if(!d){ M.innerHTML=''; return; }
   const uid=dmOther(d); const p=S.profiles.get(uid); if(!p){ M.innerHTML=''; return; }
-  M.innerHTML = `<div class="dmprof">${profileCardHtml(p, { status:statusOf(uid), fxKey:'dm-'+uid })}</div>`;
+  M.innerHTML = `<div class="dmprof">${profileCardHtml(p, { status:statusOf(uid), fxKey:'dm-'+uid, extra:actCard(activityOf(uid)) })}</div>`;
 }
 function openHome(keepView){
   S.home=true; applyServerTheme(null); $('#appBanner')?.classList.add('hidden');
@@ -3342,7 +3408,7 @@ async function onDmMessage(m){
   if(S.view?.type==='dm' && S.view.dm.id===m.dm_id){ appendMsg(m, true); if(document.hasFocus() || m.user_id===S.me.id){ if(S.home) renderDmSide(); return; } }
   if(m.user_id===S.me.id) return;
   if(!(S.view?.type==='dm' && S.view.dm.id===m.dm_id)){ DM.unread.add(m.dm_id); saveDmUnread(); }
-  renderRail(); if(S.home) renderDmSide(); sfx('msg');
+  renderRail(); if(S.home) renderDmSide(); if(myStatus()==='dnd') return; sfx('msg');
   if(!P().notify) return; DESK?.attention();
   if(!('Notification' in window) || Notification.permission!=='granted' || document.hasFocus()) return;
   try{ const n=new Notification(dname(m.user_id), { body:String(m.content).slice(0,160), tag:'concord-dm-'+m.dm_id });
@@ -3384,7 +3450,7 @@ async function onCallSignal(p){
     const el=document.createElement('div'); el.id='callPop';
     el.innerHTML=`<div class="ring">${avatarU(p.from, 64, null, {noDeco:true})}</div><div class="who">${esc(dname(p.from))}</div><small>Chamada de voz</small>
       <div class="row"><button class="btn danger" data-no>${ic('phone-off','sm')} Recusar</button><button class="btn go" data-yes>${ic('phone','sm')} Atender</button></div>`;
-    document.body.appendChild(el); ringtone(true); DESK?.attention(); DESK?.focus?.();
+    document.body.appendChild(el); if(myStatus()!=='dnd') ringtone(true); DESK?.attention(); DESK?.focus?.();
     if('Notification' in window && Notification.permission==='granted' && !document.hasFocus()){ try{ new Notification(dname(p.from)+' está ligando', { tag:'concord-call' }); }catch{} }
     el.querySelector('[data-no]').onclick=()=>{ closeCallPop(); sendToUser(S.me.id, { t:'answered', dm:d.id, sid:S.sid }); sendToUser(p.from, { t:'decline', dm:d.id, from:S.me.id }); };
     el.querySelector('[data-yes]').onclick=async()=>{ closeCallPop(); sendToUser(S.me.id, { t:'answered', dm:d.id, sid:S.sid }); if(V) await leaveVoice(); await openDm(d); openVoice(dmVoiceCh(d)); };

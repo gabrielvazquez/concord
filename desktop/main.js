@@ -1,6 +1,7 @@
 // CONCORD para PC — janela que carrega o site + recursos que só um app nativo tem:
 // atalhos globais, push-to-talk dentro do jogo, seletor de tela com som do PC, bandeja e inicialização com o Windows.
-const { app, BrowserWindow, session, desktopCapturer, ipcMain, Tray, Menu, nativeImage, shell, nativeTheme, globalShortcut, screen } = require('electron');
+const { app, BrowserWindow, session, desktopCapturer, ipcMain, Tray, Menu, nativeImage, shell, nativeTheme, globalShortcut, screen, powerMonitor } = require('electron');
+const { execFile } = require('child_process');
 let autoUpdater = null; try { autoUpdater = require('electron-updater').autoUpdater; } catch (e) { console.warn('updater indisponível', e.message); }
 const path = require('path');
 const fs = require('fs');
@@ -179,6 +180,59 @@ ipcMain.handle('concord:metrics', () => {
   const mb = v => Math.round(v / 1024);
   return { mb: mb(by.page + by.gpu + by.other), page: mb(by.page), gpu: mb(by.gpu), other: mb(by.other), processes: list.length, version: app.getVersion() };
 });
+
+/* ---------------- Atividade: jogo aberto e música no Spotify ---------------- */
+// Lê só o nome dos programas com janela aberta (nada é enviado além do nome do jogo / música).
+const GAMES = {
+  'valorant-win64-shipping': 'VALORANT', 'cs2': 'Counter-Strike 2', 'csgo': 'Counter-Strike', 'league of legends': 'League of Legends',
+  'fortniteclient-win64-shipping': 'Fortnite', 'rocketleague': 'Rocket League', 'gta5': 'GTA V', 'gta5_enhanced': 'GTA V', 'gtavlauncher': 'GTA V',
+  'rdr2': 'Red Dead Redemption 2', 'eldenring': 'Elden Ring', 'nightreign': 'Elden Ring Nightreign', 'overwatch': 'Overwatch 2', 'r5apex': 'Apex Legends', 'r5apex_dx12': 'Apex Legends',
+  'fc24': 'EA SPORTS FC 24', 'fc25': 'EA SPORTS FC 25', 'fc26': 'EA SPORTS FC 26', 'pes2021': 'eFootball PES 2021', 'efootball': 'eFootball',
+  'robloxplayerbeta': 'Roblox', 'dota2': 'Dota 2', 'tslgame': 'PUBG', 'cod': 'Call of Duty', 'blackops6': 'Call of Duty: Black Ops 6', 'minecraft.windows': 'Minecraft',
+  'rainbowsix': 'Rainbow Six Siege', 'rainbowsix_vulkan': 'Rainbow Six Siege', 'destiny2': 'Destiny 2', 'witcher3': 'The Witcher 3', 'cyberpunk2077': 'Cyberpunk 2077',
+  'hollow_knight': 'Hollow Knight', 'terraria': 'Terraria', 'stardew valley': 'Stardew Valley', 'among us': 'Among Us', 'fallguys_client_game': 'Fall Guys',
+  'deadbydaylight-win64-shipping': 'Dead by Daylight', 'marvel-win64-shipping': 'Marvel Rivals', 'helldivers2': 'Helldivers 2', 'palworld-win64-shipping': 'Palworld',
+  'bg3': "Baldur's Gate 3", 'bg3_dx11': "Baldur's Gate 3", 'forzahorizon5': 'Forza Horizon 5', 'forzahorizon4': 'Forza Horizon 4', 'eurotrucks2': 'Euro Truck Simulator 2',
+  'sons of the forest': 'Sons of the Forest', 'rust': 'Rust', 'phasmophobia': 'Phasmophobia', 'lethal company': 'Lethal Company', 'repo': 'R.E.P.O.', 'peak': 'PEAK',
+  'ryujinx': 'Ryujinx (Switch)', 'yuzu': 'Yuzu (Switch)', 'pcsx2-qt': 'PCSX2', 'rpcs3': 'RPCS3', 'dolphin': 'Dolphin', 'retroarch': 'RetroArch', 'cemu': 'Cemu',
+};
+const NOT_GAMES = new Set(['steam', 'steamwebhelper', 'epicgameslauncher', 'riotclientservices', 'riotclientux', 'leagueclient', 'leagueclientux', 'eadesktop', 'eabackgroundservice', 'battle.net', 'ubisoftconnect', 'upc', 'gog galaxy', 'galaxyclient', 'unitycrashhandler64', 'crashreportclient']);
+const GAME_DIRS = /\\steamapps\\common\\|\\epic games\\|\\riot games\\|\\xboxgames\\|\\gog galaxy\\games\\|\\ea games\\|\\ubisoft game launcher\\games\\/i;
+let actTimer = null, actLast = '', actSince = {};
+function readActivity() {
+  return new Promise(res => {
+    if (process.platform !== 'win32') return res(null);
+    const cmd = "Get-Process | Where-Object { $_.MainWindowTitle } | Select-Object ProcessName,MainWindowTitle,Path | ConvertTo-Json -Compress";
+    execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', cmd], { windowsHide: true, timeout: 9000, maxBuffer: 1 << 20 }, (err, out) => {
+      if (err || !out) return res(null);
+      let list; try { list = JSON.parse(out); } catch { return res(null); }
+      if (!Array.isArray(list)) list = [list];
+      let game = null, music = null;
+      for (const p of list) {
+        const n = String(p.ProcessName || '').toLowerCase(), t = String(p.MainWindowTitle || '').trim(), path = String(p.Path || '');
+        if (n === 'spotify' && t && !/^spotify( premium| free)?$/i.test(t) && t.includes(' - ')) { const i = t.indexOf(' - '); music = { app: 'Spotify', artist: t.slice(0, i).trim(), title: t.slice(i + 3).trim() }; continue; }
+        if (game || NOT_GAMES.has(n)) continue;
+        if (GAMES[n]) game = GAMES[n];
+        else if (n === 'javaw' && /^minecraft/i.test(t)) game = 'Minecraft';
+        else if (GAME_DIRS.test(path)) { const m = path.match(/\\(?:common|epic games|riot games|xboxgames|games)\\([^\\]+)/i); game = (t && t.length < 48 ? t : (m ? m[1] : n)).replace(/\s{2,}/g, ' '); }
+      }
+      const now = Date.now();
+      if (game) { actSince[game] = actSince[game] || now; } for (const k of Object.keys(actSince)) if (k !== game) delete actSince[k];
+      res({ game: game ? { name: game, since: actSince[game] } : null, music });
+    });
+  });
+}
+async function pollActivity() {
+  const a = await readActivity(); if (!a) return;
+  const key = JSON.stringify([a.game?.name, a.music?.title, a.music?.artist]);
+  if (key !== actLast) { actLast = key; send('activity', a); }
+}
+ipcMain.handle('concord:activity', (_e, on) => {
+  clearInterval(actTimer); actTimer = null; actLast = '';
+  if (on) { pollActivity(); actTimer = setInterval(pollActivity, 15000); } else send('activity', { game: null, music: null });
+  return true;
+});
+ipcMain.handle('concord:idle', () => { try { return powerMonitor.getSystemIdleTime(); } catch { return 0; } });
 
 /* ---------------- Atualizações do app ---------------- */
 let pendingUpdate = null;

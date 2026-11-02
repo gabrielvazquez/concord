@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('concordDesktop', {
   openExternal: (url) => ipcRenderer.invoke('concord:openExternal', url),
   win: { minimize: () => ipcRenderer.send('win:minimize'), maximize: () => ipcRenderer.send('win:maximize'), close: () => ipcRenderer.send('win:close') },
   metrics: () => ipcRenderer.invoke('concord:metrics'),
+  activity: (on) => ipcRenderer.invoke('concord:activity', !!on),
+  idle: () => ipcRenderer.invoke('concord:idle'),
   trim: () => { try { webFrame.clearCache(); } catch {} return ipcRenderer.invoke('concord:trim'); },
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
