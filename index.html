@@ -608,24 +608,22 @@ body.eco.blurred .fx{display:none!important}
   radial-gradient(700px 420px at 50% 115%,color-mix(in srgb,var(--ac) 7%,transparent) 0,transparent 70%);
   }
 .who-wall::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;opacity:.35;mask-image:radial-gradient(60% 55% at 50% 45%,#000,transparent 75%);-webkit-mask-image:radial-gradient(60% 55% at 50% 45%,#000,transparent 75%)}
-.who-logo{position:absolute;top:28px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:1;font-weight:800;letter-spacing:.34em;font-size:12px;color:var(--tx2)}
-.who-logo svg{width:22px;height:22px}
-.who-time{position:absolute;top:12vh;left:0;right:0;text-align:center;z-index:1}
-.who-date{font-size:clamp(13px,1.2vw,16px);font-weight:500;color:var(--tx2);letter-spacing:.04em}
-.who-clock{font-size:clamp(76px,10vw,132px);font-weight:200;letter-spacing:-.04em;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums;color:#fff}
-.who-users{position:absolute;left:0;right:0;bottom:21vh;z-index:1;display:flex;flex-direction:column;align-items:center;gap:22px}
-.who-row{display:flex;gap:14px;padding:7px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
-.who-u{width:44px;height:44px;border-radius:50%;opacity:.45;transition:.15s;filter:grayscale(.5)}
-.who-u.on,.who-u:hover{opacity:1;filter:none}
-.who-u.on{box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--tx)}
-.who-u .av,.who-big .av{width:100%!important;height:100%!important;border-radius:50%!important}
-.who-u .av .avi,.who-big .av .avi{border-radius:50%!important}
-.who-u .av .avi{font-size:17px}
-.who-me{display:flex;flex-direction:column;align-items:center;gap:10px}
-.who-big{width:104px;height:104px;border-radius:50%;padding:4px;border:1px solid var(--line2);background:var(--bg)}
-.who-big .av .avi{font-size:40px}
-.who-me>b{font-size:17px;font-weight:700;margin-top:6px}
-.who-pill{height:40px;min-width:180px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;color:var(--tx);font-size:14px;font-weight:600;transition:.15s}
+.who-col{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:40px 20px}
+.who-mark{display:flex;flex-direction:column;align-items:center;gap:14px}
+.who-mark svg{width:64px;height:64px}
+.who-mark b{font-weight:800;letter-spacing:.42em;font-size:13px;color:var(--tx2);margin-left:.42em}
+.who-me{display:flex;flex-direction:column;align-items:center;gap:12px;padding:30px 40px 28px;border-radius:24px;background:var(--panel);border:1px solid var(--line);min-width:300px}
+.who-big{width:112px;height:112px;border-radius:50%;padding:4px;border:1px solid var(--line2);background:var(--bg)}
+.who-big .av,.who-u .av{width:100%!important;height:100%!important;border-radius:50%!important}
+.who-big .av .avi,.who-u .av .avi{border-radius:50%!important}
+.who-big .av .avi{font-size:42px}
+.who-me>b{font-size:18px;font-weight:700;margin-top:2px}
+.who-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:-14px}
+.who-u{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 5px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--tx2);font-size:13px;font-weight:600}
+.who-u:hover{border-color:var(--line2);color:var(--tx)}
+.who-u>.av{width:30px!important;height:30px!important}
+.who-u .av .avi{font-size:13px}
+.who-pill{height:40px;min-width:220px;margin-top:6px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;color:var(--tx);font-size:14px;font-weight:600;transition:.15s}
 button.who-pill{justify-content:space-between;cursor:pointer}
 button.who-pill:hover,button.who-pill:focus-visible{border-color:var(--tx2);outline:none}
 .who-pill:focus-within{border-color:var(--tx2)}
@@ -638,12 +636,9 @@ button.who-pill:hover,button.who-pill:focus-visible{border-color:var(--tx2);outl
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @keyframes pulseav{50%{opacity:.4}}
 .who-msg{font-size:12px;color:var(--tx3)}
-.who-bottom{position:absolute;bottom:5vh;left:0;right:0;z-index:1;display:flex;justify-content:center;gap:30px}
-.who-bottom button{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--tx2);font-size:12px;font-weight:500}
-.who-bottom button:hover{color:var(--tx)}
-.who-bottom span{width:40px;height:40px;border-radius:50%;background:var(--panel);border:1px solid var(--line2);display:grid;place-items:center;transition:.15s}
-.who-bottom button:hover span{border-color:var(--tx2)}
-.who-bottom .i{width:16px;height:16px}
+.who-bottom{display:flex;justify-content:center;gap:8px}
+.who-bottom button{display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:10px;color:var(--tx3);font-size:13px;font-weight:500}
+.who-bottom button:hover{color:var(--tx);background:var(--card)}
 html.is-desktop #who{top:34px}
 /* ---------- Markdown ---------- */
 .msg .txt b{font-weight:700;color:#fff}
@@ -1522,23 +1517,21 @@ function showWho(selId, msg){
   let sel = a.find(x=>x.id===selId) || a[0]; let needPass = !!msg;
   const av = r=>avatarP({display_name:r.name, color:r.color, avatar_url:r.avatar_url, avatar_shape:'', theme_accent:r.theme_accent}, null, {noDeco:true});
   const draw=()=>{
-    w.innerHTML = `<div class="who-wall"></div><div class="who-logo"><svg><use href="#i-logo"/></svg>CONCORD</div>
-      <div class="who-time"><div class="who-date" id="whoDate"></div><div class="who-clock" id="whoClock"></div></div>
-      <div class="who-users">
-        ${a.length>1?`<div class="who-row">${a.map(r=>`<button class="who-u ${r.id===sel.id?'on':''}" data-acc="${r.id}" title="${esc(r.name||'')}">${av(r)}</button>`).join('')}</div>`:''}
+    w.innerHTML = `<div class="who-wall"></div>
+      <div class="who-col">
+        <div class="who-mark"><svg><use href="#i-logo"/></svg><b>CONCORD</b></div>
         <div class="who-me"><div class="who-big">${av(sel)}</div><b>${esc(sel.name||sel.email||'Conta')}</b>
           ${needPass
             ? `<form class="who-pill" id="whoPass"><input type="password" placeholder="Senha" autocomplete="current-password" required><button type="submit" title="Entrar">${ic('chev')}</button></form>${msg?`<small class="who-msg">${esc(msg)}</small>`:''}`
             : `<button class="who-pill go" id="whoGo">Entrar <span>${ic('chev')}</span></button>`}
         </div>
-      </div>
-      <div class="who-bottom">
-        <button data-add><span>${ic('plus')}</span>Outra conta</button>
-        <button data-rm><span>${ic('x')}</span>Remover</button>
+        ${a.length>1?`<div class="who-row">${a.filter(r=>r.id!==sel.id).map(r=>`<button class="who-u" data-acc="${r.id}" title="${esc(r.name||'')}">${av(r)}<span>${esc(r.name||'')}</span></button>`).join('')}</div>`:''}
+        <div class="who-bottom">
+          <button data-add>${ic('plus','sm')}Outra conta</button>
+          <button data-rm>${ic('x','sm')}Remover</button>
+        </div>
       </div>`;
-    const tick=()=>{ const d=new Date(); const c=$('#whoClock'); if(!c) return; c.textContent=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); const ds=d.toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'}); $('#whoDate').textContent=ds.charAt(0).toUpperCase()+ds.slice(1); };
-    tick(); clearInterval(whoClock); whoClock=setInterval(()=>{ if(w.classList.contains('hidden')) return clearInterval(whoClock); tick(); }, 10000);
-    w.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{ if(b.dataset.acc===sel.id) return go(); sel=a.find(x=>x.id===b.dataset.acc); needPass=false; msg=null; draw(); });
+    w.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{ sel=a.find(x=>x.id===b.dataset.acc); needPass=false; msg=null; draw(); });
     w.querySelector('[data-add]').onclick=()=>{ clearInterval(whoClock); w.classList.add('hidden'); showAuth('login'); };
     w.querySelector('[data-rm]').onclick=async()=>{ if(!await confirmBox('Remover '+(sel.name||sel.email)+' deste aparelho?', '', 'Remover')) return;
       try{ if(sel.rt){ const { error } = await sb.auth.setSession({ access_token:sel.at, refresh_token:sel.rt }); if(!error) await sb.auth.signOut({scope:'local'}); } }catch{}
