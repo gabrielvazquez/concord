@@ -476,7 +476,7 @@ body.theater.ui #cineBar{opacity:1;pointer-events:auto}
 
 /* ---------- App para PC: barra de título ---------- */
 #titlebar{display:none}
-html.is-desktop #titlebar{display:flex;position:fixed;top:0;left:0;right:0;height:34px;z-index:90;background:#000;align-items:stretch;-webkit-app-region:drag;user-select:none;border-bottom:1px solid #141416}
+html.is-desktop #titlebar{display:flex;position:fixed;top:0;left:0;right:0;height:34px;z-index:90;background:var(--bg);align-items:stretch;-webkit-app-region:drag;user-select:none;border-bottom:1px solid #141416}
 #titlebar .tb-l{display:flex;align-items:center;gap:8px;padding-left:12px;font-size:12px;font-weight:800;letter-spacing:.18em;color:var(--tx2);flex:1;min-width:0}
 #titlebar .tb-l svg{width:18px;height:18px}
 #tbUpdate{-webkit-app-region:no-drag;margin-left:10px;letter-spacing:0;font-weight:700;font-size:11.5px;border-radius:999px;padding:3px 10px;background:var(--card2);color:var(--tx2);border:1px solid var(--line2);cursor:default;white-space:nowrap}
@@ -501,15 +501,15 @@ html.is-desktop.win-full body.theater #cineBar{top:0}
 body.flat #app{padding:0;gap:0}
 body.flat #drawer{gap:0}
 body.flat .panel{border-radius:0;border:0}
-body.flat #rail{background:#000;border-right:1px solid var(--line)}
-body.flat #side{background:#08080a;border-right:1px solid var(--line)}
-body.flat #main{background:#050506}
-body.flat #members{background:#08080a;border-left:1px solid var(--line)}
+body.flat #rail{background:var(--bg);border-right:1px solid var(--line)}
+body.flat #side{background:var(--side,#08080a);border-right:1px solid var(--line)}
+body.flat #main{background:var(--main,#050506)}
+body.flat #members{background:var(--side,#08080a);border-left:1px solid var(--line)}
 body.flat .side-head{border-radius:0}
 body.flat .main-head{padding-top:14px}
 body.flat #settings{padding:0;gap:0}
-body.flat .set-nav{border-right:1px solid var(--line);background:#08080a}
-body.flat .set-body{background:#050506}
+body.flat .set-nav{border-right:1px solid var(--line);background:var(--side,#08080a)}
+body.flat .set-body{background:var(--main,#050506)}
 body.flat #auth{padding:0;gap:0}
 body.flat #auth .hero{border-right:1px solid var(--line)}
 
@@ -598,6 +598,89 @@ body.page-hidden *,body.page-hidden *::before,body.page-hidden *::after{animatio
 #ssum .hint,.hint.keep{display:block!important}
 .srow{padding:10px 0}
 
+/* ---------- Markdown ---------- */
+.msg .txt b{font-weight:700;color:#fff}
+.mdc{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.88em;background:var(--card2);border:1px solid var(--line2);border-radius:6px;padding:1px 5px}
+.mdpre{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:4px 0;white-space:pre-wrap;overflow-x:auto;display:block}
+.mdq{display:block;border-left:3px solid var(--line2);padding-left:10px;color:var(--tx2)}
+.mdh1,.mdh2,.mdh3{display:block;font-weight:800;color:#fff;line-height:1.3;margin:4px 0 2px}
+.mdh1{font-size:1.45em}.mdh2{font-size:1.25em}.mdh3{font-size:1.08em}
+.mdli{display:block;padding-left:16px;position:relative}.mdli::before{content:"";position:absolute;left:5px;top:.65em;width:4px;height:4px;border-radius:50%;background:var(--tx2)}
+.spoiler{background:var(--line2);color:transparent;border-radius:4px;cursor:pointer;transition:.15s;padding:0 2px}
+.spoiler *{visibility:hidden}.spoiler.open{background:var(--card2);color:inherit}.spoiler.open *{visibility:visible}
+.mention{background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--tx);border-radius:4px;padding:0 3px;font-weight:600}
+.msg.mentioned{background:color-mix(in srgb,#fbbf24 8%,transparent);box-shadow:inset 2px 0 0 #fbbf24}
+.fmtbar{display:none;gap:2px;padding:0 0 6px 4px}
+.composer:focus-within .fmtbar{display:flex}
+.fmtbar button{height:26px;min-width:28px;padding:0 7px;border-radius:7px;color:var(--tx2);font-size:13px;display:grid;place-items:center}
+.fmtbar button:hover{background:var(--card2);color:var(--tx)}
+.composer.ro form{opacity:.55}
+/* ---------- Mensagens diretas ---------- */
+.logo{cursor:pointer;border-radius:14px;position:relative;transition:.15s}
+.logo:hover{background:var(--card)}
+.logo.on{background:var(--card2)}
+.logo.on::before{content:"";position:absolute;left:-13px;top:9px;width:3px;height:22px;background:var(--ac);border-radius:0 3px 3px 0}
+.dot-badge{position:absolute;right:-3px;bottom:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:3px solid var(--bg)}
+.dmrow{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px;border-radius:10px;color:var(--tx2);text-align:left;min-width:0}
+.dmrow:hover{background:var(--card);color:var(--tx)}
+.dmrow.on{background:var(--card2);color:var(--tx)}
+.dmrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:14px}
+.dmrow .ub{width:8px;height:8px;border-radius:50%;background:#fff;flex-shrink:0}
+.dmrow .oncall{color:#3ddc84;display:grid}
+.dmempty{color:var(--tx3);font-size:13px;padding:12px 10px}
+.dmprof{padding:4px}
+.dmprof .pcard{width:auto;max-width:none}
+#callBtn.on{background:#3ddc84;color:#000;border-color:#3ddc84}
+#callPop{position:fixed;right:20px;bottom:20px;z-index:95;width:300px;background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 20px 60px #000c;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;animation:pop .2s}
+#callPop .who{font-weight:800;font-size:16px}
+#callPop small{color:var(--tx2)}
+#callPop .row{display:flex;gap:10px;width:100%}
+#callPop .ring{animation:ringp 1.2s infinite;border-radius:50%}
+@keyframes ringp{0%{box-shadow:0 0 0 0 #3ddc8488}100%{box-shadow:0 0 0 18px #3ddc8400}}
+.btn.go{background:#3ddc84;border-color:#3ddc84;color:#000}
+/* ---------- Servidor: categorias, cargos ---------- */
+.cat.fold{cursor:pointer}
+.cat.fold span::before{content:"";display:inline-block;width:0;height:0;border:4px solid transparent;border-top:5px solid currentColor;margin:0 6px 1px 0;vertical-align:middle;transition:transform .15s}
+.cat.fold.closed span::before{transform:rotate(-90deg) translateX(2px)}
+.ch .chi{width:16px;text-align:center;font-size:14px;line-height:1;flex-shrink:0}
+.ch .lk{opacity:.5;display:grid}
+.cnt.full{background:var(--red);color:#fff}
+.rchip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:12px;border:1px solid var(--line2);background:var(--card);font-size:12px;font-weight:600;color:var(--tx2);margin:2px 4px 2px 0}
+.rchip i{width:9px;height:9px;border-radius:50%;background:var(--rc,#a1a1aa);display:block}
+.rchip.on{color:var(--tx);border-color:var(--rc,#a1a1aa)}
+button.rchip{cursor:pointer}
+.rolerow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rolerow:last-child{border-bottom:0}
+.rolerow .inp{height:36px}
+.optgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bgsw{width:54px;height:36px;border-radius:10px;border:1px solid var(--line2);cursor:pointer;flex-shrink:0}
+.bgsw.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ac)}
+/* ---------- Temas do app ---------- */
+.themegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.tcard{background:var(--card2);border:1px solid var(--line2);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;font-weight:600;color:var(--tx2);cursor:pointer}
+.tcard.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac);color:var(--tx)}
+.tprev{height:58px;border-radius:9px;display:flex;gap:4px;padding:5px;overflow:hidden}
+.tprev i{display:block;border-radius:5px}
+.tprev i:first-child{width:28%}
+.tprev i:last-child{flex:1;display:flex;flex-direction:column;gap:4px;padding:5px}
+.tprev b{display:block;height:10px;border-radius:4px}
+.tprev b:last-child{width:45%}
+/* ---------- Ajustes de alinhamento ---------- */
+.sc>h3{margin-bottom:14px}
+.swatches,.colorrow{padding:4px 2px}
+.sw{flex-shrink:0}
+.sc .field:last-child{margin-bottom:0}
+.imgrow{row-gap:10px}
+.profile b{line-height:1.25}
+#userbar .who{line-height:1.25}
+.mem .nm{display:flex;align-items:center;gap:4px;min-width:0}
+.mem .nm .nmx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.main-head .t{display:flex;flex-direction:column;justify-content:center}
+.main-head .t small:empty{display:none}
+.cat{user-select:none}
+.thgrid button,.avgrid button{cursor:pointer}
+/* tema do app: brilho de fundo opcional */
+body.bg-glow #main{background-image:radial-gradient(900px 500px at 100% 0%,color-mix(in srgb,var(--ac) 10%,transparent),transparent 70%)}
 /* ---------- Sugestão do app para PC ---------- */
 #appBanner{display:flex;align-items:center;gap:12px;margin:12px 16px 0;padding:10px 12px 10px 14px;border-radius:14px;background:linear-gradient(110deg,#1a1a1f,#111114 60%);border:1px solid var(--line2);flex-shrink:0;animation:tin .25s}
 #appBanner .ab-ico{width:34px;height:34px;border-radius:10px;background:var(--ac);color:var(--act);display:grid;place-items:center;flex-shrink:0}
@@ -740,6 +823,7 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
   .cbtn{width:44px;height:44px}
 }
 @media (min-width: 761px){ #scrim{display:none!important} }
+.sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
 </style>
 </head>
 <body>
@@ -774,6 +858,12 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-1.2-1-1.5-1-2.5s.8-1.5 2-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></symbol>
   <symbol id="i-keyb" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-phone-off" viewBox="0 0 24 24"><path d="M10.7 13.3a11 11 0 0 0 3.8 2.2L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 6.6 15.4M4.2 11.6A16 16 0 0 1 3 6a2 2 0 0 1 2-2h4l2 5-2.5 1.5M3 21 21 3"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></symbol>
   <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/></symbol>
@@ -853,6 +943,7 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
       <div class="t"><h1 id="mainTitle"></h1><small id="mainSub"></small></div>
       <div class="sp"></div>
       <button class="hbtn hidden" id="statsBtn" title="Mostra em cada vídeo: resolução, fps, codec, velocidade e ping. Útil para ver por que algo está travando."><svg class="i sm"><use href="#i-signal"/></svg><span>Estatísticas</span></button>
+      <button class="ibtn hidden" id="callBtn" title="Ligar"><svg class="i"><use href="#i-phone"/></svg></button>
       <button class="hbtn" id="inviteBtn"><svg class="i sm"><use href="#i-plus"/></svg><span>Convidar</span></button>
       <button class="ibtn" id="membersBtn" title="Mostrar/ocultar membros"><svg class="i"><use href="#i-users"/></svg></button>
     </div>
@@ -860,7 +951,7 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
     <section id="chat" class="hidden">
       <div id="msgs"></div>
       <div id="typing"></div>
-      <div class="composer"><form id="sendForm"><textarea id="msgInp" rows="1" maxlength="2000" placeholder="Conversar"></textarea><button class="send" type="submit" title="Enviar"><svg class="i"><use href="#i-send"/></svg></button></form></div>
+      <div class="composer"><div class="fmtbar" id="fmtbar"><button type="button" data-md="**" title="Negrito (Ctrl+B)"><b>B</b></button><button type="button" data-md="*" title="Itálico (Ctrl+I)"><i>I</i></button><button type="button" data-md="__" title="Sublinhado (Ctrl+U)"><u>U</u></button><button type="button" data-md="~~" title="Riscado"><s>S</s></button><button type="button" data-md="`" title="Código" style="font-family:monospace">&lt;/&gt;</button><button type="button" data-md="||" title="Spoiler">▮</button><button type="button" data-line="> " title="Citação">❝</button><button type="button" data-line="- " title="Lista">•</button></div><form id="sendForm"><textarea id="msgInp" rows="1" maxlength="2000" placeholder="Conversar"></textarea><button class="send" type="submit" title="Enviar"><svg class="i"><use href="#i-send"/></svg></button></form></div>
     </section>
     <section id="stage" class="hidden">
       <div id="tiles"></div>
@@ -913,7 +1004,7 @@ const SHARE_Q = {
 const CAM_Q = { '480':{w:854,h:480,br:700000}, '720':{w:1280,h:720,br:1500000}, '1080':{w:1920,h:1080,br:2800000} };
 const PREF_DEFAULTS = {
   micId:'', outId:'', camId:'', inGain:1, outVol:1,
-  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
+  sensMode:'auto', sensDb:-50, ns:true, ec:true, agc:true, joinSound:true, voiceKbps:96, voiceRed:true, voiceMode:'vad', pttKey:null, pttWeb:'', pttRelease:200, keyMute:'Ctrl+Shift+M', keyDeaf:'Ctrl+Shift+D', notify:true, layout:'', showMembers:true, appTheme:'oled', themeBase:'#1a1a2e', bgGlow:false, accent:'#ffffff', fontScale:1, compact:false, reduce:false, hideFx:false,
   camRes:'720', camFps:30,
   shareQ:'jogo1080', shareCodec:'auto', uploadMbps:20, lowLatency:false, showStats:false,
   turnUrl:'', turnUser:'', turnPass:'',
@@ -930,17 +1021,66 @@ const ls = {
 };
 let PREFS = Object.assign({}, PREF_DEFAULTS, ls.get('cc_prefs', {}));
 const P = () => PREFS;
+const APP_THEMES = {
+  oled:      { label:'OLED',        bg:'#000000', panel:'#0a0a0b', side:'#08080a', main:'#050506', card:'#131315', card2:'#1a1a1d', line:'#202024', line2:'#2a2a2f' },
+  grafite:   { label:'Grafite',     bg:'#111214', panel:'#18191c', side:'#16171a', main:'#1c1d21', card:'#222327', card2:'#2a2b30', line:'#2c2d32', line2:'#3a3b41' },
+  meianoite: { label:'Meia-noite',  bg:'#05070f', panel:'#0b1020', side:'#0a0f1d', main:'#080c18', card:'#121a2e', card2:'#18213a', line:'#1c2540', line2:'#263155' },
+  roxo:      { label:'Ametista',    bg:'#08040f', panel:'#120a1f', side:'#10091c', main:'#0c0716', card:'#1b1030', card2:'#22153b', line:'#2a1b45', line2:'#372457' },
+  floresta:  { label:'Floresta',    bg:'#030806', panel:'#08130e', side:'#07110c', main:'#050d09', card:'#0f1f17', card2:'#14281e', line:'#1a3125', line2:'#22402f' },
+  vinho:     { label:'Vinho',       bg:'#0a0306', panel:'#16080d', side:'#13070b', main:'#0f0509', card:'#221017', card2:'#2b141d', line:'#351823', line2:'#45202e' },
+  oceano:    { label:'Oceano',      bg:'#020a0e', panel:'#06141b', side:'#051218', main:'#040e13', card:'#0b2029', card2:'#0f2833', line:'#13303c', line2:'#1a3e4d' },
+  cafe:      { label:'Café',        bg:'#0b0806', panel:'#15100c', side:'#130e0a', main:'#0f0b08', card:'#211913', card2:'#2a2018', line:'#33271d', line2:'#433426' },
+  ardosia:   { label:'Ardósia',     bg:'#0b0d10', panel:'#13171c', side:'#11151a', main:'#0e1115', card:'#1b2128', card2:'#222a32', line:'#27303a', line2:'#323e4a' },
+};
+function themeFromBase(hex){
+  const n=parseInt(hex.slice(1),16); const r=n>>16&255, g=n>>8&255, b=n&255;
+  const sh=(k)=>'#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v*k)))).map(v=>v.toString(16).padStart(2,'0')).join('');
+  const mix=(k)=>'#'+[r,g,b].map(v=>Math.min(255,Math.round(v+(255-v)*k))).map(v=>v.toString(16).padStart(2,'0')).join('');
+  return { bg:sh(.45), panel:sh(.8), side:sh(.72), main:sh(.62), card:hex, card2:mix(.05), line:mix(.08), line2:mix(.14) };
+}
 function applyAppearance(){
   const isApp = !!window.concordDesktop;
   const c = isApp && /^#[0-9a-f]{6}$/i.test(PREFS.accent||'') ? PREFS.accent : '#ffffff';
   const n=parseInt(c.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255; const lum=(0.299*r+0.587*g+0.114*b)/255;
-  const root=document.documentElement.style; root.setProperty('--ac', c); root.setProperty('--act', lum>0.6?'#000000':'#ffffff'); document.body.style.zoom = String(isApp ? (PREFS.fontScale||1) : 1);
+  const root=document.documentElement.style; root.setProperty('--ac', c);
+  const T = isApp ? (PREFS.appTheme==='custom' && /^#[0-9a-f]{6}$/i.test(PREFS.themeBase||'') ? themeFromBase(PREFS.themeBase) : (APP_THEMES[PREFS.appTheme]||APP_THEMES.oled)) : APP_THEMES.oled;
+  for(const k of ['bg','panel','side','main','card','card2','line','line2']) root.setProperty('--'+k, T[k]);
+  document.body.classList.toggle('bg-glow', isApp && !!PREFS.bgGlow); root.setProperty('--act', lum>0.6?'#000000':'#ffffff'); document.body.style.zoom = String(isApp ? (PREFS.fontScale||1) : 1);
   document.body.classList.toggle('compact', !!PREFS.compact); document.body.classList.toggle('reduce', !!PREFS.reduce);
   const lay = isApp ? (PREFS.layout || 'flat') : 'cards'; document.body.classList.toggle('flat', lay==='flat');
   document.body.classList.toggle('hide-members', PREFS.showMembers===false);
 }
 function setPref(k, v){ PREFS[k]=v; ls.set('cc_prefs', PREFS); }
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function md(src){
+  const keep=[]; const K=h=>{ keep.push(h); return '\u0001'+(keep.length-1)+'\u0002'; };
+  let t=String(src??'');
+  t=t.replace(/```(?:[a-zA-Z0-9+#-]*\n)?([\s\S]*?)```/g, (_,c)=>K('<span class="mdpre">'+esc(c.replace(/^\n+|\n+$/g,''))+'</span>'));
+  t=t.replace(/`([^`\n]+)`/g, (_,c)=>K('<code class="mdc">'+esc(c)+'</code>'));
+  t=esc(t);
+  t=t.replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g, u=>K(`<a href="${u}" target="_blank" rel="noopener">${u}</a>`));
+  t=t.replace(/\|\|(.+?)\|\|/g,'<span class="spoiler">$1</span>')
+     .replace(/\*\*\*(.+?)\*\*\*/g,'<b><i>$1</i></b>')
+     .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+     .replace(/__(.+?)__/g,'<u>$1</u>')
+     .replace(/~~(.+?)~~/g,'<s>$1</s>')
+     .replace(/(^|[^\w*])\*(?=\S)([^*\n]*?\S)\*(?!\w)/g,'$1<i>$2</i>')
+     .replace(/(^|[^\w])_(?=\S)([^_\n]*?\S)_(?!\w)/g,'$1<i>$2</i>');
+  const me=(S.me?.name||'').toLowerCase();
+  t=t.replace(/(^|\s)@([\wÀ-ÿ.-]{2,32})/g,(m0,pre,n)=>`${pre}<span class="mention${(n.toLowerCase()===me||n==='todos'||n==='everyone')?' me':''}">@${n}</span>`);
+  const lines=t.split('\n'); let out='';
+  const isB=l=>/^(&gt; ?|#{1,3} \S|[-*] \S)/.test(l||'');
+  lines.forEach((l,i)=>{ let blk=null;
+    if(/^&gt; ?/.test(l)) blk='<span class="mdq">'+l.replace(/^&gt; ?/,'')+'</span>';
+    else if(/^#{1,3} \S/.test(l)){ const n=l.match(/^#+/)[0].length; blk=`<span class="mdh${n}">`+l.slice(n+1)+'</span>'; }
+    else if(/^[-*] \S/.test(l)) blk='<span class="mdli">'+l.slice(2)+'</span>';
+    out += blk ?? l;
+    if(i<lines.length-1 && !blk && !isB(lines[i+1])) out+='\n';
+  });
+  out=out.replace(/\u0001(\d+)\u0002/g,(_,i)=>keep[+i]);
+  return out;
+}
+document.addEventListener('click', e=>{ const sp=e.target.closest('.spoiler'); if(sp) sp.classList.add('open'); });
 const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 const initial = n => (n||'?').trim().charAt(0).toUpperCase();
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36));
@@ -1023,7 +1163,10 @@ function nameP(p, text){
   if(fx==='wave') return `<span class="${cls.join(' ')}" style="${esc(st)}">${[...(text ?? p.display_name ?? '')].map((ch,i)=>`<i style="animation-delay:${(i*0.07).toFixed(2)}s">${ch===' '?'&nbsp;':esc(ch)}</i>`).join('')}</span>`;
   return `<span class="${cls.join(' ')}" style="${esc(st)}">${t}</span>`;
 }
-function nameHtml(uid, text){ return nameP(S.profiles.get(uid), text ?? dname(uid)); }
+function nameHtml(uid, text){ let p=S.profiles.get(uid); const rc=!S.home && roleColor(uid); if(rc && p && !safeColor(p.name_color) && !p.name_effect) p={...p, name_color:rc}; return nameP(p, text ?? dname(uid)); }
+function userRoles(uid){ const set=S.mroles?.get(uid); return set ? (S.roles||[]).filter(r=>set.has(r.id)) : []; }
+function roleColor(uid){ const r=userRoles(uid).find(r=>safeColor(r.color)); return r ? r.color : null; }
+function hoistRole(uid){ return userRoles(uid).find(r=>r.hoist) || null; }
 function avatarP(p, size, opt={}){
   p=p||{}; const color=safeColor(p.color)||'#6366f1'; const url=safeUrl(p.avatar_url);
   const deco = (opt.noDeco || PREFS.hideFx) && opt.noDeco!==false ? '' : (DECO_KEYS.has(p.decoration)?p.decoration:'');
@@ -1108,8 +1251,12 @@ function showProfile(uid, ev){
   const bg=document.createElement('div'); bg.className='pop-bg'; bg.onclick=closePop;
   const pop=document.createElement('div'); pop.className='pop';
   pop.innerHTML=profileCardHtml(p, { nick:S.nicks.get(uid), status:statusOf(uid), fxKey:'card-'+uid,
-    extra: uid===S.me.id ? `<button class="btn sec" style="margin-top:14px" data-edit>${ic('user','sm')} Editar perfil</button>` : '' });
+    extra: (!S.home && userRoles(uid).length ? `<div class="lbl" style="margin-top:12px">Cargos</div><div>${userRoles(uid).map(r=>`<span class="rchip on" style="--rc:${safeColor(r.color)||'#a1a1aa'}"><i></i>${r.icon?esc(r.icon)+' ':''}${esc(r.name)}</span>`).join('')}</div>` : '')
+      + (uid===S.me.id ? `<button class="btn sec" style="margin-top:14px" data-edit>${ic('user','sm')} Editar perfil</button>`
+        : `<div class="row" style="margin-top:14px;gap:8px"><button class="btn sec" data-dm>${ic('chat','sm')} Mensagem</button><button class="btn sec auto" data-call title="Ligar">${ic('phone','sm')}</button></div>`) });
   document.body.append(bg, pop); placePop(pop, ev);
+  pop.querySelector('[data-dm]')?.addEventListener('click', ()=>{ closePop(); openDmWith(uid); });
+  pop.querySelector('[data-call]')?.addEventListener('click', ()=>{ closePop(); openDmWith(uid, true); });
   pop.querySelector('[data-edit]')?.addEventListener('click', ()=>{ closePop(); openSettings('perfil'); });
 }
 document.addEventListener('click', e=>{ const t=e.target.closest('[data-pu]'); if(t && t.dataset.pu && !e.target.closest('.tools')){ e.stopPropagation(); showProfile(t.dataset.pu, e); } }, true);
@@ -1286,8 +1433,9 @@ async function start(){
   if(P().notify && !DESK && 'Notification' in window && Notification.permission==='default') setTimeout(()=>{ try{ Notification.requestPermission(); }catch{} }, 4000);
   const hashCode = (location.hash||'').replace('#','').trim().toUpperCase();
   await loadServers();
+  loadDms().then(startDmRealtime);
   let joinedNew=null;
-  if(/^[A-Z0-9]{4,12}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
+  if(/^[A-Z0-9-]{3,24}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
   if(hashCode) history.replaceState(null, '', location.pathname+location.search);
   const pick = joinedNew || S.servers.find(s=>s.code===hashCode) || S.servers.find(s=>s.code===ls.get('dc_last')) || S.servers[0];
   if(pick) selectServer(pick); else renderNoServer();
@@ -1302,7 +1450,7 @@ function renderNoServer(){
   $('.composer').classList.add('hidden');
   $('#msgs').innerHTML = `<div class="welcome" style="max-width:520px;margin:40px auto"><div class="big">${ic('users','lg')}</div>
     <h2>Você ainda não está em nenhum servidor</h2><p>Peça para quem te chamou o <b>link</b> ou o <b>código de convite</b>.</p>
-    <div class="row" style="margin-top:16px"><input class="inp" id="nsCode" maxlength="12" placeholder="Código, ex.: K7P2QX" style="text-transform:uppercase;letter-spacing:.1em"><button class="btn auto" id="nsGo">Entrar</button></div></div>`;
+    <div class="row" style="margin-top:16px"><input class="inp" id="nsCode" maxlength="24" placeholder="Código, ex.: K7P2QX" style="text-transform:uppercase;letter-spacing:.1em"><button class="btn auto" id="nsGo">Entrar</button></div></div>`;
   const go=async()=>{ const c=$('#nsCode').value.trim().toUpperCase().replace('#',''); if(!c) return; const s=await joinByCode(c); if(s){ $('.composer').classList.remove('hidden'); selectServer(s); } };
   $('#nsGo').onclick=go; $('#nsCode').onkeydown=e=>{ if(e.key==='Enter') go(); };
 }
@@ -1323,9 +1471,11 @@ async function joinByCode(code, silent){
   renderRail(); return srv;
 }
 function renderRail(){
-  const r = $('#rail'); r.innerHTML='<div class="logo" title="CONCORD"><svg><use href="#i-logo"/></svg></div><div class="rail-sep"></div>';
+  const r = $('#rail'); const un=DM.unread.size;
+  r.innerHTML=`<button class="logo${S.home?' on':''}" title="Mensagens diretas"><svg><use href="#i-logo"/></svg>${un?`<span class="dot-badge">${un}</span>`:''}</button><div class="rail-sep"></div>`;
+  r.querySelector('.logo').onclick=()=>{ openHome(); closeDrawer(); };
   S.servers.forEach(s=>{ const b=document.createElement('button'); const img=safeUrl(s.icon_url);
-    b.className='srv'+(S.server?.id===s.id?' on':'')+(img?' has-img':''); b.title=s.name;
+    b.className='srv'+(S.server?.id===s.id&&!S.home?' on':'')+(img?' has-img':''); b.title=s.name;
     if(img) b.innerHTML=`<img src="${esc(img)}" alt="">`; else b.textContent = s.icon || initial(s.name);
     b.onclick=()=>{ selectServer(s); closeDrawer(); }; r.appendChild(b); });
   const add=document.createElement('button'); add.className='srv add'; add.title=S.isAdmin?'Criar ou entrar em servidor':'Entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal(S.isAdmin?'create':'join'); r.appendChild(add);
@@ -1333,6 +1483,7 @@ function renderRail(){
   const out=document.createElement('button'); out.className='srv logout'; out.title='Sair da conta'; out.innerHTML=ic('out'); out.onclick=async()=>{ if(await confirmBox('Sair da conta?', '', 'Sair')) logout(); }; r.appendChild(out);
 }
 function renderServerHead(){
+  if(S.home) return renderHomeHead();
   const s=S.server; if(!s) return; const head=$('.side-head'); const bn=safeUrl(s.banner_url); const ac=safeColor(s.accent);
   $('#srvCode').classList.remove('hidden'); $('#inviteBtn').classList.remove('hidden');
   $('#srvName').innerHTML=esc(s.name)+ic('chev','sm'); $('#srvCode').innerHTML=ic('copy','sm')+esc(s.code);
@@ -1342,16 +1493,19 @@ function renderServerHead(){
   head.style.backgroundImage = bn ? `url('${bn}')` : ac ? `linear-gradient(135deg,${ac},#0a0a0b)` : '';
 }
 async function selectServer(s){
+  if(S.home && S.server?.id===s.id){ S.home=false; applyServerTheme(S.server); renderServerHead(); renderRail(); renderChannels(); renderMembers(); const f=S.channels.find(c=>c.kind==='text'); if(f) openText(f); return; }
   if(S.server?.id===s.id) return;
-  if(V) await leaveVoice();
+  S.home=false;
+  if(V && !V.ch.dm) await leaveVoice();
   if(S.srvRt) { sb.removeChannel(S.srvRt); S.srvRt=null; }
   if(S.msgRt) { sb.removeChannel(S.msgRt); S.msgRt=null; }
   S.server=s; S.unread.clear(); S.srvPresence={}; S.nicks=new Map(); ls.set('dc_last', s.code);
   $('.composer').classList.remove('hidden');
-  renderServerHead(); renderRail(); renderAppBanner();
+  renderServerHead(); renderRail(); renderAppBanner(); applyServerTheme(s);
   await Promise.all([loadChannels(), loadMemberProfiles()]);
+  showWelcome(s);
   const refreshServer = async ()=>{ const { data } = await sb.from('dc_servers').select('*').eq('id', s.id).maybeSingle();
-    if(data){ Object.assign(S.server, data); const i=S.servers.findIndex(x=>x.id===data.id); if(i>=0) S.servers[i]=S.server; renderServerHead(); renderRail(); } };
+    if(data){ Object.assign(S.server, data); const i=S.servers.findIndex(x=>x.id===data.id); if(i>=0) S.servers[i]=S.server; renderServerHead(); renderRail(); if(!S.home) applyServerTheme(S.server); } };
   S.srvRt = sb.channel('dc-srv-'+s.id, { config:{ presence:{ key:S.sid }, broadcast:{ self:false } } })
     .on('presence', {event:'sync'}, ()=>{ S.srvPresence = S.srvRt.presenceState(); renderChannels(); renderMembers(); renderSub(); renderMe(); if(S.view?.type==='voice' && !V) renderJoinCta(); })
     .on('broadcast', {event:'typing'}, ({payload})=>onTyping(payload))
@@ -1359,6 +1513,8 @@ async function selectServer(s){
     .on('postgres_changes', {event:'*', schema:'public', table:'dc_channels', filter:'server_id=eq.'+s.id}, ()=>loadChannels())
     .on('postgres_changes', {event:'DELETE', schema:'public', table:'dc_channels'}, ({old})=>{ if(S.channels.find(c=>c.id===old?.id)) loadChannels(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'dc_members', filter:'server_id=eq.'+s.id}, ()=>loadMemberProfiles())
+    .on('postgres_changes', {event:'*', schema:'public', table:'dc_roles', filter:'server_id=eq.'+s.id}, ()=>loadMemberProfiles())
+    .on('postgres_changes', {event:'*', schema:'public', table:'dc_member_roles', filter:'server_id=eq.'+s.id}, ()=>loadMemberProfiles())
     .on('postgres_changes', {event:'DELETE', schema:'public', table:'dc_members'}, ()=>loadMemberProfiles())
     .on('postgres_changes', {event:'UPDATE', schema:'public', table:'dc_servers', filter:'id=eq.'+s.id}, refreshServer)
     .on('postgres_changes', {event:'UPDATE', schema:'public', table:'dc_profiles'}, ({new:p})=>{ if(p && (S.profiles.has(p.id))){ S.profiles.set(p.id, p); fxCache.clear(); renderMembers(); renderChannels(); renderMe(); if(V) renderTiles(); } })
@@ -1384,6 +1540,10 @@ async function loadMemberProfiles(){
   const ids=(mem||[]).map(m=>m.user_id);
   if(ids.length){ const { data } = await sb.from('dc_profiles').select('*').in('id', ids); (data||[]).forEach(p=>S.profiles.set(p.id, p)); }
   S.memberProfiles = ids.map(id=>S.profiles.get(id)).filter(Boolean);
+  const sid=S.server.id; const [{data:roles},{data:mr}] = await Promise.all([ sb.from('dc_roles').select('*').eq('server_id', sid), sb.from('dc_member_roles').select('*').eq('server_id', sid) ]);
+  if(S.server?.id!==sid) return;
+  S.roles=(roles||[]).sort((a,b)=>a.position-b.position||String(a.created_at).localeCompare(String(b.created_at))); S.mroles=new Map();
+  (mr||[]).forEach(r=>{ if(!S.mroles.has(r.user_id)) S.mroles.set(r.user_id, new Set()); S.mroles.get(r.user_id).add(r.role_id); });
   renderMe(); renderMembers(); renderChannels(); if(V) renderTiles();
 }
 function subscribeMessages(){
@@ -1411,31 +1571,42 @@ function onlineList(){
 }
 function voiceUsers(chId){ return onlineList().filter(p=>p.voice===chId); }
 function renderChannels(){
-  const L = $('#chanlist'); L.innerHTML=''; const edit=canEditServer();
-  const sec = (title, kind) => {
-    const h=document.createElement('div'); h.className='cat'; h.innerHTML=`<span>${title}</span>${edit?`<button title="Criar canal">${ic('plus','sm')}</button>`:''}`;
-    h.querySelector('button')?.addEventListener('click', ()=>openChannelModal(kind)); L.appendChild(h);
-    S.channels.filter(c=>c.kind===kind).forEach(c=>{
-      const users = kind==='voice' ? voiceUsers(c.id) : [];
-      const b=document.createElement('button');
-      b.className='ch'+(S.view?.ch.id===c.id?' on':'')+(S.unread.has(c.id)?' unread':'');
-      b.innerHTML=`${ic(kind==='text'?'hash':'vol','sm')}<span class="nm">${esc(c.name)}</span>${users.length?`<span class="cnt">${users.length}</span>`:''}${edit?`<span class="gear" title="Editar canal">${ic('gear','sm')}</span>`:''}`;
-      b.onclick=e=>{ if(e.target.closest('.gear')){ e.stopPropagation(); openServerSettings('canais'); return; } kind==='text'?openText(c):openVoice(c); closeDrawer(); };
-      L.appendChild(b);
-      if(users.length){ const w=document.createElement('div'); w.className='vusers';
-        w.innerHTML = users.map(u=>`<div class="vu${plateClass(S.profiles.get(u.uid))}" data-key="${esc(u.key)}" data-pu="${esc(u.uid||'')}">${avatarU(u.uid, 22, {name:u.name,color:u.color})}<span class="nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameHtml(u.uid, dname(u.uid,u.name))}</span><span class="flags">${u.screen?'<span class="live">AO VIVO</span>':''}${u.cam?ic('cam','sm'):''}${u.deaf?ic('head-off','sm'):u.muted?ic('mic-off','sm'):''}</span></div>`).join('');
-        L.appendChild(w); }
-    });
+  if(S.home) return renderDmSide();
+  const L = $('#chanlist'); L.innerHTML=''; const edit=canEditServer(); const coll=new Set(ls.get('dc_fold', []));
+  const item = c=>{
+    const kind=c.kind; const users = kind==='voice' ? voiceUsers(c.id) : [];
+    const b=document.createElement('button');
+    b.className='ch'+(S.view?.ch?.id===c.id?' on':'')+(S.unread.has(c.id)?' unread':'');
+    const full = c.user_limit && users.length>=c.user_limit;
+    b.innerHTML=`${c.icon?`<span class="chi">${esc(c.icon)}</span>`:ic(kind==='text'?'hash':'vol','sm')}<span class="nm">${esc(c.name)}</span>${c.readonly?`<span class="lk" title="Somente leitura">${ic('lock','sm')}</span>`:''}${c.slowmode?`<span class="lk" title="Modo lento">${ic('clock','sm')}</span>`:''}${kind==='voice'&&(users.length||c.user_limit)?`<span class="cnt${full?' full':''}">${users.length}${c.user_limit?'/'+c.user_limit:''}</span>`:''}${edit?`<span class="gear" title="Editar canal">${ic('gear','sm')}</span>`:''}`;
+    b.onclick=e=>{ if(e.target.closest('.gear')){ e.stopPropagation(); openChannelOptions(c); return; } kind==='text'?openText(c):openVoice(c); closeDrawer(); };
+    L.appendChild(b);
+    if(users.length){ const w=document.createElement('div'); w.className='vusers';
+      w.innerHTML = users.map(u=>`<div class="vu${plateClass(S.profiles.get(u.uid))}" data-key="${esc(u.key)}" data-pu="${esc(u.uid||'')}">${avatarU(u.uid, 22, {name:u.name,color:u.color})}<span class="nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameHtml(u.uid, dname(u.uid,u.name))}</span><span class="flags">${u.screen?'<span class="live">AO VIVO</span>':''}${u.cam?ic('cam','sm'):''}${u.deaf?ic('head-off','sm'):u.muted?ic('mic-off','sm'):''}</span></div>`).join('');
+      L.appendChild(w); }
   };
-  sec('Canais de texto','text'); sec('Canais de voz','voice');
+  const sec = (key, title, chans, addKind) => {
+    if(!chans.length && !edit) return;
+    const closed=coll.has(key);
+    const h=document.createElement('div'); h.className='cat fold'+(closed?' closed':''); h.innerHTML=`<span>${esc(title)}</span>${edit&&addKind?`<button title="Criar canal">${ic('plus','sm')}</button>`:''}`;
+    h.onclick=e=>{ if(e.target.closest('button')) return; closed?coll.delete(key):coll.add(key); ls.set('dc_fold', [...coll]); renderChannels(); };
+    h.querySelector('button')?.addEventListener('click', ()=>openChannelModal(addKind)); L.appendChild(h);
+    chans.forEach(c=>{ if(!closed || S.view?.ch?.id===c.id || (c.kind==='voice' && voiceUsers(c.id).length)) item(c); });
+  };
+  const nocat = k => S.channels.filter(c=>c.kind===k && !c.category);
+  sec('_t','Canais de texto', nocat('text'), 'text'); sec('_v','Canais de voz', nocat('voice'), 'voice');
+  const cats=[]; S.channels.forEach(c=>{ if(c.category && !cats.includes(c.category)) cats.push(c.category); });
+  cats.forEach(cat=>{ const ch=S.channels.filter(c=>c.category===cat); sec('c:'+S.server.id+':'+cat, cat, [...ch.filter(c=>c.kind==='text'), ...ch.filter(c=>c.kind==='voice')], null); });
 }
 function renderSub(){
   if(!S.view) return;
+  if(S.view.type==='dm'){ $('#mainSub').textContent=''; return; }
   const n=onlineList().length;
   if(S.view.type==='text') $('#mainSub').textContent = S.view.ch.topic || '';
   else { const u=voiceUsers(S.view.ch.id).length; $('#mainSub').textContent = u ? `${u} na sala` : 'Sala vazia'; }
 }
 function renderMembers(){
+  if(S.home) return renderDmMembers();
   if(!S.me || !S.server) return;
   const list = onlineList();
   const onIds = new Set(list.map(p=>p.uid));
@@ -1456,12 +1627,16 @@ function renderMembers(){
     const p=S.profiles.get(uid)||{}; const st = on ? statusOf(uid) : null;
     return `<div class="mem ${on?'':'offl'}${plateClass(p)}" data-pu="${esc(uid||'')}">${avatarU(uid, 34, {name:fbName,color:fbColor}, {status: st && st!=='offline' ? st : undefined})}<div style="min-width:0"><div class="nm">${nameHtml(uid, dname(uid, fbName))}${admBadge(uid)}</div>${sub?`<small>${sub}</small>`:(p.status_text?`<span class="st">${esc(p.status_text)}</span>`:'')}</div>${extra}</div>`;
   };
-  html += `<div class="mtitle">Online — ${list.length}</div><div>` + list.map(p=>{
+  const onRow = p=>{
     const ch = p.voice && S.channels.find(c=>c.id===p.voice);
     const mins = p.since ? Math.max(0, Math.round((Date.now()-p.since)/60000)) : null;
     const sub = ch ? (p.screen?ic('radio','sm')+'Transmitindo':ic('vol','sm')+esc(ch.name)) : '';
     return row(p.uid, p.name, p.color, sub, true, `<span class="when">${mins==null?'':mins<1?'agora':mins<60?mins+' min':Math.floor(mins/60)+' h'}</span>`);
-  }).join('') + '</div>';
+  };
+  const groups=new Map(); const rest=[];
+  list.forEach(p=>{ const r=hoistRole(p.uid); if(r){ if(!groups.has(r.id)) groups.set(r.id, []); groups.get(r.id).push(p); } else rest.push(p); });
+  (S.roles||[]).forEach(r=>{ const g=groups.get(r.id); if(g) html += `<div class="mtitle">${r.icon?esc(r.icon)+' ':''}${esc(r.name)} — ${g.length}</div><div>`+g.map(onRow).join('')+'</div>'; });
+  if(rest.length || !groups.size) html += `<div class="mtitle">Online — ${rest.length}</div><div>` + rest.map(onRow).join('') + '</div>';
   if(offline.length) html += `<div class="mtitle">Offline — ${offline.length}</div><div>` + offline.map(p=>row(p.id, p.display_name, p.color, '', false)).join('') + '</div>';
   $('#members').innerHTML = html;
   $('#mpEdit').onclick = e=>{ e.stopPropagation(); openSettings('perfil'); };
@@ -1482,9 +1657,10 @@ function renderMe(){
    ===================================================================== */
 async function openText(ch){
   S.view={type:'text', ch}; S.unread.delete(ch.id); renderChannels();
-  $('#mainTitle').innerHTML=`${ic('hash')}${esc(ch.name)}`; renderSub(); $('#statsBtn').classList.add('hidden');
+  $('#mainTitle').innerHTML=`${ch.icon?`<span class="chi" style="margin-right:6px">${esc(ch.icon)}</span>`:ic('hash')}${esc(ch.name)}`; renderSub(); $('#statsBtn').classList.add('hidden');
   $('#chat').classList.remove('hidden'); $('#stage').classList.add('hidden');
-  $('#msgInp').placeholder='Conversar em #'+ch.name;
+  const ro = ch.readonly && !canEditServer(); $('#msgInp').disabled=ro; $('.composer').classList.toggle('ro', ro);
+  $('#msgInp').placeholder= ro ? 'Somente leitura' : 'Conversar em #'+ch.name; $('#callBtn').classList.add('hidden');
   const box=$('#msgs'); box.innerHTML=`<div class="welcome"><div class="big">${ic('hash','lg')}</div><h2>Bem-vindo(a) a #${esc(ch.name)}</h2></div>`;
   S.lastAuthor=null; S.lastTime=0; S.lastDay='';
   renderTyping();
@@ -1506,9 +1682,10 @@ function appendMsg(m, live){
   const el=document.createElement('div'); el.className='msg'+(grouped?'':' first'); el.dataset.id=m.id; el.dataset.uid=m.user_id||'';
   const pu = m.user_id && S.profiles.has(m.user_id) ? ` data-pu="${esc(m.user_id)}"` : '';
   el.innerHTML = grouped
-    ? `<div class="gut">${fmtTime(d)}</div><div class="body"><div class="txt">${linkify(m.content)}</div></div>`
-    : `<div${pu}>${avatarU(m.user_id, null, {name:m.author,color:m.author_color}, {noDeco:false})}</div><div class="body"><div class="hd"><b${pu}>${m.user_id&&S.profiles.has(m.user_id)?nameHtml(m.user_id):esc(m.author)}</b>${admBadge(m.user_id)}<time>${fmtDay(d)==='Hoje'?'Hoje às '+fmtTime(d):fmtDay(d)+' '+fmtTime(d)}</time></div><div class="txt">${linkify(m.content)}</div></div>`;
-  if(S.isAdmin){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem (ADM)'; del.innerHTML=ic('trash','sm');
+    ? `<div class="gut">${fmtTime(d)}</div><div class="body"><div class="txt">${md(m.content)}</div></div>`
+    : `<div${pu}>${avatarU(m.user_id, null, {name:m.author,color:m.author_color}, {noDeco:false})}</div><div class="body"><div class="hd"><b${pu}>${m.user_id&&S.profiles.has(m.user_id)?nameHtml(m.user_id):esc(m.author)}</b>${admBadge(m.user_id)}<time>${fmtDay(d)==='Hoje'?'Hoje às '+fmtTime(d):fmtDay(d)+' '+fmtTime(d)}</time></div><div class="txt">${md(m.content)}</div></div>`;
+  if(el.querySelector('.mention.me') && m.user_id!==S.me.id) el.classList.add('mentioned');
+  if(S.isAdmin && !m.dm_id){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem (ADM)'; del.innerHTML=ic('trash','sm');
     del.onclick=async e=>{ e.stopPropagation(); const { error } = await sb.from('dc_messages').delete().eq('id', m.id); if(error) return toast('Erro: '+error.message, true); el.remove(); }; el.appendChild(del); }
   box.appendChild(el); S.lastAuthor=who; S.lastTime=+d;
   const all=box.querySelectorAll('.msg'); if(all.length>400) for(let i=0;i<all.length-350;i++) all[i].remove();
@@ -1519,10 +1696,24 @@ $('#msgInp').addEventListener('input', e=>{
   const t=e.target; t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,200)+'px';
   if(Date.now()-typingSent>2500 && S.srvRt && S.view?.type==='text'){ typingSent=Date.now(); S.srvRt.send({type:'broadcast', event:'typing', payload:{ch:S.view.ch.id, name:dname(S.me.id), sid:S.sid}}); }
 });
-$('#msgInp').addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); } });
+$('#msgInp').addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); return; }
+  if((e.ctrlKey||e.metaKey) && !e.shiftKey && !e.altKey){ const w={b:'**',i:'*',u:'__'}[e.key.toLowerCase()]; if(w){ e.preventDefault(); wrapSel(w); } } });
+function wrapSel(w, line){
+  const t=$('#msgInp'); const a=t.selectionStart, b=t.selectionEnd, v=t.value;
+  if(line){ const ls0=v.lastIndexOf('\n', a-1)+1; t.value=v.slice(0,ls0)+line+v.slice(ls0); t.selectionStart=t.selectionEnd=b+line.length; }
+  else { const sel=v.slice(a,b); t.value=v.slice(0,a)+w+sel+w+v.slice(b); if(sel){ t.selectionStart=a; t.selectionEnd=b+2*w.length; } else t.selectionStart=t.selectionEnd=a+w.length; }
+  t.focus(); t.dispatchEvent(new Event('input'));
+}
+$('#fmtbar').addEventListener('mousedown', e=>e.preventDefault());
+$('#fmtbar').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; if(b.dataset.line) wrapSel(null, b.dataset.line); else wrapSel(b.dataset.md); });
 $('#sendForm').onsubmit = e=>{ e.preventDefault(); sendMsg(); };
 async function sendMsg(){
-  const t=$('#msgInp'); const content=t.value.trim(); if(!content || S.view?.type!=='text') return;
+  const t=$('#msgInp'); const content=t.value.trim(); if(!content) return;
+  if(S.view?.type==='dm') return sendDm(content);
+  if(S.view?.type!=='text') return;
+  const ch=S.view.ch, mod=canEditServer();
+  if(ch.readonly && !mod) return toast('Canal somente leitura.', true);
+  if(ch.slowmode && !mod){ S.slow=S.slow||{}; const wait=ch.slowmode*1000-(Date.now()-(S.slow[ch.id]||0)); if(wait>0) return toast(`Modo lento: aguarde ${Math.ceil(wait/1000)}s.`, true); S.slow[ch.id]=Date.now(); }
   t.value=''; t.style.height='auto';
   const { data, error } = await sb.from('dc_messages').insert({ channel_id:S.view.ch.id, user_id:S.me.id, author:S.me.name, author_color:S.me.color, content:content.slice(0,2000) }).select().single();
   if(error){ toast('Não foi possível enviar: '+error.message, true); t.value=content; return; }
@@ -1677,6 +1868,7 @@ function iceServers(){
    ===================================================================== */
 function openVoice(ch){
   S.view={type:'voice', ch}; renderChannels();
+  $('#callBtn').classList.toggle('hidden', !ch.dm); $('#callBtn').classList.toggle('on', !!ch.dm); if(ch.dm) $('#inviteBtn').classList.add('hidden');
   $('#mainTitle').innerHTML=`${ic('vol')}${esc(ch.name)}`; renderSub();
   $('#chat').classList.add('hidden'); $('#stage').classList.remove('hidden');
   if(V && V.ch.id===ch.id){ showStage(); return; }
@@ -1694,8 +1886,9 @@ function renderJoinCta(){
 function showStage(){ $('#joinCta').classList.add('hidden'); $('#tiles').classList.remove('hidden'); $('#ctrls').classList.remove('hidden'); $('#statsBtn').classList.remove('hidden'); renderTiles(); }
 
 async function joinVoice(ch){
+  if(!ch.dm && ch.user_limit && !S.isAdmin && voiceUsers(ch.id).filter(u=>u.uid!==S.me.id).length>=ch.user_limit){ toast('Sala cheia ('+ch.user_limit+').', true); if(S.view?.type==='voice') renderJoinCta(); return; }
   V = { cineSeen:new Set(), noAV1:false, cpuStrikes:0, ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
-  showStage(); $('#voicecard').classList.remove('hidden'); $('#vbChan').textContent = ch.name+' / '+S.server.name;
+  showStage(); $('#voicecard').classList.remove('hidden'); $('#vbChan').textContent = ch.dm ? ch.name+' / Chamada' : ch.name+' / '+(S.server?.name||'');
   try{
     V.pipe = new MicPipeline();
     V.mic = await V.pipe.start();
@@ -1822,7 +2015,7 @@ async function tuneSenders(pc){
     const e=prm.encodings[0];
     if(t.kind==='audio'){
       const scr = V.screen?.getAudioTracks().includes(t);
-      e.maxBitrate = scr ? (Qs.cinema ? 320000 : 192000) : (P().voiceKbps||96)*1000; e.priority='high'; e.networkPriority='high';
+      e.maxBitrate = scr ? (Qs.cinema ? 320000 : 192000) : (+(V?.ch?.quality)||P().voiceKbps||96)*1000; e.priority='high'; e.networkPriority='high';
     } else {
       const scr = V.screen?.getVideoTracks().includes(t);
       if(scr){
@@ -1854,6 +2047,7 @@ async function leaveVoice(){
   try{ v.audioCtx?.close(); }catch{}
   setTheater(false); $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
   trackServerPresence(); renderMe(); renderMembers(); beep(false);
+  if(v.ch.dm){ endCallUi(v.ch.dm); if(S.view?.type==='voice' && S.view.ch.id===v.ch.id){ const d=DM.list.find(x=>x.id===v.ch.dm); if(d && S.home) return openDm(d); } }
   if(S.view?.type==='voice') renderJoinCta();
 }
 function renderVoiceState(){
@@ -2387,7 +2581,13 @@ async function renderSettings(){
 
   else if(SET.sec==='aparencia'){
     const ACS=['#ffffff','#a78bfa','#818cf8','#60a5fa','#22d3ee','#34d399','#a3e635','#fbbf24','#fb923c','#f87171','#f472b6','#e879f9'];
-    body.innerHTML = `<h2>Aparência</h2><p class="sub">Como o CONCORD fica na sua tela. Só muda para você.</p>
+    const curT = P().appTheme||'oled';
+    body.innerHTML = `<h2>Aparência</h2>
+      <div class="sc"><h3>Tema</h3>
+        <div class="themegrid">${Object.entries(APP_THEMES).map(([k,t])=>`<button class="tcard ${curT===k?'on':''}" data-theme-app="${k}"><div class="tprev" style="background:${t.bg}"><i style="background:${t.side}"></i><i style="background:${t.main}"><b style="background:${t.card}"></b><b style="background:var(--ac)"></b></i></div><span>${t.label}</span></button>`).join('')}
+          <button class="tcard ${curT==='custom'?'on':''}" data-theme-app="custom"><div class="tprev" style="background:conic-gradient(from 45deg,#1e1b4b,#064e3b,#7f1d1d,#1e1b4b)"></div><span>Personalizado</span></button></div>
+        <div class="colorrow" id="customBase" style="margin-top:12px;${curT==='custom'?'':'display:none'}"><span style="font-size:13px;color:var(--tx2)">Cor base</span><label class="cpick" style="background:${P().themeBase}"><input type="color" id="tbPick" value="${P().themeBase}"></label></div>
+        <div class="srow" style="margin-top:6px"><div><b>Brilho de fundo</b></div><label class="switch"><input type="checkbox" id="bgGlow" ${P().bgGlow?'checked':''}><span></span></label></div></div>
       <div class="sc"><h3>Cor de destaque</h3><p>Botões, itens selecionados e indicadores.</p>
         <div class="colorrow">${ACS.map(c=>`<button class="sw ${P().accent===c?'on':''}" data-ac="${c}" style="background:${c}"></button>`).join('')}
           <label class="cpick" title="Outra cor" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"><input type="color" id="acPick" value="${P().accent}"></label></div></div>
@@ -2398,6 +2598,9 @@ async function renderSettings(){
         ${sw('hideFx','Esconder efeitos dos outros','Desliga decorações, efeitos e placas animadas nas listas e na call (continua aparecendo no cartão de perfil).')}
         ${sw('reduce','Reduzir animações','Para tudo que se mexe. Bom para PC fraco ou para quem enjoa com movimento.')}</div>`;
     body.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ setPref('accent', b.dataset.ac); applyAppearance(); renderSettings(); });
+    body.querySelectorAll('[data-theme-app]').forEach(b=>b.onclick=()=>{ setPref('appTheme', b.dataset.themeApp); applyAppearance(); renderSettings(); });
+    $('#tbPick')?.addEventListener('input', e=>{ setPref('themeBase', e.target.value); e.target.parentElement.style.background=e.target.value; applyAppearance(); });
+    $('#bgGlow').onchange=e=>{ setPref('bgGlow', e.target.checked); applyAppearance(); };
     $('#acPick').oninput=e=>{ setPref('accent', e.target.value); applyAppearance(); };
     { const cur = P().layout || (DESK?'flat':'cards'); const g=body.querySelector('[data-seg=layout]'); g.querySelectorAll('button').forEach(b=>{ b.classList.toggle('on', b.dataset.v===cur); b.onclick=()=>{ setPref('layout', b.dataset.v); applyAppearance(); g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); }; }); }
     body.querySelector('[data-seg=fontScale]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('fontScale', +b.dataset.v); applyAppearance(); b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
@@ -2654,7 +2857,7 @@ async function leaveServer(){
 }
 function renderServerSettings(){
   const s=S.server, edit=canEditServer(); const nav=$('#setNav'), body=$('#setBody'); body.parentElement.scrollTop=0;
-  const items=[['geral','gear','Visão geral'],['canais','hash','Canais'],['membros','users','Membros'],['convite','copy','Convites']];
+  const items=[['geral','gear','Visão geral'],['visual','palette','Aparência'],['canais','hash','Canais'],['cargos','shield','Cargos'],['membros','users','Membros'],['convite','copy','Convites']];
   nav.innerHTML = `<h4>${esc(s.name)}</h4>`+items.map(([k,i,l])=>`<button data-s="${k}" class="${SET.sec===k?'on':''}">${ic(i,'sm')}${l}</button>`).join('')
     + `<h4>Você</h4><button data-me>${ic('palette','sm')}Meu perfil no servidor</button><div class="sp"></div>${!S.isAdmin?`<button data-leave style="color:var(--red)">${ic('out','sm')}Sair do servidor</button>`:''}`;
   nav.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ SET.sec=b.dataset.s; SET.draft=null; renderServerSettings(); });
@@ -2667,7 +2870,8 @@ function renderServerSettings(){
     body.innerHTML = `<h2>Visão geral do servidor</h2><p class="sub">Nome, ícone, banner e cara do seu servidor.</p>${ro}
       <div class="pgrid"><div>
         <div class="sc"><label class="field"><span>Nome do servidor</span><input class="inp" data-f="name" maxlength="40" value="${esc(D.name)}" ${edit?'':'disabled'}></label>
-          <label class="field" style="margin:0"><span>Descrição</span><textarea class="inp" data-f="description" maxlength="300" rows="2" placeholder="Sobre o que é esse servidor?" ${edit?'':'disabled'}>${esc(D.description||'')}</textarea></label></div>
+          <label class="field"><span>Descrição</span><textarea class="inp" data-f="description" maxlength="300" rows="2" placeholder="Sobre o que é esse servidor?" ${edit?'':'disabled'}>${esc(D.description||'')}</textarea></label>
+          <label class="field" style="margin:0"><span>Mensagem de boas-vindas</span><textarea class="inp" data-f="welcome" maxlength="1500" rows="3" placeholder="Aparece uma vez para quem entra. Aceita **negrito**, *itálico*, > citação…" ${edit?'':'disabled'}>${esc(D.welcome||'')}</textarea></label></div>
         <div class="sc"><h3>Ícone</h3><p>Imagem quadrada (GIF animado também vale) ou até 2 letras.</p>
           <div class="imgrow"><button class="btn sec auto" data-up="icon" ${edit?'':'disabled'}>${ic('img','sm')} Enviar ícone</button>${D.icon_url&&edit?`<button class="btn danger auto" data-rm="icon_url">${ic('trash','sm')}</button>`:''}
           <input class="inp" data-f="icon" maxlength="4" placeholder="Letras" style="width:110px" value="${esc(D.icon||'')}" ${edit?'':'disabled'}></div></div>
@@ -2692,16 +2896,67 @@ function renderServerSettings(){
       if(url){ D[ico?'icon_url':'banner_url']=url; renderServerSettings(); toast('Imagem pronta. Clique em "Salvar alterações".'); } });
     $('#svReset').onclick=()=>{ SET.draft=null; renderServerSettings(); };
     $('#svSave').onclick=async()=>{ const name=(D.name||'').trim().slice(0,40); if(!name) return toast('O servidor precisa de um nome.', true);
-      const upd={ name, description:(D.description||'').trim()||null, icon:(D.icon||'').trim()||null, icon_url:D.icon_url||null, banner_url:D.banner_url||null, accent:D.accent||null };
+      const upd={ name, description:(D.description||'').trim()||null, welcome:(D.welcome||'').trim()||null, icon:(D.icon||'').trim()||null, icon_url:D.icon_url||null, banner_url:D.banner_url||null, accent:D.accent||null };
       const { data, error } = await sb.from('dc_servers').update(upd).eq('id', s.id).select().single();
       if(error) return toast('Erro: '+error.message, true);
       Object.assign(S.server, data); SET.draft=null; renderServerHead(); renderRail(); renderServerSettings(); toast('Servidor atualizado!'); };
   }
 
+  else if(SET.sec==='visual'){
+    const D = SET.draft || (SET.draft = {...s});
+    const cur=D.theme_bg||''; const custom = cur && !SRV_BGS[cur];
+    body.innerHTML = `<h2>Aparência do servidor</h2>${ro}
+      <div class="sc"><h3>Fundo do chat</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">${Object.entries(SRV_BGS).map(([k,[l,css]])=>`<button class="bgsw ${cur===k?'on':''}" data-bg="${k}" title="${l}" style="background:${css?css+',':''}var(--main,#050506)" ${edit?'':'disabled'}></button>`).join('')}
+          <label class="cpick ${custom?'on':''}" title="Cor própria" style="background:${custom?hex6(cur,'#6366f1'):'conic-gradient(#ef4444,#f59e0b,#22c55e,#06b6d4,#6366f1,#ec4899,#ef4444)'}"><input type="color" data-bgc value="${custom?hex6(cur,'#6366f1'):'#6366f1'}" ${edit?'':'disabled'}></label></div></div>
+      <div class="sc"><h3>Cor do servidor</h3>
+        <div class="colorrow"><label class="cpick" style="background:${hex6(D.accent,'#27272a')}"><input type="color" data-acc value="${hex6(D.accent,'#27272a')}" ${edit?'':'disabled'}></label>${D.accent&&edit?`<button class="btn sec auto" data-noacc>Sem cor</button>`:''}</div>
+        <div class="srow" style="margin-top:10px"><div><b>Usar como cor de destaque</b></div><label class="switch"><input type="checkbox" data-apply ${D.apply_accent?'checked':''} ${edit?'':'disabled'}><span></span></label></div></div>
+      <div class="prev" style="max-width:none"><div class="prevlbl">Pré-visualização</div><div class="panel" id="pvChat" style="height:150px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px"><div style="display:flex;gap:10px;align-items:center"><div class="av" style="width:32px;height:32px"><b class="avi" style="background:var(--card2)">A</b></div><div><b>Amigo</b><div style="color:var(--tx2);font-size:14px">bora jogar?</div></div></div><button class="btn auto" id="pvBtn" style="align-self:flex-start">Botão</button></div></div>
+      ${edit?`<div class="savebar"><button class="btn sec auto" id="svReset">Desfazer</button><button class="btn auto" id="svSave">Salvar alterações</button></div>`:''}`;
+    const pv=()=>{ const c=$('#pvChat'); const bg=srvBgCss(D.theme_bg); c.style.background = bg ? bg+',var(--main,#050506)' : 'var(--main,#050506)';
+      const ac=D.apply_accent && safeColor(D.accent); const b=$('#pvBtn'); b.style.background=ac||''; b.style.borderColor=ac||''; };
+    pv(); if(!edit) return;
+    body.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>{ D.theme_bg=b.dataset.bg||null; renderServerSettings(); });
+    body.querySelector('[data-bgc]').oninput=e=>{ D.theme_bg=e.target.value; e.target.parentElement.style.background=e.target.value; body.querySelectorAll('.bgsw').forEach(x=>x.classList.remove('on')); pv(); };
+    body.querySelector('[data-acc]').oninput=e=>{ D.accent=e.target.value; e.target.parentElement.style.background=e.target.value; pv(); };
+    body.querySelector('[data-noacc]')?.addEventListener('click', ()=>{ D.accent=null; renderServerSettings(); });
+    body.querySelector('[data-apply]').onchange=e=>{ D.apply_accent=e.target.checked; pv(); };
+    $('#svReset').onclick=()=>{ SET.draft=null; renderServerSettings(); };
+    $('#svSave').onclick=async()=>{ const upd={ theme_bg:D.theme_bg||null, accent:D.accent||null, apply_accent:!!D.apply_accent };
+      const { data, error } = await sb.from('dc_servers').update(upd).eq('id', s.id).select().single(); if(error) return toast('Erro: '+error.message, true);
+      Object.assign(S.server, data); SET.draft=null; renderServerHead(); applyServerTheme(S.server); renderServerSettings(); toast('Aparência salva!'); };
+  }
+
+  else if(SET.sec==='cargos'){
+    const roles=S.roles||[];
+    body.innerHTML = `<h2>Cargos</h2>${ro}
+      <div class="sc">${roles.length?roles.map((r,i)=>`<div class="rolerow" data-r="${r.id}">
+        <label class="cpick" style="background:${hex6(r.color,'#a1a1aa')};flex-shrink:0"><input type="color" data-rc value="${hex6(r.color,'#a1a1aa')}" ${edit?'':'disabled'}></label>
+        <input class="inp" data-ri maxlength="4" placeholder="🙂" value="${esc(r.icon||'')}" style="width:58px;text-align:center" ${edit?'':'disabled'}>
+        <input class="inp" data-rn maxlength="32" value="${esc(r.name)}" style="flex:1" ${edit?'':'disabled'}>
+        <label class="switch" title="Separar na lista de membros"><input type="checkbox" data-rh ${r.hoist?'checked':''} ${edit?'':'disabled'}><span></span></label>
+        ${edit?`<button class="ibtn" data-mv="-1" ${i===0?'disabled style="opacity:.3"':''} title="Subir">${ic('up','sm')}</button><button class="ibtn" data-mv="1" ${i===roles.length-1?'disabled style="opacity:.3"':''} title="Descer" style="transform:rotate(180deg)">${ic('up','sm')}</button><button class="ibtn off" data-del title="Excluir">${ic('trash','sm')}</button>`:''}</div>`).join(''):'<p class="hint keep">Nenhum cargo.</p>'}
+        ${edit?`<button class="btn sec auto" style="margin-top:10px" id="roleAdd">${ic('plus','sm')} Novo cargo</button>`:''}</div>`;
+    if(!edit) return;
+    const upd=async(r, patch)=>{ const { error } = await sb.from('dc_roles').update(patch).eq('id', r.id); if(error) return toast('Erro: '+error.message, true); Object.assign(r, patch); renderMembers(); renderChannels(); };
+    $('#roleAdd').onclick=async()=>{ const { error } = await sb.from('dc_roles').insert({ server_id:s.id, name:'Novo cargo', color:'#a1a1aa', hoist:true, position:roles.length }); if(error) return toast('Erro: '+error.message, true); await loadMemberProfiles(); renderServerSettings(); };
+    body.querySelectorAll('.rolerow').forEach(row=>{ const r=roles.find(x=>x.id===row.dataset.r);
+      const cp=row.querySelector('[data-rc]'); cp.oninput=()=>{ cp.parentElement.style.background=cp.value; }; cp.onchange=()=>upd(r,{color:cp.value});
+      const n=row.querySelector('[data-rn]'); n.onblur=()=>{ const v=n.value.trim().slice(0,32); if(v && v!==r.name) upd(r,{name:v}); else n.value=r.name; }; n.onkeydown=e=>{ if(e.key==='Enter') n.blur(); };
+      const ii=row.querySelector('[data-ri]'); ii.onblur=()=>{ const v=ii.value.trim()||null; if(v!==(r.icon||null)) upd(r,{icon:v}); };
+      row.querySelector('[data-rh]').onchange=e=>upd(r,{hoist:e.target.checked});
+      row.querySelectorAll('[data-mv]').forEach(b=>b.onclick=async()=>{ const i=roles.indexOf(r), j=i+(+b.dataset.mv); if(j<0||j>=roles.length) return; [roles[i],roles[j]]=[roles[j],roles[i]];
+        await Promise.all(roles.map((x,idx)=>{ x.position=idx; return sb.from('dc_roles').update({position:idx}).eq('id', x.id); })); renderMembers(); renderServerSettings(); });
+      row.querySelector('[data-del]').onclick=async()=>{ if(!await confirmBox('Excluir o cargo '+r.name+'?', '', 'Excluir')) return;
+        const { error } = await sb.from('dc_roles').delete().eq('id', r.id); if(error) return toast('Erro: '+error.message, true); await loadMemberProfiles(); renderServerSettings(); };
+    });
+  }
+
   else if(SET.sec==='canais'){
     const list=(k)=>S.channels.filter(c=>c.kind===k);
-    const rows=(k)=>list(k).map((c,i,a)=>`<div class="chrow" data-id="${c.id}">${ic(k==='text'?'hash':'vol','sm')}<input class="inp" value="${esc(c.name)}" maxlength="32" ${edit?'':'disabled'} style="flex:1">${k==='text'?`<input class="inp topic" value="${esc(c.topic||'')}" maxlength="160" placeholder="Tópico do canal" ${edit?'':'disabled'} style="flex:1.4">`:''}
-      ${edit?`<button class="ibtn" data-mv="-1" ${i===0?'disabled style="opacity:.3"':''} title="Subir">${ic('up','sm')}</button><button class="ibtn" data-mv="1" ${i===a.length-1?'disabled style="opacity:.3"':''} title="Descer" style="transform:rotate(180deg)">${ic('up','sm')}</button><button class="ibtn off" data-del title="Excluir">${ic('trash','sm')}</button>`:''}</div>`).join('') || '<p class="hint">Nenhum canal.</p>';
+    const rows=(k)=>list(k).map((c,i,a)=>`<div class="chrow" data-id="${c.id}">${c.icon?`<span class="chi" style="width:18px;text-align:center">${esc(c.icon)}</span>`:ic(k==='text'?'hash':'vol','sm')}<input class="inp" value="${esc(c.name)}" maxlength="32" ${edit?'':'disabled'} style="flex:1">${k==='text'?`<input class="inp topic" value="${esc(c.topic||'')}" maxlength="160" placeholder="Tópico do canal" ${edit?'':'disabled'} style="flex:1.4">`:''}
+      ${edit?`<button class="ibtn" data-opt title="Opções">${ic('gear','sm')}</button><button class="ibtn" data-mv="-1" ${i===0?'disabled style="opacity:.3"':''} title="Subir">${ic('up','sm')}</button><button class="ibtn" data-mv="1" ${i===a.length-1?'disabled style="opacity:.3"':''} title="Descer" style="transform:rotate(180deg)">${ic('up','sm')}</button><button class="ibtn off" data-del title="Excluir">${ic('trash','sm')}</button>`:''}</div>`).join('') || '<p class="hint">Nenhum canal.</p>';
     body.innerHTML = `<h2>Canais</h2><p class="sub">Renomeie, dê um tópico, reordene ou exclua. Salva quando você sai do campo.</p>${ro}
       <div class="sc"><h3>${ic('hash','sm')} Texto</h3><p></p>${rows('text')}${edit?`<button class="btn sec auto" style="margin-top:10px" data-add="text">${ic('plus','sm')} Novo canal de texto</button>`:''}</div>
       <div class="sc"><h3>${ic('vol','sm')} Voz</h3><p></p>${rows('voice')}${edit?`<button class="btn sec auto" style="margin-top:10px" data-add="voice">${ic('plus','sm')} Nova sala de voz</button>`:''}</div>`;
@@ -2715,6 +2970,7 @@ function renderServerSettings(){
         const { error } = await sb.from('dc_channels').update({name:n}).eq('id', c.id); if(error) return toast('Erro: '+error.message, true);
         c.name=n; inp.value=n; renderChannels(); if(S.view?.ch.id===c.id) $('#mainTitle').innerHTML=`${ic(c.kind==='text'?'hash':'vol')}${esc(n)}`; toast('Canal renomeado.'); };
       inp.onblur=save; inp.onkeydown=e=>{ if(e.key==='Enter') inp.blur(); };
+      row.querySelector('[data-opt]').onclick=()=>openChannelOptions(c);
       row.querySelectorAll('[data-mv]').forEach(b=>b.onclick=async()=>{
         const arr=list(c.kind); const i=arr.indexOf(c), j=i+(+b.dataset.mv); if(j<0||j>=arr.length) return;
         [arr[i],arr[j]]=[arr[j],arr[i]];
@@ -2734,8 +2990,13 @@ function renderServerSettings(){
     const mem=(S.members||[]).slice().sort((a,b)=>(on.has(b.user_id)-on.has(a.user_id)) || dname(a.user_id).localeCompare(dname(b.user_id)));
     body.innerHTML = `<h2>Membros</h2><p class="sub">${mem.length} ${mem.length===1?'pessoa':'pessoas'} em ${esc(s.name)}.</p>
       <div class="sc">${mem.map(m=>{ const p=S.profiles.get(m.user_id)||{}; const owner=S.admins.has(m.user_id);
-        return `<div class="memrow">${avatarU(m.user_id, 36, null, {status: on.has(m.user_id)?statusOf(m.user_id):undefined})}<div style="flex:1;min-width:0"><b>${nameHtml(m.user_id)}</b>${owner?'<span class="adm">ADM</span>':''}<small>${m.nickname?esc(p.display_name)+' · ':''}entrou em ${new Date(m.joined_at).toLocaleDateString('pt-BR')}</small></div>
+        const mine=S.mroles?.get(m.user_id)||new Set();
+        const chips=(S.roles||[]).filter(r=>edit||mine.has(r.id)).map(r=>`<${edit?'button':'span'} class="rchip ${mine.has(r.id)?'on':''}" style="--rc:${safeColor(r.color)||'#a1a1aa'}" data-role="${r.id}" data-u="${m.user_id}"><i></i>${r.icon?esc(r.icon)+' ':''}${esc(r.name)}</${edit?'button':'span'}>`).join('');
+        return `<div class="memrow" style="flex-wrap:wrap">${avatarU(m.user_id, 36, null, {status: on.has(m.user_id)?statusOf(m.user_id):undefined})}<div style="flex:1;min-width:0"><b>${nameHtml(m.user_id)}</b>${owner?'<span class="adm">ADM</span>':''}<small>${m.nickname?esc(p.display_name)+' · ':''}entrou em ${new Date(m.joined_at).toLocaleDateString('pt-BR')}</small>${chips?`<div style="margin-top:6px">${chips}</div>`:''}</div>
         ${edit && m.user_id!==S.me.id && !owner ? `<button class="btn danger auto" data-kick="${m.user_id}">Remover</button>`:''}</div>`; }).join('')}</div>`;
+    body.querySelectorAll('button[data-role]').forEach(b=>b.onclick=async()=>{ const rid=b.dataset.role, uid=b.dataset.u; const has=(S.mroles?.get(uid)||new Set()).has(rid);
+      const q = has ? sb.from('dc_member_roles').delete().eq('server_id', s.id).eq('user_id', uid).eq('role_id', rid) : sb.from('dc_member_roles').insert({ server_id:s.id, user_id:uid, role_id:rid });
+      const { error } = await q; if(error) return toast('Erro: '+error.message, true); await loadMemberProfiles(); renderServerSettings(); });
     body.querySelectorAll('[data-kick]').forEach(b=>b.onclick=async()=>{ const uid=b.dataset.kick;
       if(!await confirmBox('Remover '+dname(uid)+'?', 'A pessoa sai do servidor, mas pode voltar com o código de convite.', 'Remover')) return;
       const { error } = await sb.from('dc_members').delete().eq('server_id', s.id).eq('user_id', uid); if(error) return toast('Erro: '+error.message, true);
@@ -2747,8 +3008,20 @@ function renderServerSettings(){
     body.innerHTML = `<h2>Convites</h2><p class="sub">Quem tiver o link ou o código entra no servidor.</p>
       <div class="sc"><label class="field"><span>Link de convite</span><div class="row" style="margin:0"><input class="inp" readonly value="${esc(link)}"><button class="btn auto" data-l>${ic('copy','sm')} Copiar</button></div></label>
         <label class="field" style="margin:0"><span>Código</span><div class="row" style="margin:0"><input class="inp" readonly value="${esc(s.code)}" style="font-weight:800;letter-spacing:.14em"><button class="btn sec auto" data-c>${ic('copy','sm')}</button></div></label></div>
-      ${edit?`<div class="sc"><h3>Trocar código</h3><p>Gera um código novo. O antigo para de funcionar (quem já entrou continua no servidor).</p><button class="btn danger auto" data-regen>Gerar novo código</button></div>`:''}`;
+      ${edit?`<div class="sc"><h3>Link personalizado</h3>
+        <div class="row" style="margin:0;align-items:center"><span style="color:var(--tx3);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%">${esc(location.origin+location.pathname)}#</span><input class="inp" id="vanity" maxlength="24" value="${esc(s.code)}" style="text-transform:uppercase;font-weight:800;letter-spacing:.08em"><button class="btn auto" id="vanitySave">Salvar</button></div>
+        <small class="hint keep" id="vanityMsg" style="display:block;margin-top:6px">3 a 24 caracteres: letras, números e hífen.</small></div>
+      <div class="sc"><div class="srow" style="margin:0"><div><b>Aceitar novos membros</b></div><label class="switch"><input type="checkbox" id="invOpen" ${s.invites_open!==false?'checked':''}><span></span></label></div></div>
+      <div class="sc"><button class="btn danger auto" data-regen>Gerar código aleatório</button></div>`:''}`;
     body.querySelector('[data-l]').onclick=()=>copy(link); body.querySelector('[data-c]').onclick=()=>copy(s.code);
+    const vi=$('#vanity'); if(vi){
+      vi.oninput=()=>{ const v=vi.value.toUpperCase().replace(/\s+/g,'-').replace(/[^A-Z0-9-]/g,''); if(v!==vi.value) vi.value=v; const ok=/^[A-Z0-9-]{3,24}$/.test(v); $('#vanityMsg').style.color= ok?'':'var(--red)'; };
+      $('#vanitySave').onclick=async()=>{ const code=vi.value.toUpperCase(); if(!/^[A-Z0-9-]{3,24}$/.test(code)) return toast('Use 3 a 24 letras, números ou hífen.', true); if(code===s.code) return;
+        const { data, error } = await sb.from('dc_servers').update({code}).eq('id', s.id).select().single();
+        if(error) return toast(/duplicate|unique/i.test(error.message)?'Esse link já está em uso.':'Erro: '+error.message, true);
+        Object.assign(S.server, data); renderServerHead(); renderServerSettings(); toast('Link atualizado!'); };
+      $('#invOpen').onchange=async e=>{ const { data, error } = await sb.from('dc_servers').update({invites_open:e.target.checked}).eq('id', s.id).select().single(); if(error){ e.target.checked=!e.target.checked; return toast('Erro: '+error.message, true); } Object.assign(S.server, data); toast(e.target.checked?'Convites abertos.':'Convites fechados.'); };
+    }
     body.querySelector('[data-regen]')?.addEventListener('click', async()=>{
       if(!await confirmBox('Gerar novo código?', 'Links e códigos antigos deixam de funcionar.', 'Gerar')) return;
       const code=Array.from(crypto.getRandomValues(new Uint8Array(6)), b=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b%32]).join('');
@@ -2775,6 +3048,212 @@ async function restartMicInputs(){
   try{ if(V?.pipe){ const ok = await V.pipe.restartInput(); if(!ok) toast('Saia e entre na sala para aplicar.'); } if(SET.test) await SET.test.restartInput(); }
   catch(e){ toast('Não foi possível trocar o microfone: '+(e.name||e.message), true); }
 }
+/* =====================================================================
+   Mensagens diretas e chamadas 1:1
+   ===================================================================== */
+const DM = { list:[], unread:new Set(ls.get('dc_dm_unread', [])), rt:null, ring:null, incoming:null, outgoing:null, ringT:null, ringCtx:null };
+const dmOther = d => d.user_a===S.me.id ? d.user_b : d.user_a;
+const dmVoiceCh = d => ({ id:'dm-'+d.id, name:dname(dmOther(d)), kind:'voice', dm:d.id });
+function saveDmUnread(){ ls.set('dc_dm_unread', [...DM.unread]); }
+async function loadDms(){
+  const { data } = await sb.from('dc_dms').select('*');
+  DM.list = (data||[]).filter(d=>d.user_a===S.me.id||d.user_b===S.me.id).sort((a,b)=>String(b.last_at).localeCompare(String(a.last_at)));
+  const miss = [...new Set(DM.list.map(dmOther))].filter(id=>!S.profiles.has(id));
+  if(miss.length){ const { data:ps } = await sb.from('dc_profiles').select('*').in('id', miss); (ps||[]).forEach(p=>S.profiles.set(p.id,p)); }
+  renderRail(); if(S.home){ renderDmSide(); renderDmMembers(); }
+}
+function startDmRealtime(){
+  if(DM.rt) return;
+  DM.rt = sb.channel('dc-dmrt-'+S.me.id)
+    .on('postgres_changes', {event:'INSERT', schema:'public', table:'dc_dm_messages'}, ({new:m})=>onDmMessage(m))
+    .on('postgres_changes', {event:'*', schema:'public', table:'dc_dms'}, ()=>loadDms())
+    .subscribe();
+  DM.ring = sb.channel('dc-user-'+S.me.id, { config:{ broadcast:{ self:false } } })
+    .on('broadcast', {event:'call'}, ({payload})=>onCallSignal(payload||{}))
+    .subscribe();
+}
+async function sendToUser(uid, payload){
+  const real = sb.channel('dc-user-'+uid, { config:{ broadcast:{ self:false } } });
+  await new Promise(r=>{ const t=setTimeout(r,4000); real.subscribe(st=>{ if(st==='SUBSCRIBED'){ clearTimeout(t); r(); } }); });
+  try{ await real.send({ type:'broadcast', event:'call', payload }); }catch{}
+  setTimeout(()=>{ try{ sb.removeChannel(real); }catch{} }, 1500);
+}
+function renderHomeHead(){
+  const head=$('.side-head'); head.classList.remove('has-bn'); head.style.backgroundImage='';
+  $('#srvName').textContent='Mensagens diretas'; $('#srvCode').classList.add('hidden'); $('#srvDesc').classList.add('hidden'); $('#srvSub').textContent='';
+  $('#inviteBtn').classList.add('hidden');
+}
+function renderDmSide(){
+  const L=$('#chanlist'); const cur=S.view?.type==='dm'?S.view.dm.id:null;
+  L.innerHTML = `<div class="cat"><span>Conversas</span><button title="Nova conversa" id="dmNew">${ic('plus','sm')}</button></div>`
+    + (DM.list.length ? DM.list.map(d=>{ const o=dmOther(d); const call=V?.ch.dm===d.id; const st=statusOf(o);
+      return `<button class="dmrow${cur===d.id?' on':''}" data-dm="${d.id}">${avatarU(o, 32, null, {status: st && st!=='offline' ? st : undefined, noDeco:true})}<span class="nm">${nameHtml(o)}</span>${call?`<span class="oncall">${ic('phone','sm')}</span>`:''}${DM.unread.has(d.id)?'<span class="ub"></span>':''}</button>`; }).join('')
+      : `<div class="dmempty">Nenhuma conversa ainda.</div>`);
+  $('#dmNew').onclick=openNewDm;
+  L.querySelectorAll('[data-dm]').forEach(b=>b.onclick=()=>{ const d=DM.list.find(x=>x.id===b.dataset.dm); if(d){ openDm(d); closeDrawer(); } });
+}
+function renderDmMembers(){
+  const M=$('#members');
+  const d = S.view?.type==='dm' ? S.view.dm : DM.list.find(x=>x.id===S.view?.ch?.dm);
+  if(!d){ M.innerHTML=''; return; }
+  const uid=dmOther(d); const p=S.profiles.get(uid); if(!p){ M.innerHTML=''; return; }
+  M.innerHTML = `<div class="dmprof">${profileCardHtml(p, { status:statusOf(uid), fxKey:'dm-'+uid })}</div>`;
+}
+function openHome(keepView){
+  S.home=true; applyServerTheme(null); $('#appBanner')?.classList.add('hidden');
+  renderRail(); renderHomeHead(); renderDmSide();
+  if(keepView) return;
+  if(S.view?.type==='dm'){ const d=DM.list.find(x=>x.id===S.view.dm.id); if(d) return openDm(d); }
+  if(DM.list[0]) return openDm(DM.list[0]);
+  S.view=null; renderDmMembers(); $('#callBtn').classList.add('hidden');
+  $('#mainTitle').innerHTML=`${ic('chat')}Mensagens diretas`; $('#mainSub').textContent='';
+  $('#stage').classList.add('hidden'); $('#chat').classList.remove('hidden'); $('.composer').classList.add('hidden'); $('#typing').textContent='';
+  $('#msgs').innerHTML=`<div class="welcome" style="max-width:460px;margin:60px auto"><div class="big">${ic('chat','lg')}</div><h2>Nenhuma conversa</h2><div class="row" style="justify-content:center;margin-top:14px"><button class="btn auto" id="dmStart">${ic('plus','sm')} Nova conversa</button></div></div>`;
+  $('#dmStart').onclick=openNewDm;
+}
+async function openDm(d){
+  if(!S.home) openHome(true);
+  const o=dmOther(d);
+  S.view={ type:'dm', dm:d, ch:{ id:'dmv-'+d.id, name:dname(o) } };
+  DM.unread.delete(d.id); saveDmUnread(); renderRail(); renderDmSide(); renderDmMembers();
+  $('#mainTitle').innerHTML=`<span style="display:inline-flex;margin-right:8px">${avatarU(o, 24, null, {noDeco:true})}</span>${nameHtml(o)}`; $('#mainSub').textContent='';
+  $('#statsBtn').classList.add('hidden'); $('#inviteBtn').classList.add('hidden');
+  const cb=$('#callBtn'); cb.classList.remove('hidden'); cb.classList.toggle('on', V?.ch.dm===d.id); cb.title = V?.ch.dm===d.id ? 'Ver chamada' : 'Ligar';
+  $('#chat').classList.remove('hidden'); $('#stage').classList.add('hidden');
+  $('.composer').classList.remove('hidden','ro'); $('#msgInp').disabled=false; $('#msgInp').placeholder='Mensagem para @'+dname(o);
+  const box=$('#msgs'); box.innerHTML=`<div class="welcome"><div style="margin-bottom:12px;display:flex">${avatarU(o, 72, null, {})}</div><h2>${esc(dname(o))}</h2></div>`;
+  S.lastAuthor=null; S.lastTime=0; S.lastDay=''; $('#typing').textContent='';
+  const { data, error } = await sb.from('dc_dm_messages').select('*').eq('dm_id', d.id).order('created_at',{ascending:false}).limit(100);
+  if(S.view?.dm?.id!==d.id) return;
+  if(error) return toast('Erro ao carregar conversa: '+error.message, true);
+  data.reverse().forEach(m=>appendMsg(m,false)); box.scrollTop=box.scrollHeight;
+  if(window.innerWidth>760) $('#msgInp').focus();
+}
+async function openDmWith(uid, call){
+  let d = DM.list.find(x=>dmOther(x)===uid);
+  if(!d){ const { data, error } = await sb.rpc('dc_open_dm', { p_other:uid });
+    if(error) return toast('Não foi possível abrir a conversa: '+error.message, true);
+    d = Array.isArray(data) ? data[0] : data; if(!d) return;
+    if(!DM.list.find(x=>x.id===d.id)) DM.list.unshift(d); }
+  await openDm(d); if(call) startCall(d);
+}
+async function sendDm(content){
+  const d=S.view.dm; const t=$('#msgInp'); t.value=''; t.style.height='auto';
+  const { data, error } = await sb.from('dc_dm_messages').insert({ dm_id:d.id, user_id:S.me.id, content:content.slice(0,2000) }).select().single();
+  if(error){ toast('Não foi possível enviar: '+error.message, true); t.value=content; return; }
+  appendMsg(data, true); d.last_at=data.created_at; DM.list.sort((a,b)=>String(b.last_at).localeCompare(String(a.last_at))); renderDmSide();
+}
+async function onDmMessage(m){
+  let d=DM.list.find(x=>x.id===m.dm_id); if(!d){ await loadDms(); d=DM.list.find(x=>x.id===m.dm_id); if(!d) return; }
+  else { d.last_at=m.created_at; DM.list.sort((a,b)=>String(b.last_at).localeCompare(String(a.last_at))); }
+  if(S.view?.type==='dm' && S.view.dm.id===m.dm_id){ appendMsg(m, true); if(document.hasFocus() || m.user_id===S.me.id){ if(S.home) renderDmSide(); return; } }
+  if(m.user_id===S.me.id) return;
+  if(!(S.view?.type==='dm' && S.view.dm.id===m.dm_id)){ DM.unread.add(m.dm_id); saveDmUnread(); }
+  renderRail(); if(S.home) renderDmSide();
+  if(!P().notify) return; DESK?.attention();
+  if(!('Notification' in window) || Notification.permission!=='granted' || document.hasFocus()) return;
+  try{ const n=new Notification(dname(m.user_id), { body:String(m.content).slice(0,160), tag:'concord-dm-'+m.dm_id });
+    n.onclick=()=>{ window.focus(); DESK?.focus(); const dd=DM.list.find(x=>x.id===m.dm_id); if(dd) openDm(dd); n.close(); }; }catch{}
+}
+function openNewDm(){
+  const ids=[...S.profiles.keys()].filter(id=>id!==S.me.id);
+  const m=modal(`<h3>Nova conversa</h3><input class="inp" id="dmSearch" placeholder="Buscar pessoa" style="margin:6px 0 10px"><div id="dmPick" style="max-height:340px;overflow:auto"></div>`);
+  const draw=q=>{ q=(q||'').toLowerCase(); m.querySelector('#dmPick').innerHTML = ids.filter(id=>dname(id).toLowerCase().includes(q)).map(id=>`<button class="dmrow" data-u="${id}">${avatarU(id, 32, null, {noDeco:true})}<span class="nm">${nameHtml(id)}</span></button>`).join('') || '<div class="dmempty">Ninguém encontrado.</div>';
+    m.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{ closeModal(); openDmWith(b.dataset.u); }); };
+  draw(''); const si=m.querySelector('#dmSearch'); si.oninput=()=>draw(si.value); si.focus();
+}
+/* ---- chamadas ---- */
+async function startCall(d){
+  if(V?.ch.dm===d.id){ openVoice(V.ch); return; }
+  if(V) await leaveVoice();
+  const ch=dmVoiceCh(d); openVoice(ch);
+  const o=dmOther(d); DM.outgoing={ dm:d.id, to:o };
+  sendToUser(o, { t:'ring', dm:d.id, from:S.me.id, name:dname(S.me.id) });
+  toast('Chamando '+dname(o)+'…');
+  clearTimeout(DM.outT); DM.outT=setTimeout(()=>{ if(V?.ch.dm===d.id && !V.peers.size){ sendToUser(o, { t:'cancel', dm:d.id, from:S.me.id }); toast(dname(o)+' não atendeu.'); leaveVoice(); } DM.outgoing=null; }, 35000);
+}
+function endCallUi(dmId){
+  if(DM.outgoing?.dm===dmId && V==null){ const o=DM.outgoing.to; clearTimeout(DM.outT); DM.outgoing=null; sendToUser(o, { t:'cancel', dm:dmId, from:S.me.id }); }
+  $('#callBtn').classList.remove('on'); if(S.home) renderDmSide();
+}
+function ringtone(on){
+  clearInterval(DM.ringT); DM.ringT=null; if(!on) return;
+  const play=()=>{ try{ DM.ringCtx=DM.ringCtx||new AudioContext(); const c=DM.ringCtx; [0,.22].forEach(off=>{ const o=c.createOscillator(), g=c.createGain(); o.frequency.value=off?660:880; g.gain.setValueAtTime(0,c.currentTime+off); g.gain.linearRampToValueAtTime(.12,c.currentTime+off+.02); g.gain.linearRampToValueAtTime(0,c.currentTime+off+.2); o.connect(g).connect(c.destination); o.start(c.currentTime+off); o.stop(c.currentTime+off+.22); }); }catch{} };
+  play(); DM.ringT=setInterval(play, 1800);
+}
+function closeCallPop(){ $('#callPop')?.remove(); ringtone(false); DM.incoming=null; }
+async function onCallSignal(p){
+  if(!p.dm || p.from===S.me.id) return;
+  let d=DM.list.find(x=>x.id===p.dm); if(!d){ await loadDms(); d=DM.list.find(x=>x.id===p.dm); } if(!d || dmOther(d)!==p.from) return;
+  if(p.t==='ring'){
+    if(V?.ch.dm===d.id) return;
+    closeCallPop(); DM.incoming={ dm:d.id, from:p.from };
+    const el=document.createElement('div'); el.id='callPop';
+    el.innerHTML=`<div class="ring">${avatarU(p.from, 64, null, {noDeco:true})}</div><div class="who">${esc(dname(p.from))}</div><small>Chamada de voz</small>
+      <div class="row"><button class="btn danger" data-no>${ic('phone-off','sm')} Recusar</button><button class="btn go" data-yes>${ic('phone','sm')} Atender</button></div>`;
+    document.body.appendChild(el); ringtone(true); DESK?.attention(); DESK?.focus?.();
+    if('Notification' in window && Notification.permission==='granted' && !document.hasFocus()){ try{ new Notification(dname(p.from)+' está ligando', { tag:'concord-call' }); }catch{} }
+    el.querySelector('[data-no]').onclick=()=>{ closeCallPop(); sendToUser(p.from, { t:'decline', dm:d.id, from:S.me.id }); };
+    el.querySelector('[data-yes]').onclick=async()=>{ closeCallPop(); if(V) await leaveVoice(); await openDm(d); openVoice(dmVoiceCh(d)); };
+    clearTimeout(DM.inT); DM.inT=setTimeout(()=>{ if(DM.incoming?.dm===d.id) closeCallPop(); }, 40000);
+  }
+  else if(p.t==='cancel'){ if(DM.incoming?.dm===d.id){ closeCallPop(); toast('Chamada perdida de '+dname(p.from)+'.'); } }
+  else if(p.t==='decline'){ if(V?.ch.dm===d.id && !V.peers.size){ clearTimeout(DM.outT); DM.outgoing=null; toast(dname(p.from)+' recusou a chamada.'); leaveVoice(); } }
+}
+$('#callBtn').onclick=()=>{ if(S.view?.type==='dm') startCall(S.view.dm); };
+
+/* =====================================================================
+   Servidor: tema, boas-vindas, opções de canal
+   ===================================================================== */
+const SRV_BGS = { '':['Padrão',''], aurora:['Aurora','radial-gradient(1200px 600px at 0% 0%,#10b98122,transparent 60%),radial-gradient(1000px 600px at 100% 100%,#6366f122,transparent 60%)'], nebula:['Nebulosa','radial-gradient(900px 500px at 80% 10%,#a855f72a,transparent 60%),radial-gradient(800px 500px at 10% 90%,#ec48991f,transparent 60%)'], sunset:['Pôr do sol','linear-gradient(180deg,#f9731614,transparent 40%),radial-gradient(900px 500px at 50% 110%,#ef444422,transparent 60%)'], ocean:['Oceano','linear-gradient(160deg,#0ea5e91c,transparent 50%,#0369a11c)'], forest:['Floresta','radial-gradient(1000px 600px at 0% 100%,#16a34a22,transparent 60%)'], ember:['Brasa','radial-gradient(900px 500px at 100% 0%,#f9731622,transparent 60%),radial-gradient(700px 400px at 0% 100%,#dc262618,transparent 60%)'], mono:['Grafite','linear-gradient(180deg,#ffffff08,transparent 50%)'], grid:['Grade','linear-gradient(#ffffff06 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,#ffffff06 1px,transparent 1px) 0 0/32px 32px'] };
+function srvBgCss(v){ if(!v) return ''; if(SRV_BGS[v]) return SRV_BGS[v][1]; const c=safeColor(v); return c ? `radial-gradient(1100px 600px at 100% 0%,${c}33,transparent 65%),radial-gradient(900px 500px at 0% 100%,${c}1f,transparent 60%)` : ''; }
+function applyServerTheme(s){
+  const m=$('#main'); const bg=s?srvBgCss(s.theme_bg):''; m.style.background = bg ? bg+',var(--main,#050506)' : '';
+  applyAppearance();
+  const ac = s && s.apply_accent && safeColor(s.accent);
+  if(ac){ document.documentElement.style.setProperty('--ac', ac); const n=parseInt(hex6(ac,'#ffffff').slice(1),16); const l=(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255)); document.documentElement.style.setProperty('--act', l>150?'#000':'#fff'); }
+}
+function showWelcome(s){
+  if(!s?.welcome) return; const k='dc_wel_'+s.id; const h=s.welcome.length+':'+s.welcome.slice(0,40);
+  if(ls.get(k)===h) return; ls.set(k, h);
+  const bn=safeUrl(s.banner_url), ac=safeColor(s.accent), img=safeUrl(s.icon_url);
+  const m=modal(`<div style="margin:-22px -22px 14px;height:110px;border-radius:18px 18px 0 0;background:${bn?`url('${bn}') center/cover`:ac?`linear-gradient(135deg,${ac},#0a0a0b)`:'var(--card2)'}"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div class="srv on ${img?'has-img':''}" style="margin:0">${img?`<img src="${esc(img)}">`:esc(s.icon||initial(s.name))}</div><h3 style="margin:0">${esc(s.name)}</h3></div>
+    <div class="msg" style="padding:0"><div class="txt">${md(s.welcome)}</div></div>
+    <div class="row" style="margin-top:16px"><button class="btn" data-x>Entrar</button></div>`);
+  m.querySelector('[data-x]').onclick=closeModal;
+}
+function openChannelOptions(c){
+  if(!canEditServer()) return;
+  const cats=[...new Set(S.channels.map(x=>x.category).filter(Boolean))];
+  const opt=(arr,v)=>arr.map(([k,l])=>`<option value="${k}" ${String(v??'')===String(k)?'selected':''}>${l}</option>`).join('');
+  const m=modal(`<h3>${c.kind==='text'?'#':''}${esc(c.name)}</h3>
+    <div class="optgrid" style="margin-top:12px">
+      <label class="field"><span>Nome</span><input class="inp" id="coName" maxlength="32" value="${esc(c.name)}"></label>
+      <label class="field"><span>Ícone (emoji)</span><input class="inp" id="coIcon" maxlength="4" placeholder="ex.: 🎮" value="${esc(c.icon||'')}"></label>
+      <label class="field" style="grid-column:1/-1"><span>Categoria</span><input class="inp" id="coCat" list="coCats" maxlength="32" placeholder="Sem categoria" value="${esc(c.category||'')}"><datalist id="coCats">${cats.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
+      ${c.kind==='text' ? `
+      <label class="field" style="grid-column:1/-1"><span>Tópico</span><input class="inp" id="coTopic" maxlength="160" value="${esc(c.topic||'')}"></label>
+      <label class="field"><span>Modo lento</span><select class="inp" id="coSlow">${opt([[0,'Desligado'],[5,'5 s'],[10,'10 s'],[30,'30 s'],[60,'1 min'],[300,'5 min'],[900,'15 min']], c.slowmode||0)}</select></label>
+      <div class="field"><span>Somente leitura</span><label class="switch" style="margin-top:6px"><input type="checkbox" id="coRo" ${c.readonly?'checked':''}><span></span></label></div>`
+      : `
+      <label class="field"><span>Limite de pessoas</span><select class="inp" id="coLim">${opt([[0,'Sem limite'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[15,'15'],[25,'25']], c.user_limit||0)}</select></label>
+      <label class="field"><span>Qualidade de voz</span><select class="inp" id="coQ">${opt([['','Padrão de cada um'],[64,'64 kbps'],[96,'96 kbps'],[128,'128 kbps'],[256,'256 kbps · estúdio'],[510,'510 kbps · máximo']], c.quality||'')}</select></label>`}
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn sec" data-x>Cancelar</button><button class="btn" data-ok>Salvar</button></div>`);
+  m.querySelector('[data-x]').onclick=closeModal;
+  m.querySelector('[data-ok]').onclick=async()=>{
+    let name=m.querySelector('#coName').value.trim().slice(0,32); if(c.kind==='text') name=name.toLowerCase().replace(/\s+/g,'-'); if(!name) return toast('Dê um nome ao canal.', true);
+    const upd={ name, icon:m.querySelector('#coIcon').value.trim()||null, category:m.querySelector('#coCat').value.trim()||null };
+    if(c.kind==='text'){ upd.topic=m.querySelector('#coTopic').value.trim()||null; upd.slowmode=+m.querySelector('#coSlow').value; upd.readonly=m.querySelector('#coRo').checked; }
+    else { upd.user_limit=+m.querySelector('#coLim').value; upd.quality=m.querySelector('#coQ').value||null; }
+    const { error } = await sb.from('dc_channels').update(upd).eq('id', c.id); if(error) return toast('Erro: '+error.message, true);
+    Object.assign(c, upd); closeModal(); renderChannels(); if(S.view?.ch?.id===c.id){ if(c.kind==='text') openText(c); else { $('#mainTitle').innerHTML=`${c.icon?`<span class="chi" style="margin-right:6px">${esc(c.icon)}</span>`:ic('vol')}${esc(c.name)}`; } }
+    if(V?.ch.id===c.id){ V.ch.quality=c.quality; V.peers.forEach(pp=>tuneSenders(pp.pc)); }
+    if(SET.mode==='server' && !$('#settings').classList.contains('hidden')) renderServerSettings();
+    toast('Canal atualizado.'); };
+}
+
 async function logout(){ if(V) await leaveVoice(); await sb.auth.signOut(); location.hash=''; location.reload(); }
 
 /* =====================================================================
@@ -2857,7 +3336,7 @@ $('#cDeaf').onclick=()=>setDeaf(!S.deaf);
 $('#cCam').onclick=toggleCam; $('#vbCam').onclick=toggleCam;
 $('#cScreen').onclick=toggleScreen; $('#vbScreen').onclick=toggleScreen;
 $('#cLeave').onclick=leaveVoice; $('#vbLeave').onclick=leaveVoice;
-$('#vbChan').onclick=()=>{ if(V) openVoice(V.ch); };
+$('#vbChan').onclick=()=>{ if(!V) return; if(V.ch.dm && !S.home) openHome(true); openVoice(V.ch); };
 $('#ubSet').onclick=()=>openSettings('voz');
 $('#setClose').onclick=closeSettings;
 $('#statsBtn').onclick=()=>{ setPref('showStats', !P().showStats); renderControls(); renderStats(); if(P().showStats) toast('Estatísticas ligadas: resolução, fps, codec, velocidade e ping aparecem em cada vídeo.'); };
