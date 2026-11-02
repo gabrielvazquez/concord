@@ -449,7 +449,7 @@ a.btn{text-decoration:none}
 
 /* ---------- Modo cinema (teatro) ---------- */
 body.theater #app{padding:0;gap:0}
-body.theater #drawer,body.theater #members,body.theater .main-head{display:none!important}
+body.theater #drawer,body.theater #members,body.theater .main-head,body.theater #appBanner{display:none!important}
 body.theater #main{border:0;border-radius:0;background:#000}
 body.theater #tiles{display:block;padding:0;overflow:hidden}
 body.theater #tiles .tile:not(.big){display:none}
@@ -472,6 +472,18 @@ body.theater.ui #cineBar{opacity:1;pointer-events:auto}
 #cineVol input{width:110px;accent-color:#fff}
 .cine-badge{background:#fff;color:#000;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:.05em}
 
+/* ---------- Sugestão do app para PC ---------- */
+#appBanner{display:flex;align-items:center;gap:12px;margin:12px 16px 0;padding:10px 12px 10px 14px;border-radius:14px;background:linear-gradient(110deg,#1a1a1f,#111114 60%);border:1px solid var(--line2);flex-shrink:0;animation:tin .25s}
+#appBanner .ab-ico{width:34px;height:34px;border-radius:10px;background:var(--ac);color:var(--act);display:grid;place-items:center;flex-shrink:0}
+#appBanner .ab-txt{flex:1;min-width:0;font-size:13px;line-height:1.35}
+#appBanner .ab-txt b{display:block;font-size:13.5px}
+#appBanner .ab-txt span{color:var(--tx2)}
+#appBanner .btn{width:auto;padding:8px 14px;font-size:13px;border-radius:10px;white-space:nowrap}
+#appBanner .ibtn{flex-shrink:0}
+.af .dlapp{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line);color:var(--tx2);font-size:13px;text-decoration:none}
+.af .dlapp:hover{color:var(--tx)}
+.af .dlapp b{color:var(--tx)}
+@media (max-width:900px){ #appBanner .ab-txt span{display:none} }
 /* ---------- Seletor de transmissão ---------- */
 .smodes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .smode{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--tx2);transition:.12s}
@@ -715,6 +727,7 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
       <button class="hbtn hidden" id="statsBtn" title="Mostra em cada vídeo: resolução, fps, codec, velocidade e ping. Útil para ver por que algo está travando."><svg class="i sm"><use href="#i-signal"/></svg><span>Estatísticas</span></button>
       <button class="hbtn" id="inviteBtn"><svg class="i sm"><use href="#i-users"/></svg><span>Convidar</span></button>
     </div>
+    <div id="appBanner" class="hidden"></div>
     <section id="chat" class="hidden">
       <div id="msgs"></div>
       <div id="typing"></div>
@@ -1095,7 +1108,8 @@ function showAuth(view, msg){
         <div class="fp"><button type="button" class="link" data-go="forgot">Esqueci minha senha</button></div>
         <button class="btn" type="submit">Entrar ${ic('send','sm')}</button>
       </form>
-      <div class="alt">Primeira vez aqui? <button data-go="signup">Criar conta</button></div>`;
+      <div class="alt">Primeira vez aqui? <button data-go="signup">Criar conta</button></div>
+      ${IS_WIN_PC?`<a class="dlapp" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Prefere app? <b>Baixar para Windows</b></a>`:''}`;
     $('#fLogin').onsubmit = async e=>{ e.preventDefault(); const fd=new FormData(e.target); const btn=e.target.querySelector('button[type=submit]'); busy(btn,true);
       const { data, error } = await sb.auth.signInWithPassword({ email:fd.get('email').trim(), password:fd.get('pass') });
       busy(btn,false); if(error) return showAuth('login', {text:authMsg(error)});
@@ -1190,7 +1204,7 @@ async function selectServer(s){
   if(S.msgRt) { sb.removeChannel(S.msgRt); S.msgRt=null; }
   S.server=s; S.unread.clear(); S.srvPresence={}; S.nicks=new Map(); ls.set('dc_last', s.code);
   $('.composer').classList.remove('hidden');
-  renderServerHead(); renderRail();
+  renderServerHead(); renderRail(); renderAppBanner();
   await Promise.all([loadChannels(), loadMemberProfiles()]);
   const refreshServer = async ()=>{ const { data } = await sb.from('dc_servers').select('*').eq('id', s.id).maybeSingle();
     if(data){ Object.assign(S.server, data); const i=S.servers.findIndex(x=>x.id===data.id); if(i>=0) S.servers[i]=S.server; renderServerHead(); renderRail(); } };
@@ -2009,6 +2023,17 @@ function renderTiles(){
    ===================================================================== */
 const DESK = window.concordDesktop || null;
 const APP_DOWNLOAD = 'https://github.com/gabrielvazquez/concord/releases/latest/download/CONCORD-Setup.exe';
+const IS_WIN_PC = !DESK && /Windows/i.test(navigator.userAgent) && !/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+function renderAppBanner(){
+  const el=$('#appBanner'); if(!el) return;
+  const last=ls.get('dc_app_banner', 0);
+  if(!IS_WIN_PC || !S.server || Date.now()-last < 14*864e5){ el.classList.add('hidden'); return; }
+  el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>Baixe o CONCORD para PC</b><span>Push-to-talk dentro do jogo, som do PC na transmissão e ícone perto do relógio. Mesma conta.</span></div>
+    <a class="btn" href="${APP_DOWNLOAD}" target="_blank" rel="noopener" data-ab="dl">${ic('down','sm')} Baixar para Windows</a><button class="ibtn" title="Agora não" data-ab="x">${ic('x','sm')}</button>`;
+  el.classList.remove('hidden');
+  el.querySelector('[data-ab=x]').onclick=()=>{ ls.set('dc_app_banner', Date.now()); el.classList.add('hidden'); toast('Tudo bem. O link fica em Configurações → Atalhos.'); };
+  el.querySelector('[data-ab=dl]').onclick=()=>{ ls.set('dc_app_banner', Date.now()); setTimeout(()=>{ el.classList.add('hidden'); toast('Download iniciado. Abra o CONCORD-Setup.exe — se o Windows avisar, clique em Mais informações → Executar assim mesmo.'); }, 300); };
+}
 S.pttHeld = false; let pttTimer = null;
 function micLive(){ return !S.muted && !S.deaf && (P().voiceMode!=='ptt' || S.pttHeld); }
 function updateMicEnabled(){ V?.mic?.getAudioTracks().forEach(t=>t.enabled=micLive()); }
