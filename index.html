@@ -288,8 +288,10 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .set-nav .sp{flex:1}
 .set-body{flex:1;overflow:auto;padding:28px 34px 60px;position:relative}
 .set-body .inner{max-width:720px}
-.set-close{position:absolute;right:22px;top:22px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;color:var(--tx2);background:var(--panel)}
-.set-close:hover{color:var(--tx)}
+.set-close{position:absolute;right:24px;top:22px;width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;color:#000;background:#fff;box-shadow:0 6px 20px #0008;z-index:4;transition:transform .12s}
+.set-close .i{width:22px;height:22px;stroke-width:2.2}
+.set-close:hover{transform:scale(1.07)}
+.set-close::after{content:'ESC';position:absolute;top:52px;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--tx2)}
 .set-body h2{font-size:24px;font-weight:800;letter-spacing:-.015em}
 .set-body > .inner > p.sub{color:var(--tx2);margin:6px 0 24px}
 .sc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
@@ -440,6 +442,31 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .mem .st{display:block;color:var(--tx3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
 @media (max-width: 1000px){ .pgrid{grid-template-columns:1fr} .pgrid .prev{position:static;order:-1} }
 
+/* ---------- Modo cinema (teatro) ---------- */
+body.theater #app{padding:0;gap:0}
+body.theater #drawer,body.theater #members,body.theater .main-head{display:none!important}
+body.theater #main{border:0;border-radius:0;background:#000}
+body.theater #tiles{display:block;padding:0;overflow:hidden}
+body.theater #tiles .tile:not(.big){display:none}
+body.theater #tiles .tile.big{width:100%;height:100vh!important;height:100dvh!important;border:0;border-radius:0;background:#000;box-shadow:none;cursor:default}
+body.theater #tiles .tile.big video{object-fit:contain}
+body.theater.fill #tiles .tile.big video{object-fit:cover}
+body.theater .tile .tools,body.theater .tile .label{display:none}
+body.theater .ctrls{position:fixed;left:0;right:0;bottom:0;padding:30px 16px 22px;background:linear-gradient(transparent,#000c);z-index:20;opacity:0;transition:opacity .25s;pointer-events:none}
+body.theater.ui .ctrls{opacity:1;pointer-events:auto}
+body.theater:not(.ui){cursor:none}
+#cineBar{display:none}
+body.theater #cineBar{display:flex;position:fixed;top:0;left:0;right:0;z-index:21;align-items:center;gap:10px;padding:16px 20px 34px;background:linear-gradient(#000c,transparent);opacity:0;transition:opacity .25s;pointer-events:none}
+body.theater.ui #cineBar{opacity:1;pointer-events:auto}
+#cineBar .tt{flex:1;min-width:0;font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cineBar .tt small{color:var(--tx2);font-weight:500}
+#cineBar .hbtn{background:#000a;border-color:#ffffff33;color:#fff;backdrop-filter:blur(8px)}
+#cineBar .hbtn:hover{background:#fff;color:#000}
+#cineBar .hbtn.exit{background:#fff;color:#000;border-color:#fff}
+#cineVol{display:flex;align-items:center;gap:8px;background:#000a;border:1px solid #ffffff33;border-radius:999px;padding:0 12px;height:36px}
+#cineVol input{width:110px;accent-color:#fff}
+.cine-badge{background:#fff;color:#000;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:.05em}
+
 /* Mobile */
 @media (max-width: 1100px){ #members{display:none} }
 @media (max-width: 760px){
@@ -563,7 +590,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <button class="ibtn" id="menuBtn"><svg class="i"><use href="#i-menu"/></svg></button>
       <div class="t"><h1 id="mainTitle"></h1><small id="mainSub"></small></div>
       <div class="sp"></div>
-      <button class="hbtn hidden" id="statsBtn" title="Estatísticas da conexão"><svg class="i sm"><use href="#i-signal"/></svg><span>Estatísticas</span></button>
+      <button class="hbtn hidden" id="statsBtn" title="Mostra em cada vídeo: resolução, fps, codec, velocidade e ping. Útil para ver por que algo está travando."><svg class="i sm"><use href="#i-signal"/></svg><span>Estatísticas</span></button>
       <button class="hbtn" id="inviteBtn"><svg class="i sm"><use href="#i-users"/></svg><span>Convidar</span></button>
     </div>
     <section id="chat" class="hidden">
@@ -579,6 +606,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
         <div id="joinWho"></div>
         <button class="btn" id="joinBtn">Entrar na sala</button>
       </div>
+      <div id="cineBar"><div class="tt"><span class="cine-badge">CINEMA</span><span id="cineTitle"></span></div><div id="cineVol"><svg class="i sm"><use href="#i-vol"/></svg><input type="range" min="0" max="1" step="0.02" id="cineVolInp"></div><button class="hbtn" id="cineFit">Preencher</button><button class="hbtn" id="cineFs">Tela cheia</button><button class="hbtn exit" id="cineExit">Sair do modo cinema</button></div>
       <div class="ctrls" id="ctrls"><div class="ctrl-bar">
         <button class="cbtn" id="cMute" title="Microfone"></button>
         <button class="cbtn" id="cCam" title="Câmera"></button>
@@ -612,6 +640,8 @@ const SHARE_Q = {
   jogo1080: {label:'Jogo · 1080p 60 fps', w:1920,h:1080,fps:60, br:8000000,  motion:true,  hint:'Fluido para jogos. Recomendado.'},
   jogo720:  {label:'Jogo leve · 720p 60 fps', w:1280,h:720, fps:60, br:4500000,  motion:true,  hint:'Para internet ou PC mais fracos'},
   jogo1440: {label:'Jogo · 1440p 60 fps', w:2560,h:1440,fps:60, br:14000000, motion:true,  hint:'Precisa de muito upload (≈15 Mbps por amigo)'},
+  cinema:   {label:'Cinema · filme em 1080p', w:1920,h:1080,fps:30, br:12000000, motion:true, cinema:true, hint:'Máxima qualidade de imagem e som (AV1/VP9, áudio estéreo 320 kbps). Abre em modo cinema para quem assiste.'},
+  cinema4k: {label:'Cinema 4K · até 2160p', w:3840,h:2160,fps:30, br:22000000, motion:true, cinema:true, hint:'Só com PC forte e upload alto (≈25 Mbps por amigo)'},
   texto:    {label:'Texto nítido · 1080p 30 fps', w:1920,h:1080,fps:30, br:5000000, motion:false, hint:'Navegador, código, planilhas'},
   nativo:   {label:'Nativo · resolução da tela, 30 fps', w:0,h:0,fps:30, br:9000000, motion:false, hint:'Nitidez máxima, sem reduzir'},
 };
@@ -1244,7 +1274,7 @@ function mungeSdp(sdp){
       if(f){
         const codec=pts[f[1]]; const params={};
         f[2].split(';').map(s=>s.trim()).filter(Boolean).forEach(s=>{ const i=s.indexOf('='); if(i<0) params[s]=''; else params[s.slice(0,i)]=s.slice(i+1); });
-        if(codec==='OPUS'){ Object.assign(params, {stereo:'1','sprop-stereo':'1',maxaveragebitrate:'192000',useinbandfec:'1',usedtx:'0',maxplaybackrate:'48000',minptime:'10'}); out.push(`a=fmtp:${f[1]} ${fmt(params)}`); continue; }
+        if(codec==='OPUS'){ Object.assign(params, {stereo:'1','sprop-stereo':'1',maxaveragebitrate:'510000',useinbandfec:'1',usedtx:'0',maxplaybackrate:'48000',minptime:'10'}); out.push(`a=fmtp:${f[1]} ${fmt(params)}`); continue; }
         if(VIDEO_CODECS.has(codec)){ Object.assign(params, VIDEO_FMTP); out.push(`a=fmtp:${f[1]} ${fmt(params)}`); continue; }
         out.push(l); continue;
       }
@@ -1259,7 +1289,8 @@ function codecOrder(){
   const caps = window.RTCRtpReceiver?.getCapabilities?.('video'); if(!caps) return null;
   const p=P(), Q=SHARE_Q[p.shareQ]||SHARE_Q.jogo1080;
   let pref;
-  if(p.shareCodec==='auto') pref = Q.motion ? ['video/H264','video/VP9','video/VP8'] : ['video/VP9','video/H264','video/VP8'];
+  if(V?.noAV1 && p.shareCodec==='AV1') pref = ['video/VP9','video/H264','video/VP8'];
+  else if(p.shareCodec==='auto') pref = Q.cinema ? (V?.noAV1 ? ['video/VP9','video/H264','video/VP8'] : ['video/AV1','video/VP9','video/H264','video/VP8']) : Q.motion ? ['video/H264','video/VP9','video/VP8'] : ['video/VP9','video/H264','video/VP8'];
   else pref = ['video/'+p.shareCodec, 'video/H264', 'video/VP9', 'video/VP8'];
   const rank = c => { const i=pref.findIndex(m=>m.toLowerCase()===c.mimeType.toLowerCase()); return i<0?99:i; };
   return caps.codecs.slice().sort((a,b)=>rank(a)-rank(b));
@@ -1294,7 +1325,7 @@ function renderJoinCta(){
 function showStage(){ $('#joinCta').classList.add('hidden'); $('#tiles').classList.remove('hidden'); $('#ctrls').classList.remove('hidden'); $('#statsBtn').classList.remove('hidden'); renderTiles(); }
 
 async function joinVoice(ch){
-  V = { ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
+  V = { cineSeen:new Set(), noAV1:false, cpuStrikes:0, ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
   showStage(); $('#voicecard').classList.remove('hidden'); $('#vbChan').textContent = ch.name+' / '+S.server.name;
   try{
     V.pipe = new MicPipeline();
@@ -1316,7 +1347,7 @@ async function joinVoice(ch){
     });
   renderControls(); renderTiles();
 }
-function myVoiceMeta(){ return { uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, muted:S.muted, deaf:S.deaf }; }
+function myVoiceMeta(){ return { uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, screenMode:V?.screen && SHARE_Q[V.screenQ]?.cinema ? 'cinema' : null, muted:S.muted, deaf:S.deaf }; }
 function onVoicePresence(){
   if(!V) return;
   const state=V.rt.presenceState(); V.meta={};
@@ -1350,7 +1381,7 @@ function createPeer(id){
   if(V.mic) addStreamToPeer(peer, V.mic, 'mic');
   if(V.cam) addStreamToPeer(peer, V.cam, 'cam');
   if(V.screen) addStreamToPeer(peer, V.screen, 'screen');
-  pc.onnegotiationneeded = async ()=>{
+  pc.onnegotiationneeded = peer.negotiate = async ()=>{
     try{
       peer.makingOffer=true;
       const offer = await pc.createOffer();
@@ -1403,7 +1434,8 @@ async function tuneSenders(pc){
   const p=P(), Q=SHARE_Q[p.shareQ]||SHARE_Q.jogo1080, C=CAM_Q[p.camRes]||CAM_Q['720'];
   const viewers=Math.max(1, V.peers.size);
   const budget = Math.max(1.5e6, p.uploadMbps*1e6*0.85/viewers);           // orçamento de upload por amigo
-  const camBr = V.cam ? Math.min(C.br, V.screen ? budget*0.2 : budget*0.8) : 0;
+  const Qs = V.screen ? (SHARE_Q[V.screenQ]||Q) : Q;
+  const camBr = V.cam ? Math.min(C.br, V.screen ? budget*(Qs.cinema?0.08:0.2) : budget*0.8) : 0;
   for(const s of pc.getSenders()){
     const t=s.track; if(!t) continue;
     let prm; try{ prm=s.getParameters(); }catch{ continue; }
@@ -1411,13 +1443,13 @@ async function tuneSenders(pc){
     const e=prm.encodings[0];
     if(t.kind==='audio'){
       const scr = V.screen?.getAudioTracks().includes(t);
-      e.maxBitrate = scr ? 160000 : 64000; e.priority='high'; e.networkPriority='high';
+      e.maxBitrate = scr ? (Q.cinema ? 320000 : 160000) : 64000; e.priority='high'; e.networkPriority='high';
     } else {
       const scr = V.screen?.getVideoTracks().includes(t);
       if(scr){
-        e.maxBitrate = Math.round(Math.max(1e6, Math.min(Q.br, budget - camBr - 200000)));
-        e.maxFramerate = Q.fps; e.scaleResolutionDownBy = 1; e.priority='high'; e.networkPriority='high';
-        prm.degradationPreference = Q.motion ? 'maintain-framerate' : 'maintain-resolution';
+        e.maxBitrate = Math.round(Math.max(1e6, Math.min(Qs.br, budget - camBr - (Qs.cinema?400000:200000))));
+        e.maxFramerate = Qs.fps; e.scaleResolutionDownBy = 1; e.priority='high'; e.networkPriority='high';
+        prm.degradationPreference = Qs.cinema ? 'balanced' : Qs.motion ? 'maintain-framerate' : 'maintain-resolution';
       } else {
         e.maxBitrate = Math.round(Math.max(300000, camBr)); e.maxFramerate = p.camFps; e.priority='medium'; e.networkPriority='low';
         prm.degradationPreference = 'balanced';
@@ -1441,7 +1473,7 @@ async function leaveVoice(){
   v.pipe?.stop(); [v.cam,v.screen].forEach(s=>s&&s.getTracks().forEach(t=>t.stop()));
   try{ await v.rt?.untrack(); }catch{} if(v.rt) sb.removeChannel(v.rt);
   try{ v.audioCtx?.close(); }catch{}
-  $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
+  setTheater(false); $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
   trackServerPresence(); renderMe(); renderMembers(); beep(false);
   if(S.view?.type==='voice') renderJoinCta();
 }
@@ -1485,19 +1517,20 @@ async function toggleScreen(){
   if(!V) return;
   if(V.screen){ stopScreen(); return; }
   const q = await pickQuality(); if(!q || !V) return;
-  const Q=SHARE_Q[q];
+  const Q=SHARE_Q[q]; V.screenQ=q;
   const video = Q.w ? { width:{ideal:Q.w, max:Q.w}, height:{ideal:Q.h, max:Q.h}, frameRate:{ideal:Q.fps, max:Q.fps} } : { frameRate:{ideal:Q.fps, max:Q.fps} };
   video.cursor='always';
   try{
     V.screen = await navigator.mediaDevices.getDisplayMedia({ video,
       audio:{ channelCount:2, sampleRate:48000, echoCancellation:false, noiseSuppression:false, autoGainControl:false, suppressLocalAudioPlayback:false },
-      systemAudio:'include', selfBrowserSurface:'exclude', surfaceSwitching:'include' });
+      systemAudio:'include', selfBrowserSurface:'exclude', surfaceSwitching:'include', ...(Q.cinema?{ preferCurrentTab:false, monitorTypeSurfaces:'include' }:{}) });
   }catch(e){ if(e.name!=='NotAllowedError') toast('Não foi possível transmitir: '+(e.name||e.message), true); return; }
   if(!V){ return; }
   const vt=V.screen.getVideoTracks()[0];
   if(vt){ vt.contentHint = Q.motion ? 'motion' : 'detail'; vt.onended = ()=>stopScreen(); }
   V.screen.getAudioTracks().forEach(t=>t.contentHint='music');
-  if(!V.screen.getAudioTracks().length) toast('Transmitindo sem som. Para enviar o áudio, compartilhe uma aba ou a tela inteira e marque "Compartilhar áudio".');
+  if(!V.screen.getAudioTracks().length) toast(Q.cinema ? 'Atenção: o filme está indo SEM som. Pare e compartilhe a ABA do player marcando "Compartilhar áudio da aba".' : 'Transmitindo sem som. Para enviar o áudio, compartilhe uma aba ou a tela inteira e marque "Compartilhar áudio".', !!Q.cinema);
+  else if(Q.cinema) toast('Modo cinema no ar: qualidade máxima de imagem e som para a galera.');
   addStream(V.screen, 'screen'); V.focus='screen:'+S.sid;
   afterToggle(); renderMembers();
   V.peers.forEach(p=>tuneSenders(p.pc));
@@ -1514,13 +1547,40 @@ function renderControls(){
   $('#vbCam').classList.toggle('on',!!V?.cam); $('#vbScreen').classList.toggle('on',!!V?.screen);
   $('#statsBtn').classList.toggle('on', P().showStats);
 }
+function applyCinemaBuffer(peer, stream){
+  const tracks=stream.getTracks();
+  peer.pc.getReceivers().forEach(r=>{ if(!tracks.includes(r.track)) return;
+    try{ if('jitterBufferTarget' in r){ if(r.jitterBufferTarget!==400) r.jitterBufferTarget = 400; } else if('playoutDelayHint' in r) r.playoutDelayHint = 0.4; }catch{} });
+}
+let uiTimer=null;
+function theaterUI(){ document.body.classList.add('ui'); clearTimeout(uiTimer); uiTimer=setTimeout(()=>document.body.classList.remove('ui'), 2600); }
+function setTheater(on){
+  const b=document.body; if(on===b.classList.contains('theater')) return;
+  if(on){ const f=V && V.tiles.get(V.focus); if(!f || f.dataset.kind!=='screen') return;
+    b.classList.add('theater'); renderTiles(); theaterUI();
+    const vk=f.dataset.key.split(':')[1]; const uidv = V.meta[vk]?.uid || S.me.id;
+    const inp=$('#cineVolInp'); inp.value=ls.get('dc_svol_'+uidv,1); inp.oninput=()=>{ ls.set('dc_svol_'+uidv, +inp.value); const v=f.querySelector('video'); if(v && !v.dataset.local) v.volume=Math.min(1,+inp.value*P().outVol); };
+  } else { b.classList.remove('theater','ui','fill'); if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); if(V) renderTiles(); }
+}
+$('#cineExit').onclick=()=>setTheater(false);
+$('#cineFit').onclick=()=>{ const on=document.body.classList.toggle('fill'); $('#cineFit').textContent = on ? 'Encaixar' : 'Preencher'; };
+$('#cineFs').onclick=()=>{ (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(()=>{}); };
+document.addEventListener('fullscreenchange', ()=>{ $('#cineFs').textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
+document.addEventListener('mousemove', ()=>{ if(document.body.classList.contains('theater')) theaterUI(); });
+document.addEventListener('touchstart', ()=>{ if(document.body.classList.contains('theater')) theaterUI(); }, {passive:true});
+function fallbackFromAV1(){
+  if(!V?.screen || V.noAV1) return; V.noAV1=true; const order=codecOrder();
+  V.peers.forEach(p=>{ const vt=V.screen?.getVideoTracks()[0];
+    const tr=p.pc.getTransceivers().find(t=>t.sender.track===vt); if(tr && order){ try{ tr.setCodecPreferences(order); p.negotiate?.(); }catch(e){ console.warn(e); } } });
+  toast('Seu processador estava no limite com AV1. Troquei para VP9 para não travar.');
+}
 function pickQuality(){
   return new Promise(res=>{
     const last=P().shareQ;
     const up=P().uploadMbps, n=Math.max(1,V?.peers.size||1);
     const html = `<h3>Transmitir tela</h3><p class="sub">Escolha a qualidade. Depois o navegador pergunta qual tela, janela ou aba compartilhar.</p>
       ${Object.entries(SHARE_Q).map(([k,q])=>`<label class="opt"><input type="radio" name="q" value="${k}" ${k===last?'checked':''}><div><b>${q.label}</b><small>${q.hint}</small></div><span class="dot"></span></label>`).join('')}
-      <p class="hint">Seu upload configurado: <b>${up} Mbps</b> para ${n} ${n>1?'amigos':'amigo'} (≈${fmtBr(up*1e6*0.85/n)} cada). Ajuste em Configurações → Transmissão.<br>Para mandar o som do jogo: compartilhe uma <b>aba</b> ou a <b>tela inteira</b> e marque <b>"Compartilhar áudio"</b>.</p>
+      <p class="hint">Seu upload configurado: <b>${up} Mbps</b> para ${n} ${n>1?'amigos':'amigo'} (≈${fmtBr(up*1e6*0.85/n)} cada). Ajuste em Configurações → Transmissão.<br>Para mandar o som: compartilhe uma <b>aba</b> ou a <b>tela inteira</b> e marque <b>"Compartilhar áudio"</b>.<br><b>Filme:</b> compartilhe a <b>aba do player</b>. Netflix, Prime, Disney+ e similares aparecem pretos (proteção contra cópia).</p>
       <div class="row"><button class="btn sec" data-x>Cancelar</button><button class="btn" data-ok>${ic('cast','sm')} Transmitir</button></div>`;
     const m = modal(html, ()=>res(null));
     m.querySelector('[data-x]').onclick=()=>{ closeModal(); res(null); };
@@ -1581,6 +1641,7 @@ async function collectStats(){
     peer.rtt = rtt; peer.relay = relay;
   }
   V.outStats = V.screen ? { br:outBytes, fps:outFps, res:outRes, codec:outCodec, limit:outLimit } : null;
+  if(V.outStats && /av1/i.test(V.outStats.codec||'') && V.outStats.limit==='cpu'){ if(++V.cpuStrikes>=3) fallbackFromAV1(); } else if(V) V.cpuStrikes=0;
   renderStats();
 }
 function renderStats(){
@@ -1618,7 +1679,11 @@ function renderTiles(){
     const cam = m.camId && p.streams.get(m.camId);
     want.push({key:'user:'+id, sid:id, uid:m.uid, kind:'user', stream: cam && cam.getVideoTracks().length ? cam : null, name, color:m.color, muted:m.muted||m.deaf, state:p.pc.connectionState});
     const scr = m.screenId && p.streams.get(m.screenId);
-    if(scr && scr.getVideoTracks().length) want.push({key:'screen:'+id, sid:id, uid:m.uid, kind:'screen', stream:scr, name:'Tela de '+name, color:m.color});
+    if(scr && scr.getVideoTracks().length){
+      want.push({key:'screen:'+id, sid:id, uid:m.uid, kind:'screen', stream:scr, name:'Tela de '+name, color:m.color, cinema:m.screenMode==='cinema'});
+      if(m.screenMode==='cinema'){ applyCinemaBuffer(p, scr);
+        if(!V.cineSeen.has(scr.id)){ V.cineSeen.add(scr.id); V.focus='screen:'+id; setTimeout(()=>{ if(V && V.tiles.has('screen:'+id)){ V.focus='screen:'+id; setTheater(true); toast(name+' começou um filme. Modo cinema ligado — use fone para o som não voltar pelo seu microfone.'); } }, 300); } }
+    }
   }
   if(V.focus && !want.find(w=>w.key===V.focus)) V.focus=null;
   if(!V.focus){ const r = want.find(w=>w.kind==='screen' && !w.local); if(r) V.focus=r.key; }
@@ -1672,11 +1737,13 @@ function renderTiles(){
           if(w.kind==='screen') el.querySelector('video').volume=Math.min(1,v*P().outVol); else { const p=V.peers.get(w.sid); if(p) applyPeerVolume(p); } };
         tools.appendChild(lab);
       }
+      if(w.kind==='screen'){ const cb=document.createElement('button'); cb.innerHTML=ic('cast','sm')+'Modo cinema'; cb.onclick=()=>{ V.focus=w.key; setTheater(true); }; tools.appendChild(cb); }
       if(w.kind==='screen'){ const fs=document.createElement('button'); fs.innerHTML=ic('max','sm')+'Tela cheia'; fs.onclick=()=>{ (document.fullscreenElement? document.exitFullscreen() : el.requestFullscreen()).catch(()=>{}); }; tools.appendChild(fs); }
     }
     box.appendChild(el);
   }
   if(V.focus){ const f=V.tiles.get(V.focus); if(f) box.prepend(f); }
+  if(document.body.classList.contains('theater')){ const f=want.find(w=>w.key===V.focus); if(!f || f.kind!=='screen') setTheater(false); else $('#cineTitle').innerHTML=esc(f.name)+(f.cinema?' <small>· qualidade máxima</small>':''); }
   if(S.view?.type==='voice') renderSub();
   renderVoiceState(); renderStats();
 }
@@ -1722,14 +1789,32 @@ async function renderSettings(){
   const p=P();
 
   if(SET.sec==='conta'){
-    body.innerHTML = `<h2>Minha conta</h2><p class="sub">Login e segurança.</p>
+    let user=null; try{ user=(await sb.auth.getUser()).data.user; }catch{}
+    const verified = !!(user?.email_confirmed_at || user?.confirmed_at);
+    body.innerHTML = `<h2>Minha conta</h2><p class="sub">Login, email e segurança.</p>
       <div class="sc"><div class="profile">${avatarU(S.me.id, 56)}<div><b style="font-size:17px">${nameHtml(S.me.id)}</b><small>${esc(S.me.email)}</small></div><button class="btn sec auto" style="margin-left:auto" id="goProf">${ic('palette','sm')} Editar perfil</button></div></div>
+      <div class="sc"><h3>Email</h3><p>Usado para entrar e recuperar a senha.</p>
+        <div class="srow"><div><b>${esc(user?.email||S.me.email)}</b><small>${verified?'<span style="color:var(--green)">● Verificado</span>':'<span style="color:var(--amber)">● Não verificado</span>'}${user?.new_email?` · aguardando confirmação de <b>${esc(user.new_email)}</b>`:''}</small></div>
+          ${verified?'':`<button class="btn sec auto" id="stVerify">Reenviar verificação</button>`}</div>
+        <div class="srow" style="display:block"><b style="margin-bottom:8px">Trocar email</b>
+          <div class="row" style="margin:0"><input class="inp" id="stEmail" type="email" placeholder="novo@email.com" autocomplete="email"><button class="btn auto" id="stEmailGo">Trocar</button></div>
+          <small class="hint">Enviamos um link de confirmação para o novo email (e, por segurança, um aviso para o atual). A troca só vale depois de clicar no link.</small></div>
+        <div id="emailMsg"></div></div>
       <div class="sc"><h3>Senha</h3><p>Troque a senha da sua conta.</p>
         <div class="row" style="margin:0"><input class="inp" id="stPass" type="password" minlength="6" placeholder="Nova senha" autocomplete="new-password"><button class="btn sec auto" id="stSavePass">Alterar</button></div></div>
       <div class="sc"><h3>Sessão</h3><p>Sair desta conta neste navegador.</p><button class="btn danger auto" id="stOut">${ic('out','sm')} Sair da conta</button></div>`;
     $('#goProf').onclick=()=>{ SET.sec='perfil'; renderSettings(); };
-    $('#stSavePass').onclick=async()=>{ const pw=$('#stPass').value; if(pw.length<6) return toast('Use pelo menos 6 caracteres.', true);
-      const { error } = await sb.auth.updateUser({ password:pw }); if(error) return toast(authMsg(error), true); $('#stPass').value=''; toast('Senha alterada!'); };
+    const emailMsg=(t,ok)=>{ $('#emailMsg').innerHTML=`<div class="${ok?'ok-box':'err-box'}" style="margin:12px 0 0">${esc(t)}</div>`; };
+    const redirect = location.origin+location.pathname;
+    $('#stEmailGo').onclick=async()=>{ const em=$('#stEmail').value.trim(); if(!/^\S+@\S+\.\S+$/.test(em)) return emailMsg('Digite um email válido.');
+      if(em.toLowerCase()===(user?.email||'').toLowerCase()) return emailMsg('Esse já é o seu email.');
+      const btn=$('#stEmailGo'); busy(btn,true);
+      const { error } = await sb.auth.updateUser({ email:em }, { emailRedirectTo:redirect }); busy(btn,false);
+      if(error) return emailMsg(authMsg(error));
+      emailMsg('Pronto! Confirme pelo link enviado para '+em+'. Até lá, continue entrando com o email atual.', true); };
+    $('#stVerify')?.addEventListener('click', async()=>{ const btn=$('#stVerify'); busy(btn,true);
+      const { error } = await sb.auth.resend({ type:'signup', email:user?.email||S.me.email, options:{ emailRedirectTo:redirect } }); busy(btn,false);
+      emailMsg(error ? authMsg(error) : 'Link de verificação enviado para '+(user?.email||S.me.email)+'.', !error); });
     $('#stOut').onclick=logout;
   }
 
@@ -2144,7 +2229,7 @@ $('#cLeave').onclick=leaveVoice; $('#vbLeave').onclick=leaveVoice;
 $('#vbChan').onclick=()=>{ if(V) openVoice(V.ch); };
 $('#ubSet').onclick=()=>openSettings('voz');
 $('#setClose').onclick=closeSettings;
-$('#statsBtn').onclick=()=>{ setPref('showStats', !P().showStats); renderControls(); renderStats(); };
+$('#statsBtn').onclick=()=>{ setPref('showStats', !P().showStats); renderControls(); renderStats(); if(P().showStats) toast('Estatísticas ligadas: resolução, fps, codec, velocidade e ping aparecem em cada vídeo.'); };
 $('#inviteBtn').onclick=()=>S.server&&openInvite();
 $('#srvCode').onclick=e=>{ e.stopPropagation(); S.server&&copy(S.server.code); };
 $('.side-head').onclick=e=>openServerMenu(e);
@@ -2154,6 +2239,7 @@ $('#scrim').onclick=closeDrawer;
 document.addEventListener('click', ()=>{ if(V){ V.peers.forEach(p=>{ if(p.audio.srcObject && p.audio.paused) p.audio.play().catch(()=>{}); }); if(V.audioCtx?.state==='suspended') V.audioCtx.resume().catch(()=>{}); if(V.pipe?.ctx?.state==='suspended') V.pipe.ctx.resume().catch(()=>{}); } });
 window.addEventListener('beforeunload', ()=>{ if(V){ try{ V.rt.untrack(); }catch{} V.peers.forEach(p=>p.pc.close()); } });
 document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.body.classList.contains('theater') && !document.fullscreenElement){ setTheater(false); return; }
   if(e.key==='Escape'){ if($('#modalRoot').innerHTML) closeModal(); else if(!$('#settings').classList.contains('hidden')) closeSettings(); }
   if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='m'){ e.preventDefault(); setMuted(!(S.muted||S.deaf)); }
   if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='d'){ e.preventDefault(); setDeaf(!S.deaf); }
@@ -2168,13 +2254,19 @@ setInterval(()=>{ if(S.server) renderMembers(); }, 60000);
 (async function boot(){
   if(!sb){ document.body.innerHTML='<p style="padding:40px;color:#fff;font-family:sans-serif">Não foi possível carregar a biblioteca do Supabase. Verifique sua internet.</p>'; return; }
   let recovering = /type=recovery/.test(location.hash);
+  const emailFlow = (location.hash.match(/type=(signup|email_change|email)/)||[])[1];
+  const hashErr = decodeURIComponent((location.hash.match(/error_description=([^&]+)/)||[])[1]||'').replace(/\+/g,' ');
   sb.auth.onAuthStateChange((ev, session)=>{
     if(ev==='PASSWORD_RECOVERY'){ recovering=true; showAuth('recovery'); }
+    else if(ev==='USER_UPDATED' && session && S.me){ if(session.user.email && session.user.email!==S.me.email){ S.me.email=session.user.email; toast('Email atualizado para '+S.me.email); renderMembers(); } }
     else if(ev==='SIGNED_OUT'){ S.started=false; }
   });
   const { data:{ session } } = await sb.auth.getSession();
-  if(/access_token|type=/.test(location.hash)) history.replaceState(null, '', location.pathname+location.search);
+  if(/access_token|type=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname+location.search);
   if(recovering) return showAuth('recovery');
+  if(hashErr) setTimeout(()=>toast('Link inválido ou expirado: '+hashErr, true), 600);
+  else if(emailFlow==='signup') setTimeout(()=>toast('Email verificado! Bem-vindo ao CONCORD.'), 600);
+  else if(emailFlow) setTimeout(()=>toast('Email confirmado.'), 600);
   if(session) afterLogin(session); else showAuth('login');
 })();
 </script>
