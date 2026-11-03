@@ -79,7 +79,6 @@ class RtChannel internal constructor(
     }
 
     internal fun handle(event: String, payload: JSONObject) {
-        if (event.startsWith("presence") || event.startsWith("phx")) android.util.Log.d("Concord", "rt $name $event ${payload.toString().take(300)}")
         when (event) {
             "phx_reply" -> {
                 if (!joined && payload.optString("status") == "ok") {
