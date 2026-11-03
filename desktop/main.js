@@ -141,6 +141,17 @@ function openPicker() {
   });
 }
 let lastSources = new Map();
+// última fonte escolhida: se a captura cair sozinha, o site pede para retomar a mesma, sem abrir o seletor
+let lastChoice = null, reuseNext = null;
+ipcMain.handle('concord:reshare', async () => {
+  if (!lastChoice) return false;
+  const list = await desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 0, height: 0 } });
+  const s = list.find(x => x.id === lastChoice.id) || (!lastChoice.screen && list.find(x => x.name === lastChoice.name)) || null;
+  if (!s) return false;
+  lastSources.set(s.id, s);
+  reuseNext = { id: s.id, audio: lastChoice.audio };
+  return true;
+});
 ipcMain.handle('picker:sources', async () => {
   const list = await desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 400, height: 225 }, fetchWindowIcons: true });
   lastSources = new Map(list.map(s => [s.id, s]));
@@ -263,9 +274,11 @@ app.whenReady().then(() => {
   ses.setPermissionRequestHandler((wc, perm, cb, details) => cb(ALLOWED.has(perm) && okOrigin(details.requestingUrl || wc.getURL())));
   ses.setPermissionCheckHandler((wc, perm, origin) => ALLOWED.has(perm) && (origin ? origin.startsWith(ORIGIN) : true));
   ses.setDisplayMediaRequestHandler(async (request, callback) => {
-    const choice = await openPicker();
+    const choice = reuseNext || await openPicker();
+    reuseNext = null;
     const src = choice && lastSources.get(choice.id);
     if (!src) return callback({});
+    lastChoice = { id: src.id, name: src.name, audio: !!choice.audio, screen: src.id.startsWith('screen:') };
     const cfg = { video: src };
     if (choice.audio && process.platform === 'win32') cfg.audio = 'loopback';
     callback(cfg);

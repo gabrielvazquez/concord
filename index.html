@@ -2307,16 +2307,14 @@ async function toggleScreen(){
   if(V.screen){ stopScreen(); return; }
   const q = await pickQuality(); if(!q || !V) return;
   const Q=SHARE_Q[q]; V.screenQ=q;
-  const video = Q.w ? { width:{ideal:Q.w, max:Q.w}, height:{ideal:Q.h, max:Q.h}, frameRate:{ideal:Q.fps, max:Q.fps} } : { frameRate:{ideal:Q.fps, max:Q.fps} };
-  video.cursor='always';
+  V.reshares=0;
   try{
-    V.screen = await navigator.mediaDevices.getDisplayMedia({ video,
-      audio:{ channelCount:2, sampleRate:48000, echoCancellation:false, noiseSuppression:false, autoGainControl:false, suppressLocalAudioPlayback:false },
-      systemAudio:'include', selfBrowserSurface:'exclude', surfaceSwitching:'include', ...(Q.cinema?{ preferCurrentTab:false, monitorTypeSurfaces:'include' }:{}) });
+    V.screen = await navigator.mediaDevices.getDisplayMedia(screenConstraints(Q));
   }catch(e){ if(e.name!=='NotAllowedError' && e.name!=='AbortError' && !/Permission|denied|cancel/i.test(e.message||'')) toast('Não foi possível transmitir: '+(e.name||e.message), true); return; }
   if(!V){ return; }
   const vt=V.screen.getVideoTracks()[0];
-  if(vt){ vt.contentHint = Q.motion ? 'motion' : 'detail'; vt.onended = ()=>stopScreen(); }
+  if(vt) vt.contentHint = Q.motion ? 'motion' : 'detail';
+  watchScreenEnd();
   V.screen.getAudioTracks().forEach(t=>t.contentHint='music');
   if(!V.screen.getAudioTracks().length) toast(Q.cinema ? 'Atenção: o filme está indo SEM som. Pare e compartilhe a ABA do player marcando "Compartilhar áudio da aba".' : 'Transmitindo sem som. Para enviar o áudio, compartilhe uma aba ou a tela inteira e marque "Compartilhar áudio".', !!Q.cinema);
   else if(Q.cinema) toast('Modo cinema no ar: qualidade máxima de imagem e som para a galera.');
@@ -2324,6 +2322,46 @@ async function toggleScreen(){
   afterToggle(); renderMembers();
   V.peers.forEach(p=>tuneSenders(p.pc));
   setTimeout(()=>V && V.peers.forEach(p=>tuneSenders(p.pc)), 1500);
+}
+function screenConstraints(Q){
+  const video = Q.w ? { width:{ideal:Q.w, max:Q.w}, height:{ideal:Q.h, max:Q.h}, frameRate:{ideal:Q.fps, max:Q.fps} } : { frameRate:{ideal:Q.fps, max:Q.fps} };
+  video.cursor='always';
+  return { video,
+    audio:{ channelCount:2, sampleRate:48000, echoCancellation:false, noiseSuppression:false, autoGainControl:false, suppressLocalAudioPlayback:false },
+    systemAudio:'include', selfBrowserSurface:'exclude', surfaceSwitching:'include', ...(Q.cinema?{ preferCurrentTab:false, monitorTypeSurfaces:'include' }:{}) };
+}
+/* a captura pode cair sozinha (janela minimizada, tela cheia, troca de modo do vídeo no Windows).
+   No app de PC ela é retomada na hora, sem ninguém perceber; no site avisamos o motivo. */
+function watchScreenEnd(){ const vt=V?.screen?.getVideoTracks()[0]; if(vt) vt.onended=()=>onScreenEnded(vt); }
+async function onScreenEnded(vt){
+  if(!V?.screen || !V.screen.getVideoTracks().includes(vt)) return;
+  if(DESK?.reshare && (V.reshares||0) < 6){
+    V.reshares=(V.reshares||0)+1;
+    try{
+      if(!(await DESK.reshare())) throw new Error('fonte sumiu');
+      const ns = await navigator.mediaDevices.getDisplayMedia(screenConstraints(SHARE_Q[V.screenQ]||{fps:30}));
+      if(!V?.screen){ ns.getTracks().forEach(t=>t.stop()); return; }
+      await swapScreenTracks(ns);
+      toast('A captura caiu e foi retomada sozinha.');
+      return;
+    }catch(e){ console.warn('retomar captura', e); }
+  }
+  stopScreen();
+  toast(DESK ? 'A transmissão parou: a janela compartilhada fechou. Compartilhe a tela inteira para não cair.'
+             : 'A transmissão parou: o navegador encerrou a captura (botão "Parar", aba/janela fechada ou em tela cheia). Compartilhe a tela inteira, ou use o app de PC, que retoma sozinho.', true);
+}
+async function swapScreenTracks(ns){
+  const st=V.screen, oldV=st.getVideoTracks()[0], oldA=st.getAudioTracks()[0], nv=ns.getVideoTracks()[0], na=ns.getAudioTracks()[0];
+  if(nv) nv.contentHint = oldV?.contentHint || 'motion'; if(na) na.contentHint='music';
+  for(const p of V.peers.values()) for(const s of p.pc.getSenders()){
+    try{ if(oldV && nv && s.track===oldV) await s.replaceTrack(nv); else if(oldA && na && s.track===oldA) await s.replaceTrack(na); }catch(e){ console.warn(e); } }
+  if(oldV && nv){ st.removeTrack(oldV); st.addTrack(nv); }
+  if(oldA && na){ st.removeTrack(oldA); st.addTrack(na); }
+  for(const t of [oldV, oldA]) if(t && !st.getTracks().includes(t)){ t.onended=null; try{ t.stop(); }catch{} }
+  ns.getTracks().forEach(t=>{ if(!st.getTracks().includes(t)) t.stop(); });
+  watchScreenEnd();
+  const tile=V.tiles.get('screen:'+S.sid); if(tile){ const v=tile.querySelector('video'); if(v){ v.srcObject=null; v.srcObject=st; } }
+  renderTiles(); V.peers.forEach(p=>tuneSenders(p.pc));
 }
 function stopScreen(){ if(!V?.screen) return; removeStream(V.screen); V.screen=null; if(V.focus==='screen:'+S.sid) V.focus=null; afterToggle(); renderMembers(); V.peers.forEach(p=>tuneSenders(p.pc)); }
 function renderControls(){
