@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>CONCORD TV</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;color:#fafafa;font-family:Inter,'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;cursor:none}
+.pair{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;background:radial-gradient(60vw 50vh at 50% 0%,#18181c,transparent 70%),#000}
+.brand{display:flex;align-items:center;gap:1.2vw;font-weight:800;letter-spacing:.4em;color:#a1a1aa;font-size:1.6vw}
+.brand svg{width:3.4vw;height:3.4vw}
+.code{font-size:11vw;font-weight:800;letter-spacing:.12em;font-variant-numeric:tabular-nums;line-height:1}
+.hint{color:#a1a1aa;font-size:1.6vw;text-align:center;line-height:1.5}
+.hint b{color:#fafafa}
+.dot{display:inline-block;width:.8vw;height:.8vw;border-radius:50%;background:#3ddc84;margin-right:.6vw;vertical-align:middle}
+.dot.off{background:#fbbf24}
+#stage{position:fixed;inset:0;display:none;background:#000}
+#stage.on{display:block}
+#main{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#grid{position:absolute;inset:4vh 4vw;display:none;grid-template-columns:repeat(auto-fit,minmax(30vw,1fr));gap:2vw;align-content:center}
+#grid.on{display:grid}
+#grid .t{aspect-ratio:16/9;border-radius:1.4vw;overflow:hidden;background:#131315;position:relative;display:grid;place-items:center}
+#grid video{width:100%;height:100%;object-fit:cover}
+#grid .nm{position:absolute;left:1vw;bottom:1vw;background:#000a;border-radius:.6vw;padding:.3vw .8vw;font-size:1.3vw;font-weight:600}
+#grid .av{width:8vw;height:8vw;border-radius:50%;display:grid;place-items:center;font-size:3.4vw;font-weight:800}
+.wait{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;color:#a1a1aa;font-size:1.8vw;text-align:center}
+.wait.on{display:flex}
+.wait b{color:#fafafa;font-size:2.6vw}
+.osd{position:fixed;left:3vw;bottom:3vh;display:flex;align-items:center;gap:1vw;background:#000c;border:1px solid #2a2a2f;border-radius:999px;padding:.8vw 1.6vw;font-size:1.3vw;opacity:0;transition:opacity .4s}
+.osd.show{opacity:1}
+.osd .live{background:#ff4d5e;color:#fff;font-weight:800;font-size:1vw;border-radius:.4vw;padding:.15vw .5vw}
+.osd small{color:#a1a1aa}
+</style>
+</head>
+<body>
+<div class="pair" id="pair">
+  <div class="brand"><svg viewBox="0 0 32 32"><circle cx="12.5" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/><circle cx="19.5" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/></svg>CONCORD TV</div>
+  <div class="code" id="code">······</div>
+  <div class="hint">No celular ou no PC, entre numa sala de voz e toque em <b>Enviar para a TV</b>.<br>Digite este código.</div>
+  <div class="hint" id="net"><span class="dot off"></span>Conectando…</div>
+</div>
+<div id="stage">
+  <video id="main" autoplay playsinline muted></video>
+  <div id="grid"></div>
+  <div class="wait" id="wait"><b id="roomName"></b><span id="waitTxt">Aguardando alguém transmitir…</span></div>
+</div>
+<div class="osd" id="osd"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL='https://tfzloojivxgeshjijfee.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmemxvb2ppdnhnZXNoamlqZmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODg5NzMsImV4cCI6MjEwNjk2NDk3M30._wNiXS3dhNaKBls2YJrzobnI5LJYB5ktbIt7eFbFr5k';
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth:{ persistSession:false, autoRefreshToken:false }, realtime:{ params:{ eventsPerSecond:40 } } });
+const $ = s=>document.querySelector(s);
+const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36));
+const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch{ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} } };
+const SID = uid();
+let CODE = ls.get('tv_code', null); if(!CODE){ CODE = String(Math.floor(100000+Math.random()*900000)); ls.set('tv_code', CODE); }
+$('#code').textContent = CODE;
+
+const TV = { pairRt:null, rt:null, room:null, owner:null, peers:new Map(), meta:{}, sel:0, sound:false };
+
+/* ---------- pareamento ---------- */
+function listenPair(){
+  TV.pairRt = sb.channel('dc-tv-'+CODE, { config:{ broadcast:{ self:false } } })
+    .on('broadcast', {event:'pair'}, ({payload})=>pair(payload))
+    .on('broadcast', {event:'unpair'}, ()=>unpair())
+    .subscribe(st=>{ const n=$('#net'); if(st==='SUBSCRIBED'){ n.innerHTML='<span class="dot"></span>Pronta para conectar'; } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ n.innerHTML='<span class="dot off"></span>Sem conexão — tentando de novo'; } });
+}
+function pair(p){
+  if(!p?.room) return;
+  TV.owner = { uid:p.uid, name:p.name||'Alguém' };
+  TV.pairRt.send({ type:'broadcast', event:'paired', payload:{ ok:true, room:p.room } });
+  join(p.room, p.roomName||'Sala de voz');
+}
+function unpair(){ leave(); $('#pair').style.display='flex'; $('#stage').classList.remove('on'); }
+
+/* ---------- sala (só assiste) ---------- */
+function join(room, name){
+  leave();
+  TV.room=room; $('#roomName').textContent=name; $('#pair').style.display='none'; $('#stage').classList.add('on'); render();
+  TV.rt = sb.channel('dc-voice-'+room, { config:{ presence:{ key:SID }, broadcast:{ self:false } } })
+    .on('broadcast', {event:'sig'}, ({payload})=>{ if(payload.to===SID) onSignal(payload.from, payload); })
+    .on('presence', {event:'sync'}, onPresence)
+    .subscribe(st=>{ if(st==='SUBSCRIBED') TV.rt.track({ tv:true, viewer:true, uid:TV.owner?.uid||null, name:'TV de '+(TV.owner?.name||''), jt:0, micId:null, camId:null, screenId:null, muted:true, deaf:!TV.sound }); });
+  wake();
+}
+function leave(){
+  for(const p of TV.peers.values()){ try{ p.pc.close(); }catch{} }
+  TV.peers.clear(); TV.meta={};
+  if(TV.rt){ try{ TV.rt.untrack(); }catch{} sb.removeChannel(TV.rt); TV.rt=null; }
+  TV.room=null; $('#main').srcObject=null; $('#grid').innerHTML='';
+}
+function onPresence(){
+  const st=TV.rt.presenceState(); TV.meta={};
+  for(const [k,arr] of Object.entries(st)){ const m=arr.reduce((a,b)=>((b.jt||0)>(a.jt||0)?b:a), arr[0]); if(k!==SID && !m.tv) TV.meta[k]=m; }
+  for(const k of Object.keys(TV.meta)) if(!TV.peers.has(k)) createPeer(k);
+  for(const k of [...TV.peers.keys()]) if(!TV.meta[k]){ try{ TV.peers.get(k).pc.close(); }catch{} TV.peers.delete(k); }
+  render();
+}
+function createPeer(id){
+  const pc = new RTCPeerConnection({ iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478']}], bundlePolicy:'max-bundle' });
+  const peer={ id, pc, polite: SID > id, makingOffer:false, ignoreOffer:false, streams:new Map(), q:Promise.resolve() };
+  TV.peers.set(id, peer);
+  pc.onicecandidate = ({candidate})=>{ if(candidate) send(id, {cand:candidate.toJSON()}); };
+  pc.onnegotiationneeded = async ()=>{ try{ peer.makingOffer=true; const o=await pc.createOffer(); if(pc.signalingState!=='stable') return; await pc.setLocalDescription(o); send(id,{desc:pc.localDescription.toJSON()}); }catch{} finally{ peer.makingOffer=false; } };
+  pc.ontrack = ({track, streams, receiver})=>{ const st=streams[0]||new MediaStream([track]); peer.streams.set(st.id, st);
+    try{ if('jitterBufferTarget' in receiver) receiver.jitterBufferTarget = 400; }catch{}
+    track.onunmute=render; track.onended=render; st.onremovetrack=()=>{ if(!st.getTracks().length) peer.streams.delete(st.id); render(); }; render(); };
+  pc.onconnectionstatechange = ()=>{ if(pc.connectionState==='failed'){ try{ pc.restartIce(); }catch{} } render(); };
+  return peer;
+}
+function onSignal(from, {desc, cand}){
+  const peer = TV.peers.get(from) || createPeer(from);
+  peer.q = peer.q.then(async ()=>{ const pc=peer.pc; try{
+    if(desc){ const collision = desc.type==='offer' && (peer.makingOffer || pc.signalingState!=='stable'); peer.ignoreOffer = !peer.polite && collision; if(peer.ignoreOffer) return;
+      await pc.setRemoteDescription(desc); if(desc.type==='offer'){ await pc.setLocalDescription(await pc.createAnswer()); send(from,{desc:pc.localDescription.toJSON()}); } }
+    else if(cand){ try{ await pc.addIceCandidate(cand); }catch{} }
+  }catch(e){ console.warn(e); } });
+}
+function send(to, data){ TV.rt?.send({ type:'broadcast', event:'sig', payload:{...data, to, from:SID} }); }
+
+/* ---------- tela ---------- */
+function sources(){
+  const scr=[], cams=[], people=[];
+  for(const [id,p] of TV.peers){ const m=TV.meta[id]||{};
+    people.push({ id, m, mic: m.micId && p.streams.get(m.micId) });
+    const s = m.screenId && p.streams.get(m.screenId); if(s && s.getVideoTracks().some(t=>t.readyState==='live')) scr.push({ id, m, stream:s });
+    const c = m.camId && p.streams.get(m.camId); if(c && c.getVideoTracks().length) cams.push({ id, m, stream:c }); }
+  return { scr, cams, people };
+}
+function render(){
+  if(!TV.room) return;
+  const { scr, cams, people } = sources();
+  const v=$('#main'), grid=$('#grid'), wait=$('#wait');
+  if(scr.length){
+    TV.sel = Math.min(TV.sel, scr.length-1); const cur=scr[TV.sel];
+    if(v.srcObject!==cur.stream){ v.srcObject=cur.stream; v.muted=!TV.sound; v.play().catch(()=>{}); osd(`<span class="live">AO VIVO</span> Tela de ${esc(cur.m.name||'alguém')}${scr.length>1?` <small>◀ ▶ trocar (${TV.sel+1}/${scr.length})</small>`:''}`); }
+    v.style.display='block'; grid.classList.remove('on'); wait.classList.remove('on');
+  } else if(cams.length){
+    v.srcObject=null; v.style.display='none'; wait.classList.remove('on'); grid.classList.add('on');
+    const key=cams.map(c=>c.stream.id).join('|'); if(grid.dataset.k!==key){ grid.dataset.k=key;
+    grid.innerHTML=''; cams.forEach(c=>{ const t=document.createElement('div'); t.className='t'; const vv=document.createElement('video'); vv.autoplay=true; vv.playsInline=true; vv.muted=true; vv.srcObject=c.stream; t.appendChild(vv); t.insertAdjacentHTML('beforeend', `<span class="nm">${esc(c.m.name||'')}</span>`); grid.appendChild(t); vv.play().catch(()=>{}); }); }
+  } else {
+    v.srcObject=null; v.style.display='none'; grid.classList.remove('on'); grid.dataset.k=''; wait.classList.add('on');
+    $('#waitTxt').textContent = people.length ? people.map(p=>p.m.name).join(', ')+(people.length>1?' estão':' está')+' na sala · aguardando transmissão' : 'Aguardando alguém transmitir…';
+  }
+  // som da sala (vozes) só se ligado
+  for(const p of people){ if(!p.mic) continue; let a=TV.audios?.get(p.id); if(!a){ (TV.audios ||= new Map()).set(p.id, a=new Audio()); a.autoplay=true; } if(a.srcObject!==p.mic) a.srcObject=p.mic; a.muted=!TV.sound; }
+}
+const esc = s=>String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let osdT=null; function osd(html){ const o=$('#osd'); o.innerHTML=html; o.classList.add('show'); clearTimeout(osdT); osdT=setTimeout(()=>o.classList.remove('show'), 4500); }
+async function wake(){ try{ await navigator.wakeLock?.request('screen'); }catch{} }
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) wake(); });
+
+/* ---------- controle remoto ---------- */
+document.addEventListener('keydown', e=>{
+  const k=e.keyCode;
+  if(!TV.room) return;
+  const { scr } = sources();
+  if(k===39 || k===40){ if(scr.length>1){ TV.sel=(TV.sel+1)%scr.length; $('#main').srcObject=null; render(); } e.preventDefault(); }
+  else if(k===37 || k===38){ if(scr.length>1){ TV.sel=(TV.sel-1+scr.length)%scr.length; $('#main').srcObject=null; render(); } e.preventDefault(); }
+  else if(k===13){ TV.sound=!TV.sound; $('#main').muted=!TV.sound; render(); osd(TV.sound?'🔊 Som na TV ligado':'🔇 Som só no celular/PC'); TV.rt?.track({ tv:true, viewer:true, uid:TV.owner?.uid||null, name:'TV de '+(TV.owner?.name||''), jt:0, muted:true, deaf:!TV.sound }); e.preventDefault(); }
+  else if(k===10009 || k===461 || k===8 || k===27){ unpair(); e.preventDefault(); }
+});
+document.addEventListener('click', ()=>{ if(TV.room){ TV.sound=!TV.sound; $('#main').muted=!TV.sound; render(); osd(TV.sound?'🔊 Som na TV ligado':'🔇 Som só no celular/PC'); } });
+try{ window.tizen?.tvinputdevice?.registerKey('Return'); }catch{}
+listenPair();
+</script>
+</body>
+</html>

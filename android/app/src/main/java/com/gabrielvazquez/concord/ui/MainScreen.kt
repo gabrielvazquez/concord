@@ -100,6 +100,7 @@ object Ui {
     var newDmOpen by mutableStateOf(false)
     var pip by mutableStateOf(false)
     var focusVideo by mutableStateOf<String?>(null)
+    var tvOpen by mutableStateOf(false)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -152,6 +153,7 @@ fun MainScreen(onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> Unit, onAskC
     if (Ui.joinOpen) JoinDialog()
     if (Ui.statusOpen) StatusSheet()
     if (Ui.newDmOpen) NewDmSheet()
+    if (Ui.tvOpen) TvDialog()
     c.incoming?.let { IncomingCallDialog() }
 }
 

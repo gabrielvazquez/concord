@@ -145,6 +145,8 @@ class Realtime(private val supa: Supa, private val scope: CoroutineScope) {
     @Volatile var connected = false
         private set
     var onStatus: ((Boolean) -> Unit)? = null
+    /** a TV assiste sem login (canais públicos de voz e pareamento) */
+    var allowAnon = false
 
     fun channel(name: String, presenceKey: String? = null, pg: List<PgSub> = emptyList()): RtChannel {
         channels["realtime:$name"]?.let { it.leave() }
@@ -157,7 +159,7 @@ class Realtime(private val supa: Supa, private val scope: CoroutineScope) {
     internal fun remove(ch: RtChannel) { if (channels[ch.topic] === ch) channels.remove(ch.topic) }
 
     fun connect() {
-        if (connected || connecting || supa.session == null) return
+        if (connected || connecting || (supa.session == null && !allowAnon)) return
         connecting = true
         val url = Cfg.URL.replace("https://", "wss://") + "/realtime/v1/websocket?apikey=${Cfg.KEY}&vsn=1.0.0"
         ws = supa.http.newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
@@ -188,7 +190,7 @@ class Realtime(private val supa: Supa, private val scope: CoroutineScope) {
         connected = false
         hb?.cancel()
         channels.values.forEach { it.resetForReconnect() }
-        if (supa.session == null) return
+        if (supa.session == null && !allowAnon) return
         val wait = backoff; backoff = (backoff * 2).coerceAtMost(15_000)
         main.postDelayed({ connect() }, wait)
     }
@@ -206,7 +208,7 @@ class Realtime(private val supa: Supa, private val scope: CoroutineScope) {
 
     private fun join(ch: RtChannel) {
         scope.launch {
-            val t = try { supa.token() } catch (_: Exception) { Cfg.KEY }
+            val t = if (supa.session == null) Cfg.KEY else try { supa.token() } catch (_: Exception) { Cfg.KEY }
             main.post {
                 val r = ref.getAndIncrement().toString()
                 ch.joinRef = r

@@ -1050,6 +1050,7 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
         <button class="cbtn" id="cCam" title="Câmera"></button>
         <button class="cbtn" id="cScreen" title="Transmitir tela"></button>
         <button class="cbtn" id="cDeaf" title="Áudio"></button>
+        <button class="cbtn" id="cTv" title="Enviar para a TV"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
         <button class="cbtn leave" id="cLeave" title="Sair da sala"><svg class="i"><use href="#i-leave"/></svg></button>
       </div></div>
     </section>
@@ -2116,11 +2117,12 @@ function onVoicePresence(){
   const state=V.rt.presenceState(); V.meta={};
   for(const [k,arr] of Object.entries(state)) V.meta[k]=arr[0];
   // mesma conta em outro aparelho (site + app): fica só a entrada mais recente
-  for(const [k,m] of Object.entries(V.meta)){ if(k===S.sid || m?.uid!==S.me.id) continue;
+  for(const [k,m] of Object.entries(V.meta)){ if(k===S.sid || m?.uid!==S.me.id || m?.tv) continue;
     if((m.jt||0) > (V.jt||0) || ((m.jt||0)===(V.jt||0) && k>S.sid)){ toast('Você entrou nesta chamada em outro aparelho.'); leaveVoice(); return; }
     delete V.meta[k]; if(V.peers.has(k)) closePeer(k); }
   let changed=false;
-  for(const k of Object.keys(V.meta)) if(k!==S.sid && !V.peers.has(k)) { createPeer(k); playJoinSound(S.profiles.get(V.meta[k]?.uid)?.join_sound); changed=true; }
+  for(const k of Object.keys(V.meta)) if(k!==S.sid && !V.peers.has(k)) { createPeer(k); if(!V.meta[k]?.tv) playJoinSound(S.profiles.get(V.meta[k]?.uid)?.join_sound); changed=true; }
+  renderTvBtn();
   for(const k of [...V.peers.keys()]) if(!V.meta[k]) { closePeer(k); beep(false); changed=true; }
   if(changed) V.peers.forEach(p=>tuneSenders(p.pc));   // redistribui o upload entre os espectadores
   renderTiles();
@@ -2490,7 +2492,7 @@ function renderTiles(){
   want.push({key:'user:'+S.sid, sid:S.sid, uid:S.me.id, kind:'user', stream:V.cam, name:dname(S.me.id)+' (você)', color:S.me.color, local:true, muted:S.muted||S.deaf});
   if(V.screen) want.push({key:'screen:'+S.sid, sid:S.sid, uid:S.me.id, kind:'screen', stream:V.screen, name:'Sua transmissão', color:S.me.color, local:true});
   for(const [id,p] of V.peers){
-    const m=V.meta[id]||{}; const name=dname(m.uid, m.name||'…');
+    const m=V.meta[id]||{}; if(m.tv) continue; const name=dname(m.uid, m.name||'…');
     const mic = m.micId && p.streams.get(m.micId);
     if(mic && p.audio.srcObject!==mic){ p.audio.srcObject=mic; applyPeerVolume(p); p.audio.play().catch(()=>toast('Clique em qualquer lugar para liberar o áudio')); addMeter(id, mic); }
     const cam = m.camId && p.streams.get(m.camId);
@@ -3299,6 +3301,41 @@ async function restartMicInputs(){
   try{ if(V?.pipe){ const ok = await V.pipe.restartInput(); if(!ok) toast('Saia e entre na sala para aplicar.'); } if(SET.test) await SET.test.restartInput(); }
   catch(e){ toast('Não foi possível trocar o microfone: '+(e.name||e.message), true); }
 }
+/* =====================================================================
+   Enviar para a TV (a TV entra na sala só para assistir; o som fica aqui)
+   ===================================================================== */
+const TV_URL = 'gabrielvazquez.github.io/concord/tv';
+function myTvs(){ return V ? Object.entries(V.meta).filter(([k,m])=>m?.tv && m.uid===S.me?.id) : []; }
+function renderTvBtn(){ const b=$('#cTv'); if(!b) return; const on=myTvs().length>0; b.classList.toggle('active', on); b.title = on ? 'TV conectada' : 'Enviar para a TV'; }
+async function tvSend(code, event, payload){
+  const ch = sb.channel('dc-tv-'+code, { config:{ broadcast:{ self:false } } });
+  const ok = await new Promise(res=>{
+    let done=false; const fin=v=>{ if(done) return; done=true; res(v); };
+    ch.on('broadcast', {event:'paired'}, ()=>fin(true));
+    ch.subscribe(st=>{ if(st==='SUBSCRIBED'){ ch.send({ type:'broadcast', event, payload }); if(event!=='pair') setTimeout(()=>fin(true), 600); } });
+    setTimeout(()=>fin(false), 7000);
+  });
+  sb.removeChannel(ch); return ok;
+}
+function openTvModal(){
+  if(!V) return;
+  const on=myTvs().length>0;
+  const m=modal(`<h3>Enviar para a TV</h3>
+    <p class="sub">Na TV, abra <b>${TV_URL}</b> (ou o app CONCORD TV) e digite o código que aparecer.</p>
+    <input class="inp" id="tvCode" inputmode="numeric" maxlength="6" placeholder="Código da TV" style="text-align:center;font-size:26px;font-weight:800;letter-spacing:.3em;margin:12px 0" value="${esc(ls.get('dc_tv_code','')||'')}">
+    <div class="row"><button class="btn sec" data-x>${on?'Desconectar TV':'Cancelar'}</button><button class="btn" data-ok>Conectar</button></div>`);
+  const inp=m.querySelector('#tvCode'); inp.focus(); inp.oninput=()=>{ inp.value=inp.value.replace(/\D/g,'').slice(0,6); };
+  m.querySelector('[data-x]').onclick=async()=>{ closeModal(); if(on){ const c=ls.get('dc_tv_code',''); if(c) await tvSend(c,'unpair',{}); toast('TV desconectada.'); } };
+  const go=async()=>{ const code=inp.value; if(code.length!==6) return toast('O código tem 6 números.', true);
+    const b=m.querySelector('[data-ok]'); busy(b,true);
+    const ok=await tvSend(code, 'pair', { room:V.ch.id, roomName:V.ch.name, uid:S.me.id, name:dname(S.me.id) });
+    busy(b,false);
+    if(!ok) return toast('Não achei essa TV. Confira o código e se a página da TV está aberta.', true);
+    ls.set('dc_tv_code', code); closeModal(); toast('TV conectada. O som continua aqui.'); };
+  m.querySelector('[data-ok]').onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter') go(); };
+}
+$('#cTv').onclick=openTvModal;
+
 /* =====================================================================
    App para Android: ponte com o app nativo
    ===================================================================== */

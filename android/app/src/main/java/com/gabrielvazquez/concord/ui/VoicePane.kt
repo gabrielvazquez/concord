@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.ScreenShare
 import androidx.compose.material.icons.filled.StopScreenShare
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material3.Icon
@@ -99,7 +100,7 @@ fun VoicePane(ch: Channel, onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> 
     }
     val tiles = buildList {
         add(Tile(c.sid, c.meId, c.name(c.meId), c.me?.color, v.muted, v.deaf))
-        v.meta.forEach { (k, m) -> add(Tile(k, m.optString("uid").ifEmpty { null }, c.name(m.optString("uid"), m.optString("name")), m.optString("color"), m.optBoolean("muted"), m.optBoolean("deaf"))) }
+        v.meta.forEach { (k, m) -> if (!m.optBoolean("tv")) add(Tile(k, m.optString("uid").ifEmpty { null }, c.name(m.optString("uid"), m.optString("name")), m.optString("color"), m.optBoolean("muted"), m.optBoolean("deaf"))) }
     }
     val screens = v.videos.filter { v.isScreen(it) }
     val focus = Ui.focusVideo?.let { f -> v.videos.find { it.track.id() == f } } ?: screens.firstOrNull()
@@ -122,14 +123,32 @@ fun VoicePane(ch: Channel, onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> 
             Ctl(if (CallService.speakerOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Hearing, "Alto-falante", active = CallService.speakerOn) { CallService.setSpeaker(c.app, !CallService.speakerOn) }
             Ctl(if (v.camOn) Icons.Default.Videocam else Icons.Default.VideocamOff, "Câmera", active = v.camOn) { if (v.camOn) v.toggleCam() else onAskCam { v.toggleCam() } }
             Ctl(if (v.screenOn) Icons.Default.StopScreenShare else Icons.Default.ScreenShare, "Tela", active = v.screenOn) { if (v.screenOn) { v.stopScreen(); c.trackServer() } else onScreenShare() }
-            Box(Modifier.size(54.dp).clip(CircleShape).background(C.red).clickable { v.leave() }, contentAlignment = Alignment.Center) { Icon(Icons.Default.CallEnd, "Sair", tint = Color.White) }
+            Ctl(Icons.Default.Tv, "Enviar para a TV", active = c.tvsInRoom() > 0) { Ui.tvOpen = true }
+            Box(Modifier.size(50.dp).clip(CircleShape).background(C.red).clickable { v.leave() }, contentAlignment = Alignment.Center) { Icon(Icons.Default.CallEnd, "Sair", tint = Color.White) }
         }
     }
 }
 
 @Composable
+fun TvDialog() {
+    val c = Concord.I
+    var code by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(c.lastTvCode()) }
+    var busy by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val on = c.tvsInRoom() > 0
+    androidx.compose.material3.AlertDialog(onDismissRequest = { Ui.tvOpen = false }, containerColor = C.panel,
+        title = { Text("Enviar para a TV") },
+        text = { Column {
+            Text("Na TV, abra o app CONCORD TV ou o site gabrielvazquez.github.io/concord/tv e digite o código que aparecer. O som continua aqui.", color = C.tx2, fontSize = 14.sp)
+            Spacer(Modifier.height(14.dp))
+            field(code, { code = it.filter(Char::isDigit).take(6) }, "Código da TV", kb = androidx.compose.ui.text.input.KeyboardType.Number)
+        } },
+        confirmButton = { androidx.compose.material3.TextButton(enabled = code.length == 6 && !busy, onClick = { busy = true; c.pairTv(code) { ok -> busy = false; if (ok) { Ui.tvOpen = false; c.say("TV conectada. O som continua aqui.") } else c.say("Não achei essa TV. Confira o código.") } }) { Text(if (busy) "Conectando…" else "Conectar", color = Color.White) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = { if (on) c.pairTv(c.lastTvCode(), unpair = true) { c.say("TV desconectada.") }; Ui.tvOpen = false }) { Text(if (on) "Desconectar TV" else "Cancelar", color = C.tx2) } })
+}
+
+@Composable
 private fun Ctl(icon: ImageVector, label: String, off: Boolean = false, active: Boolean = false, onClick: () -> Unit) {
-    Box(Modifier.size(48.dp).clip(CircleShape).background(if (active) Color.White else if (off) Color(0x33FF4D5E) else C.card2).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(44.dp).clip(CircleShape).background(if (active) Color.White else if (off) Color(0x33FF4D5E) else C.card2).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = if (active) Color.Black else if (off) C.red else C.tx)
     }
 }

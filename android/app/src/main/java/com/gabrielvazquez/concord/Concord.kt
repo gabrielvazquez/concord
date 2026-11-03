@@ -502,6 +502,25 @@ class Concord(val app: Application) {
         else sendToUser(c.from, JSONObject().put("t", "decline").put("dm", c.dm.id).put("from", meId))
     }
 
+    /* ===================== TV ===================== */
+    fun tvsInRoom() = voice.meta.values.count { it.optBoolean("tv") && it.optString("uid") == meId }
+
+    fun pairTv(code: String, unpair: Boolean = false, done: (Boolean) -> Unit) {
+        val ch = voice.channel
+        if (ch == null && !unpair) { done(false); return }
+        val r = rt.channel("dc-tv-$code", null)
+        var fin = false
+        val finish = { ok: Boolean -> if (!fin) { fin = true; done(ok); scope.launch { delay(500); r.leave() } } }
+        r.on("paired") { finish(true) }
+        r.onJoined = {
+            if (unpair) { r.send("unpair", JSONObject()); finish(true) }
+            else r.send("pair", JSONObject().put("room", ch!!.id).put("roomName", ch.name).put("uid", meId).put("name", name(meId)))
+        }
+        app.getSharedPreferences("concord", 0).edit().putString("tv_code", code).apply()
+        scope.launch { delay(7000); finish(false) }
+    }
+    fun lastTvCode(): String = app.getSharedPreferences("concord", 0).getString("tv_code", "") ?: ""
+
     /* ===================== Voz ===================== */
     fun openVoice(ch: Channel) {
         view = View.Voice(ch)

@@ -98,6 +98,11 @@ class Voice(private val c: Concord) {
     var screenOn by mutableStateOf(false); private set
     var state by mutableStateOf("Conectando…"); private set
     private var jt = 0L
+    /** modo TV: só assiste (sem microfone), som opcional */
+    var viewer = false; private set
+    var tvSound by mutableStateOf(false); private set
+    private var ownerUid: String? = null
+    private var ownerName = ""
     private var statsJob: Job? = null
     private var micLevel = 0.0
 
@@ -131,7 +136,23 @@ class Voice(private val c: Concord) {
     )
 
     /* ---------------- Entrar e sair ---------------- */
+    fun joinAsTv(ch: Channel, owner: String?, ownerName: String) {
+        if (channel != null) leave()
+        ensureFactory()
+        viewer = true; this.ownerUid = owner; this.ownerName = ownerName
+        channel = ch; jt = 0; state = "Conectando…"
+        val r = c.rt.channel("dc-voice-${ch.id}", c.sid)
+        rt = r
+        r.on("sig") { p -> if (p.optString("to") == c.sid) onSignal(p.optString("from"), p) }
+        r.onPresence = { onPresence() }
+        r.onJoined = { r.track(myMeta()); state = "Voz conectada" }
+        startStats()
+    }
+
+    fun toggleTvSound() { tvSound = !tvSound; peers.values.forEach { p -> p.audio.forEach { it.setEnabled(tvSound) } }; rt?.track(myMeta()) }
+
     fun join(ch: Channel) {
+        viewer = false
         if (c.app.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             val ask = c.askMic
             if (ask != null) { ask { join(ch) }; return }
@@ -167,14 +188,15 @@ class Voice(private val c: Concord) {
         try { rt?.untrack() } catch (_: Exception) {}
         rt?.leave(); rt = null
         micTrack?.dispose(); micTrack = null; micSource?.dispose(); micSource = null
-        CallService.stop(c.app)
-        c.trackServer()
-        beep(false)
+        if (!viewer) { CallService.stop(c.app); c.trackServer(); beep(false) }
+        viewer = false
     }
 
     fun title() = channel?.let { if (it.dmId != null) "Chamada com ${it.name}" else "${it.name} · ${c.server?.name ?: "CONCORD"}" } ?: "CONCORD"
 
-    private fun myMeta(): JSONObject = JSONObject()
+    private fun myMeta(): JSONObject = if (viewer) JSONObject().put("tv", true).put("viewer", true).put("uid", ownerUid ?: JSONObject.NULL)
+        .put("name", "TV de $ownerName").put("jt", 0).put("micId", JSONObject.NULL).put("camId", JSONObject.NULL).put("screenId", JSONObject.NULL)
+        .put("muted", true).put("deaf", !tvSound) else JSONObject()
         .put("jt", jt).put("uid", c.meId).put("name", c.name(c.meId)).put("color", c.me?.color ?: "#6366f1")
         .put("micId", micStream).put("camId", if (camOn) camStream else JSONObject.NULL).put("screenId", if (screenOn) scrStream else JSONObject.NULL)
         .put("screenMode", JSONObject.NULL).put("muted", muted).put("deaf", deaf).put("mobile", true)
@@ -192,6 +214,7 @@ class Voice(private val c: Concord) {
     }
 
     private fun beep(up: Boolean) {
+        if (viewer) return
         try { val tg = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 60); tg.startTone(if (up) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_NACK, 120); main.postDelayed({ tg.release() }, 400) } catch (_: Exception) {}
     }
 
@@ -201,16 +224,17 @@ class Voice(private val c: Concord) {
         val now = HashMap<String, JSONObject>()
         r.presence.forEach { (k, metas) -> metas.maxByOrNull { it.optLong("jt") }?.let { now[k] = it } }
         // mesma conta em outro aparelho: fica só a entrada mais recente
+        if (viewer) now.entries.removeAll { it.key != c.sid && it.value.optBoolean("tv") }
         for ((k, m) in now.entries.toList()) {
-            if (k == c.sid || m.optString("uid") != c.meId) continue
+            if (viewer || k == c.sid || m.optBoolean("tv") || m.optString("uid") != c.meId) continue
             val ojt = m.optLong("jt")
             if (ojt > jt || (ojt == jt && k > c.sid)) { c.say("Você entrou nesta chamada em outro aparelho."); leave(); return }
             now.remove(k); closePeer(k)
         }
         meta.keys.toList().forEach { if (!now.containsKey(it)) meta.remove(it) }
         now.forEach { (k, v) -> if (k != c.sid) meta[k] = v }
-        for (k in now.keys) if (k != c.sid && !peers.containsKey(k)) { createPeer(k); beep(true) }
-        for (k in peers.keys.toList()) if (!now.containsKey(k)) { closePeer(k); beep(false) }
+        for (k in now.keys) if (k != c.sid && !peers.containsKey(k)) { createPeer(k); if (!viewer && now[k]?.optBoolean("tv") != true) beep(true) }
+        for (k in peers.keys.toList()) if (!now.containsKey(k)) { val wasTv = meta[k]?.optBoolean("tv") == true; closePeer(k); if (!viewer && !wasTv) beep(false) }
     }
 
     private fun closePeer(k: String) {
@@ -249,7 +273,7 @@ class Voice(private val c: Concord) {
                 val t = receiver.track() ?: return
                 val sid = streams.firstOrNull()?.id ?: t.id()
                 main.post {
-                    if (t is AudioTrack) { peer.audio.add(t); t.setEnabled(!deaf) }
+                    if (t is AudioTrack) { peer.audio.add(t); t.setEnabled(if (viewer) tvSound else !deaf) }
                     if (t is VideoTrack) { videos.removeAll { it.key == key && it.streamId == sid }; videos.add(RemoteVideo(key, sid, t)) }
                 }
             }
