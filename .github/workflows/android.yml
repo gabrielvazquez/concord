@@ -1,0 +1,41 @@
+name: App para Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.11.1' }
+      - name: Compilar APK
+        working-directory: android
+        run: gradle assembleRelease -PversionCode=${{ github.run_number }} --no-daemon --stacktrace
+      - name: Preparar arquivos
+        run: |
+          mkdir out
+          cp android/app/build/outputs/apk/release/app-release.apk out/CONCORD.apk
+          echo "{\"versionCode\": ${{ github.run_number }}, \"versionName\": \"1.0.${{ github.run_number }}\", \"url\": \"https://github.com/gabrielvazquez/concord/releases/download/android-latest/CONCORD.apk\"}" > out/version.json
+          ls -la out
+      - name: Publicar
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: CONCORD para Android
+          body: "Baixe o **CONCORD.apk** no celular Android e instale (permita \"instalar apps desconhecidos\" quando o Android pedir). Atualizações aparecem dentro do próprio app."
+          prerelease: true
+          make_latest: false
+          files: |
+            out/CONCORD.apk
+            out/version.json
+          overwrite_files: true

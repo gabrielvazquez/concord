@@ -1,0 +1,36 @@
+plugins { id 'com.android.application' }
+
+def vCode = (project.findProperty('versionCode') ?: '1') as Integer
+
+android {
+    namespace 'com.gabrielvazquez.concord'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.gabrielvazquez.concord'
+        minSdk 26
+        targetSdk 35
+        versionCode vCode
+        versionName "1.0.${vCode}"
+        resourceConfigurations += ['pt']
+    }
+    signingConfigs {
+        release {
+            storeFile file('../concord.p12')
+            storePassword 'concord-amigos'
+            keyAlias 'concord'
+            keyPassword 'concord-amigos'
+            storeType 'pkcs12'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug { signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    dependenciesInfo { includeInApk false; includeInBundle false }
+}
