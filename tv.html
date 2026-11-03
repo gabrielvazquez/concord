@@ -11,9 +11,16 @@ html,body{height:100%;background:#000;color:#fafafa;font-family:Inter,'Segoe UI'
 .pair{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;background:radial-gradient(60vw 50vh at 50% 0%,#18181c,transparent 70%),#000}
 .brand{display:flex;align-items:center;gap:1.2vw;font-weight:800;letter-spacing:.4em;color:#a1a1aa;font-size:1.6vw}
 .brand svg{width:3.4vw;height:3.4vw}
-.code{font-size:11vw;font-weight:800;letter-spacing:.12em;font-variant-numeric:tabular-nums;line-height:1}
+.code{font-size:7.5vw;font-weight:800;letter-spacing:.12em;font-variant-numeric:tabular-nums;line-height:1}
 .hint{color:#a1a1aa;font-size:1.6vw;text-align:center;line-height:1.5}
 .hint b{color:#fafafa}
+.ways{display:flex;align-items:center;gap:5vw;margin-top:1vh}
+.way{display:flex;flex-direction:column;align-items:center;gap:1.6vh}
+.qr{width:20vw;height:20vw;background:#fff;border-radius:1.6vw;padding:1.4vw}
+.qr svg{width:100%;height:100%;display:block}
+.sep{width:1px;height:18vw;background:#2a2a2f}
+.way .t{font-size:1.5vw;font-weight:600}
+.way .s{font-size:1.3vw;color:#a1a1aa}
 .dot{display:inline-block;width:.8vw;height:.8vw;border-radius:50%;background:#3ddc84;margin-right:.6vw;vertical-align:middle}
 .dot.off{background:#fbbf24}
 #stage{position:fixed;inset:0;display:none;background:#000}
@@ -37,8 +44,11 @@ html,body{height:100%;background:#000;color:#fafafa;font-family:Inter,'Segoe UI'
 <body>
 <div class="pair" id="pair">
   <div class="brand"><svg viewBox="0 0 32 32"><circle cx="12.5" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/><circle cx="19.5" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/></svg>CONCORD TV</div>
-  <div class="code" id="code">······</div>
-  <div class="hint">No celular ou no PC, entre numa sala de voz e toque em <b>Enviar para a TV</b>.<br>Digite este código.</div>
+  <div class="ways">
+    <div class="way"><div class="qr" id="qr"></div><div class="t">Celular: aponte a câmera</div></div>
+    <div class="sep"></div>
+    <div class="way"><div class="code" id="code">······</div><div class="t">PC: na sala de voz, clique em <b>Enviar para a TV</b></div><div class="s">e digite este código</div></div>
+  </div>
   <div class="hint" id="net"><span class="dot off"></span>Conectando…</div>
 </div>
 <div id="stage">
@@ -49,6 +59,7 @@ html,body{height:100%;background:#000;color:#fafafa;font-family:Inter,'Segoe UI'
 <div class="osd" id="osd"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
 const SB_URL='https://tfzloojivxgeshjijfee.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmemxvb2ppdnhnZXNoamlqZmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODg5NzMsImV4cCI6MjEwNjk2NDk3M30._wNiXS3dhNaKBls2YJrzobnI5LJYB5ktbIt7eFbFr5k';
@@ -59,6 +70,7 @@ const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JS
 const SID = uid();
 let CODE = ls.get('tv_code', null); if(!CODE){ CODE = String(Math.floor(100000+Math.random()*900000)); ls.set('tv_code', CODE); }
 $('#code').textContent = CODE;
+try{ const q=qrcode(0,'M'); q.addData('https://gabrielvazquez.github.io/concord/?tv='+CODE); q.make(); $('#qr').innerHTML=q.createSvgTag({ cellSize:4, margin:0, scalable:true }); }catch{ $('#qr').style.display='none'; }
 
 const TV = { pairRt:null, rt:null, room:null, owner:null, peers:new Map(), meta:{}, sel:0, sound:false };
 

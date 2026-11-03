@@ -174,7 +174,7 @@ class Voice(private val c: Concord) {
         rt = r
         r.on("sig") { p -> if (p.optString("to") == c.sid) onSignal(p.optString("from"), p) }
         r.onPresence = { onPresence() }
-        r.onJoined = { r.track(myMeta()); c.trackServer(); beep(true); state = "Voz conectada" }
+        r.onJoined = { r.track(myMeta()); c.trackServer(); beep(true); state = "Voz conectada"; c.onVoiceJoined() }
         startStats()
     }
 

@@ -45,6 +45,8 @@ import com.gabrielvazquez.concord.ui.AvatarRaw
 import com.gabrielvazquez.concord.ui.C
 import com.gabrielvazquez.concord.ui.ConcordTheme
 import com.gabrielvazquez.concord.ui.Logo
+import com.gabrielvazquez.concord.ui.QrCode
+import com.gabrielvazquez.concord.ui.tvLink
 import com.gabrielvazquez.concord.ui.VideoView
 import kotlinx.coroutines.delay
 import org.json.JSONObject
@@ -126,10 +128,23 @@ class TvActivity : ComponentActivity() {
         Column(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xFF18181C), Color.Black), radius = 1400f, center = androidx.compose.ui.geometry.Offset(960f, -100f))),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Row(verticalAlignment = Alignment.CenterVertically) { Logo(40.dp); Spacer(Modifier.width(14.dp)); Text("C O N C O R D   T V", color = C.tx2, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) }
-            Spacer(Modifier.height(30.dp))
-            Text(code.chunked(3).joinToString("  "), fontSize = 120.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-            Spacer(Modifier.height(24.dp))
-            Text("No celular ou no PC, entre numa sala de voz e toque em \"Enviar para a TV\". Digite este código.", color = C.tx2, fontSize = 20.sp)
+            Spacer(Modifier.height(36.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(250.dp).clip(RoundedCornerShape(22.dp)).background(Color.White).padding(18.dp)) { QrCode(tvLink(code), Modifier.fillMaxSize()) }
+                    Spacer(Modifier.height(14.dp))
+                    Text("Celular: aponte a câmera", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(Modifier.width(70.dp))
+                Box(Modifier.width(1.dp).height(220.dp).background(C.line2))
+                Spacer(Modifier.width(70.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(code.chunked(3).joinToString("  "), fontSize = 96.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                    Spacer(Modifier.height(14.dp))
+                    Text("PC: na sala de voz, clique em \"Enviar para a TV\"", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                    Text("e digite este código", color = C.tx2, fontSize = 17.sp)
+                }
+            }
             Spacer(Modifier.height(18.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(if (online) C.green else C.amber)); Spacer(Modifier.width(10.dp))

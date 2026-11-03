@@ -21,9 +21,11 @@ tv.on('pageerror', e => log('tv pageerror', e.message));
 await tv.goto('https://gabrielvazquez.github.io/concord/tv.html?t=' + Date.now());
 await tv.waitForTimeout(4000);
 const webCode = (await tv.textContent('#code')).trim();
+await tv.screenshot({ path: 'tv-site-codigo.png' });
+log('QR na TV do site:', await tv.evaluate(() => !!document.querySelector('#qr svg')));
 log('código da TV (site):', webCode);
 const pair = async code => p.evaluate(async c => tvSend(c, 'pair', { room: V.ch.id, roomName: V.ch.name, uid: S.me.id, name: dname(S.me.id) }), code);
-log('parear TV do site:', await pair(webCode));
+log('parear TV do site (como pelo QR):', await p.evaluate(c => tvFromQr(c), webCode));
 // TV do Android: espera o código aparecer no arquivo
 let andCode = null;
 for (let i = 0; i < 90 && !andCode; i++) { try { andCode = fs.readFileSync('/tmp/tvcode.txt', 'utf8').trim(); } catch {} if (!andCode) await p.waitForTimeout(2000); }

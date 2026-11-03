@@ -30,11 +30,13 @@ import com.gabrielvazquez.concord.ui.Logo
 import com.gabrielvazquez.concord.ui.MainScreen
 import com.gabrielvazquez.concord.ui.NewProfileScreen
 import com.gabrielvazquez.concord.ui.Ui
+import com.gabrielvazquez.concord.ui.tvCodeFrom
 
 class MainActivity : ComponentActivity() {
     private val c get() = Concord.I
     private var pendingPerm: (() -> Unit)? = null
     private var pendingInvite: String? = null
+    private var pendingTv: String? = null
 
     private val askPerm = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         val run = pendingPerm; pendingPerm = null
@@ -52,6 +54,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) { startActivity(Intent(this, TvActivity::class.java)); finish(); return }
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK), navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK))
         c.askMic = { run -> withPerm(Manifest.permission.RECORD_AUDIO, run) }
         if (c.screen == Screen.Loading) c.boot()
@@ -68,7 +71,7 @@ class MainActivity : ComponentActivity() {
             is Screen.Login -> LoginScreen(s)
             Screen.NewProfile -> NewProfileScreen()
             Screen.Main -> {
-                LaunchedEffect(Unit) { pendingInvite?.let { c.joinByCode(it); pendingInvite = null } }
+                LaunchedEffect(Unit) { pendingInvite?.let { c.joinByCode(it); pendingInvite = null }; pendingTv?.let { c.tvFromQr(it); pendingTv = null } }
                 MainScreen(
                     onAskMic = { run -> withPerm(Manifest.permission.RECORD_AUDIO, run) },
                     onScreenShare = { withPerm(Manifest.permission.RECORD_AUDIO) { askScreen.launch(getSystemService(MediaProjectionManager::class.java).createScreenCaptureIntent()) } },
@@ -82,6 +85,7 @@ class MainActivity : ComponentActivity() {
 
     private fun handle(i: Intent?) {
         i ?: return
+        i.data?.getQueryParameter("tv")?.let { tvCodeFrom(it) }?.let { code -> if (c.screen == Screen.Main) c.tvFromQr(code) else pendingTv = code }
         i.data?.fragment?.takeIf { it.isNotBlank() }?.let { code -> if (c.screen == Screen.Main) c.joinByCode(code) else pendingInvite = code }
         val act = i.getStringExtra("concord_action") ?: return
         i.removeExtra("concord_action")

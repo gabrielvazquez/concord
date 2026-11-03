@@ -519,6 +519,16 @@ class Concord(val app: Application) {
         app.getSharedPreferences("concord", 0).edit().putString("tv_code", code).apply()
         scope.launch { delay(7000); finish(false) }
     }
+    /** QR da TV lido fora de uma sala: conecta assim que a pessoa entrar numa sala de voz */
+    var pendingTv: Pair<String, Long>? = null
+    fun tvFromQr(code: String) {
+        if (voice.channel != null) pairTv(code) { ok -> say(if (ok) "TV conectada. O som continua aqui." else "Não achei a TV. Confira se ela está na tela do código.") }
+        else { pendingTv = code to System.currentTimeMillis(); say("TV encontrada! Entre numa sala de voz e ela conecta sozinha.") }
+    }
+    fun onVoiceJoined() {
+        val p = pendingTv ?: return; pendingTv = null
+        if (System.currentTimeMillis() - p.second < 15 * 60_000 && voice.channel?.dmId == null) scope.launch { delay(800); tvFromQr(p.first) }
+    }
     fun lastTvCode(): String = app.getSharedPreferences("concord", 0).getString("tv_code", "") ?: ""
 
     /* ===================== Voz ===================== */

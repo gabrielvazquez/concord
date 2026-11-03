@@ -1630,6 +1630,8 @@ async function start(){
   $('#app').classList.remove('hidden'); renderMe(); syncDesktop();
   if(P().notify && !DESK && 'Notification' in window && Notification.permission==='default') setTimeout(()=>{ try{ Notification.requestPermission(); }catch{} }, 4000);
   const hashCode = (location.hash||'').replace('#','').trim().toUpperCase();
+  const qtv = new URLSearchParams(location.search).get('tv');
+  if(qtv){ history.replaceState(null, '', location.pathname+location.hash); if(/^\d{6}$/.test(qtv)) setTimeout(()=>tvFromQr(qtv), 1500); }
   await loadServers();
   loadDms().then(startDmRealtime); syncActivity();
   let joinedNew=null;
@@ -2106,7 +2108,8 @@ async function joinVoice(ch){
     .on('presence', {event:'sync'}, onVoicePresence)
     .subscribe(st=>{
       if(V!==me) return;
-      if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join'); }
+      if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join');
+        if(PENDING_TV && !ch.dm){ const p=PENDING_TV; PENDING_TV=null; if(Date.now()-p.at<15*60e3) setTimeout(()=>{ if(V===me) tvConnect(p.code); }, 800); } }
       if(st==='CHANNEL_ERROR' || st==='TIMED_OUT') toast('Falha na conexão com a sala de voz. Tente de novo.', true);
     });
   renderControls(); renderTiles();
@@ -3317,21 +3320,30 @@ async function tvSend(code, event, payload){
   });
   sb.removeChannel(ch); return ok;
 }
+/* QR da TV: o celular abre o site com ?tv=CÓDIGO */
+let PENDING_TV=null;
+async function tvConnect(code){
+  const ok=await tvSend(code, 'pair', { room:V.ch.id, roomName:V.ch.name, uid:S.me.id, name:dname(S.me.id) });
+  if(ok){ ls.set('dc_tv_code', code); toast('TV conectada. O som continua aqui.'); } else toast('Não achei a TV. Confira se ela está na tela do código.', true);
+  return ok;
+}
+function tvFromQr(code){
+  if(V && !V.ch.dm) return tvConnect(code);
+  PENDING_TV={ code, at:Date.now() }; toast('TV encontrada! Entre numa sala de voz e ela conecta sozinha.');
+}
 function openTvModal(){
   if(!V) return;
   const on=myTvs().length>0;
   const m=modal(`<h3>Enviar para a TV</h3>
-    <p class="sub">Na TV, abra <b>${TV_URL}</b> (ou o app CONCORD TV) e digite o código que aparecer.</p>
+    <p class="sub">Na TV, abra o app <b>CONCORD TV</b> (ou <b>${TV_URL}</b>) e digite o código que aparecer. No celular, é só apontar a câmera para o QR code da TV.</p>
     <input class="inp" id="tvCode" inputmode="numeric" maxlength="6" placeholder="Código da TV" style="text-align:center;font-size:26px;font-weight:800;letter-spacing:.3em;margin:12px 0" value="${esc(ls.get('dc_tv_code','')||'')}">
     <div class="row"><button class="btn sec" data-x>${on?'Desconectar TV':'Cancelar'}</button><button class="btn" data-ok>Conectar</button></div>`);
   const inp=m.querySelector('#tvCode'); inp.focus(); inp.oninput=()=>{ inp.value=inp.value.replace(/\D/g,'').slice(0,6); };
   m.querySelector('[data-x]').onclick=async()=>{ closeModal(); if(on){ const c=ls.get('dc_tv_code',''); if(c) await tvSend(c,'unpair',{}); toast('TV desconectada.'); } };
   const go=async()=>{ const code=inp.value; if(code.length!==6) return toast('O código tem 6 números.', true);
     const b=m.querySelector('[data-ok]'); busy(b,true);
-    const ok=await tvSend(code, 'pair', { room:V.ch.id, roomName:V.ch.name, uid:S.me.id, name:dname(S.me.id) });
-    busy(b,false);
-    if(!ok) return toast('Não achei essa TV. Confira o código e se a página da TV está aberta.', true);
-    ls.set('dc_tv_code', code); closeModal(); toast('TV conectada. O som continua aqui.'); };
+    const ok=await tvConnect(code);
+    busy(b,false); if(ok) closeModal(); };
   m.querySelector('[data-ok]').onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter') go(); };
 }
 $('#cTv').onclick=openTvModal;

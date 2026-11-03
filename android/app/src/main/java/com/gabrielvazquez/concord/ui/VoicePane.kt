@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.ScreenShare
 import androidx.compose.material.icons.filled.StopScreenShare
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideocamOff
 import androidx.compose.material3.Icon
@@ -140,8 +141,21 @@ fun TvDialog() {
     androidx.compose.material3.AlertDialog(onDismissRequest = { Ui.tvOpen = false }, containerColor = C.panel,
         title = { Text("Enviar para a TV") },
         text = { Column {
-            Text("Na TV, abra o app CONCORD TV ou o site gabrielvazquez.github.io/concord/tv e digite o código que aparecer. O som continua aqui.", color = C.tx2, fontSize = 14.sp)
+            Text("Na TV, abra o app CONCORD TV ou o site gabrielvazquez.github.io/concord/tv. O som continua aqui.", color = C.tx2, fontSize = 14.sp)
             Spacer(Modifier.height(14.dp))
+            val ctx = LocalContext.current
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White).clickable(enabled = !busy) {
+                val opts = com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions.Builder().setBarcodeFormats(com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE).build()
+                com.google.mlkit.vision.codescanner.GmsBarcodeScanning.getClient(ctx, opts).startScan()
+                    .addOnSuccessListener { b -> val k = tvCodeFrom(b.rawValue); if (k == null) c.say("Esse QR code não é de uma TV do CONCORD.") else { code = k; busy = true; c.pairTv(k) { ok -> busy = false; if (ok) { Ui.tvOpen = false; c.say("TV conectada. O som continua aqui.") } else c.say("Não achei a TV. Confira se ela está na tela do código.") } } }
+                    .addOnFailureListener { c.say("Não consegui abrir o leitor. Digite o código.") }
+            }.padding(vertical = 13.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.QrCodeScanner, null, tint = Color.Black, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(10.dp))
+                Text("Ler o QR code da TV", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("ou digite o código", color = C.tx3, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Spacer(Modifier.height(8.dp))
             field(code, { code = it.filter(Char::isDigit).take(6) }, "Código da TV", kb = androidx.compose.ui.text.input.KeyboardType.Number)
         } },
         confirmButton = { androidx.compose.material3.TextButton(enabled = code.length == 6 && !busy, onClick = { busy = true; c.pairTv(code) { ok -> busy = false; if (ok) { Ui.tvOpen = false; c.say("TV conectada. O som continua aqui.") } else c.say("Não achei essa TV. Confira o código.") } }) { Text(if (busy) "Conectando…" else "Conectar", color = Color.White) } },

@@ -45,6 +45,23 @@ fun Logo(size: Dp = 32.dp, color: Color = Color.White) {
     }
 }
 
+/** QR code desenhado na hora (preto no branco, para qualquer câmera ler) */
+@Composable
+fun QrCode(text: String, modifier: Modifier = Modifier) {
+    val m = androidx.compose.runtime.remember(text) {
+        com.google.zxing.qrcode.QRCodeWriter().encode(text, com.google.zxing.BarcodeFormat.QR_CODE, 0, 0,
+            mapOf(com.google.zxing.EncodeHintType.MARGIN to 0, com.google.zxing.EncodeHintType.ERROR_CORRECTION to com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M))
+    }
+    Canvas(modifier) {
+        val n = m.width; val s = size.width / n
+        for (y in 0 until n) for (x in 0 until n) if (m[x, y]) drawRect(Color.Black, Offset(x * s, y * s), androidx.compose.ui.geometry.Size(s + 0.6f, s + 0.6f))
+    }
+}
+
+/** link que o QR da TV abre: o celular conecta na TV com ele */
+fun tvLink(code: String) = "https://gabrielvazquez.github.io/concord/?tv=$code"
+fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").find(it)?.groupValues?.get(1) }
+
 @Composable
 fun Avatar(uid: String?, size: Dp, status: String? = null, fallbackName: String? = null, fallbackColor: String? = null, speaking: Boolean = false) {
     val c = Concord.I
