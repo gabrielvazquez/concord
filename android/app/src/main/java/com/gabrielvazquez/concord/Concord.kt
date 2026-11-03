@@ -533,11 +533,11 @@ class Concord(val app: Application) {
         try {
             var code = if (regen) null else supa.userMeta().optString("tv_link").ifEmpty { null }
             if (code == null && (create || regen)) { code = (100000 + (Math.random() * 900000).toInt()).toString(); supa.setUserMeta("tv_link", code) }
-            if (code != null) setTvLink(code)
+            if (code != null) useTvLink(code)
             if (regen) say("Código novo. TVs vinculadas antes foram desligadas.")
         } catch (_: Exception) { if (create || regen) say("Não consegui gerar o código agora.") }
     }
-    private fun setTvLink(code: String) {
+    private fun useTvLink(code: String) {
         if (tvLink == code && tvLinkRt != null) return
         tvLinkRt?.leave(); tvLink = code
         val r = rt.channel("dc-tvlink-$code", null); tvLinkRt = r
