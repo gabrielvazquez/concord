@@ -24,5 +24,5 @@ done
 sleep 75; adb exec-out screencap -p > t2-assistindo.png
 adb shell input keyevent 23; sleep 3; adb exec-out screencap -p > t3-som.png
 sleep 20; adb exec-out screencap -p > t4.png
-adb logcat -d | grep -iE "AndroidRuntime|FATAL" | tail -30
+adb logcat -d | grep -iE "AndroidRuntime|FATAL|Concord" | tail -60
 adb shell pidof com.gabrielvazquez.concord && echo "APP VIVO" || echo "APP MORREU"

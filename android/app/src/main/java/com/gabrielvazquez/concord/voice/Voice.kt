@@ -221,6 +221,7 @@ class Voice(private val c: Concord) {
     /* ---------------- Presença da sala ---------------- */
     private fun onPresence() {
         val r = rt ?: return
+        android.util.Log.d("Concord", "voice presence keys=${r.presence.keys} viewer=$viewer")
         val now = HashMap<String, JSONObject>()
         r.presence.forEach { (k, metas) -> metas.maxByOrNull { it.optLong("jt") }?.let { now[k] = it } }
         // mesma conta em outro aparelho: fica só a entrada mais recente
