@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir out
           cp android/app/build/outputs/apk/release/app-release.apk out/CONCORD.apk
-          echo "{\"versionCode\": ${{ github.run_number }}, \"versionName\": \"1.0.${{ github.run_number }}\", \"url\": \"https://github.com/gabrielvazquez/concord/releases/download/android-latest/CONCORD.apk\"}" > out/version.json
+          echo "{\"versionCode\": ${{ github.run_number }}, \"versionName\": \"2.0.${{ github.run_number }}\", \"url\": \"https://github.com/gabrielvazquez/concord/releases/download/android-latest/CONCORD.apk\"}" > out/version.json
           ls -la out
       - name: Publicar
         uses: softprops/action-gh-release@v2

@@ -1,2 +1,5 @@
--keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }
--keepattributes JavascriptInterface
+-keep class org.webrtc.** { *; }
+-dontwarn org.webrtc.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
