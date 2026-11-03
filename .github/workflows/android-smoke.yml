@@ -7,36 +7,38 @@ permissions:
   contents: write
 
 jobs:
-  smoke:
+  e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Preparar cliente do site
+        working-directory: android/ci
+        run: |
+          npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null && npx playwright install --with-deps chromium >/dev/null
       - name: Baixar APK publicado
         run: curl -sL -o CONCORD.apk https://github.com/gabrielvazquez/concord/releases/download/android-latest/CONCORD.apk && ls -la CONCORD.apk
-      - name: Rodar no emulador
+      - name: Rodar no emulador + site
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           target: google_apis
+          profile: pixel_6
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -camera-back none -camera-front none
           script: |
-            adb install -r -g CONCORD.apk
-            adb logcat -c
-            adb shell am start -n com.gabrielvazquez.concord/.MainActivity
-            sleep 15
-            adb exec-out screencap -p > shot1.png
-            adb shell input tap 540 1400 || true
-            sleep 3
-            adb exec-out screencap -p > shot2.png
-            adb logcat -d | grep -E "AndroidRuntime|FATAL|concord|Concord" | tail -80 || true
-            adb shell pidof com.gabrielvazquez.concord && echo "APP VIVO" || echo "APP MORREU"
+            (cd android/ci && node web_peer.mjs > ../../web.log 2>&1 &) ; sleep 1
+            bash android/ci/e2e.sh
+            sleep 5; cat web.log | tail -60
       - name: Publicar capturas
+        if: always()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-test
@@ -44,6 +46,6 @@ jobs:
           prerelease: true
           make_latest: false
           files: |
-            shot1.png
-            shot2.png
+            e*.png
+            web.log
           overwrite_files: true

@@ -31,8 +31,9 @@ fun ConcordTheme(content: @Composable () -> Unit) {
             surfaceContainer = C.panel, surfaceContainerHigh = C.card, surfaceContainerHighest = C.card2, surfaceContainerLow = C.panel,
             outline = C.line2, outlineVariant = C.line, error = C.red, primaryContainer = C.card2, onPrimaryContainer = C.tx,
         ),
-        content = content,
-    )
+    ) {
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides C.tx) { content() }
+    }
 }
 
 fun statusColor(st: String): Color = when (st) { "online" -> C.green; "idle" -> C.amber; "dnd" -> C.red; else -> C.gray }
