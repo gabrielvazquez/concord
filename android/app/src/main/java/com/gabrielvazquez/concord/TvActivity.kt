@@ -166,30 +166,30 @@ class TvActivity : ComponentActivity() {
     private fun PairScreen() {
         Column(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xFF18181C), Color.Black), radius = 1400f, center = androidx.compose.ui.geometry.Offset(960f, -100f))),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Row(verticalAlignment = Alignment.CenterVertically) { Logo(40.dp); Spacer(Modifier.width(14.dp)); Text("C O N C O R D   T V", color = C.tx2, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) }
-            Spacer(Modifier.height(22.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) { Logo(32.dp); Spacer(Modifier.width(12.dp)); Text("C O N C O R D   T V", color = C.tx2, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) }
+            Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(200.dp).clip(RoundedCornerShape(20.dp)).background(Color.White).padding(14.dp)) { QrCode(tvLink(code), Modifier.fillMaxSize()) }
+                    Box(Modifier.size(170.dp).clip(RoundedCornerShape(18.dp)).background(Color.White).padding(12.dp)) { QrCode(tvLink(code), Modifier.fillMaxSize()) }
                     Spacer(Modifier.height(14.dp))
                     Text("Celular: aponte a câmera", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.width(70.dp))
-                Box(Modifier.width(1.dp).height(180.dp).background(C.line2))
+                Box(Modifier.width(1.dp).height(150.dp).background(C.line2))
                 Spacer(Modifier.width(70.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(code.chunked(3).joinToString("  "), fontSize = 96.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                    Text(code.chunked(3).joinToString("  "), fontSize = 80.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
                     Spacer(Modifier.height(14.dp))
                     Text("PC: na sala de voz, clique em \"Enviar para a TV\"", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
                     Text("e digite este código", color = C.tx2, fontSize = 17.sp)
                 }
             }
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(if (online) C.green else C.amber)); Spacer(Modifier.width(10.dp))
                 Text(if (online) "Pronta para conectar" else "Conectando…", color = C.tx2, fontSize = 18.sp)
             }
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(12.dp))
             if (linkCode == null) Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Ou vincule à sua conta:", color = C.tx2, fontSize = 18.sp); Spacer(Modifier.width(16.dp))
                 androidx.compose.material3.OutlinedTextField(value = linkInput, onValueChange = { v -> linkInput = v.filter(Char::isDigit).take(6); if (linkInput.length == 6) link() },
