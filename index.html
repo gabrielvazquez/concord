@@ -2042,15 +2042,19 @@ detectHW();
 const hwOk = c => !!(HW[c] && HW[c].power);
 function codecOrder(){
   const caps = window.RTCRtpReceiver?.getCapabilities?.('video'); if(!caps) return null;
-  const p=P(), Q=SHARE_Q[p.shareQ]||SHARE_Q.jogo1080;
+  const p=P(), Q=SHARE_Q[V?.screenQ]||SHARE_Q[p.shareQ]||SHARE_Q.jogo1080;
   let pref;
-  if(V?.noAV1 && p.shareCodec==='AV1') pref = ['video/VP9','video/H264','video/VP8'];
+  const bad = V?.badCodecs || new Set();
+  if(p.shareCodec!=='auto' && bad.has(p.shareCodec)) pref = ['video/VP9','video/H264','video/VP8'];
   else if(p.shareCodec==='auto'){
     const av1 = !V?.noAV1;
-    if(Q.cinema) pref = av1 ? ['video/AV1','video/VP9','video/H264'] : ['video/VP9','video/H264'];
+    // filme: AV1/VP9 só com a placa de vídeo codificando; no processador, junto com o vídeo tocando, eles travam a transmissão
+    if(Q.cinema) pref = [ ...(av1&&hwOk('AV1')?['video/AV1']:[]), ...(hwOk('VP9')?['video/VP9']:[]), ...(hwOk('H264')?['video/H264']:[]), 'video/VP9','video/H264' ];
     else if(Q.motion) pref = [ ...(av1&&hwOk('AV1')?['video/AV1']:[]), ...(hwOk('H264')?['video/H264']:[]), ...(hwOk('VP9')?['video/VP9']:[]), 'video/H264','video/VP9' ];   // jogo: o que a placa de vídeo codifica
     else pref = [ ...(av1&&hwOk('AV1')?['video/AV1']:[]), 'video/VP9','video/H264' ];                                               // texto: nitidez
     pref.push('video/VP8');
+    pref = pref.filter(m=>!bad.has(m.split('/')[1].toUpperCase()));
+    if(!pref.length) pref=['video/H264','video/VP8'];
   }
   else pref = ['video/'+p.shareCodec, 'video/H264', 'video/VP9', 'video/VP8'];
   const rank = c => { const i=pref.findIndex(m=>m.toLowerCase()===c.mimeType.toLowerCase()); return i<0?99:i; };
@@ -2395,11 +2399,15 @@ $('#cineFs').onclick=()=>{ (document.fullscreenElement ? document.exitFullscreen
 document.addEventListener('fullscreenchange', ()=>{ $('#cineFs').textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
 document.addEventListener('mousemove', ()=>{ if(document.body.classList.contains('theater')) theaterUI(); });
 document.addEventListener('touchstart', ()=>{ if(document.body.classList.contains('theater')) theaterUI(); }, {passive:true});
-function fallbackFromAV1(){
-  if(!V?.screen || V.noAV1) return; V.noAV1=true; const order=codecOrder();
-  V.peers.forEach(p=>{ const vt=V.screen?.getVideoTracks()[0];
-    const tr=p.pc.getTransceivers().find(t=>t.sender.track===vt); if(tr && order){ try{ tr.setCodecPreferences(order); p.negotiate?.(); }catch(e){ console.warn(e); } } });
-  toast('Seu processador estava no limite com AV1. Troquei para VP9 para não travar.');
+function fallbackCodec(cur){
+  if(!V?.screen) return; cur=(cur||'').toUpperCase(); if(!cur || cur==='VP8') return;
+  V.badCodecs = V.badCodecs || new Set(); if(V.badCodecs.has(cur)) return;
+  V.badCodecs.add(cur); if(cur==='AV1') V.noAV1=true; V.cpuStrikes=0;
+  const order=codecOrder(); const vt=V.screen.getVideoTracks()[0];
+  // setCodecPreferences já dispara a renegociação sozinho (onnegotiationneeded); chamar de novo criava duas ofertas
+  V.peers.forEach(p=>{ const tr=p.pc.getTransceivers().find(t=>t.sender.track===vt); if(tr && order){ try{ tr.setCodecPreferences(order); }catch(e){ console.warn(e); } } });
+  const next = order?.[0]?.mimeType?.split('/')[1] || 'outro formato';
+  toast(`Seu processador estava no limite com ${cur}. Troquei para ${next} para a transmissão não travar.`);
 }
 /* ---- Seletor de transmissão: o quê + qualidade ---- */
 const SHARE_MODES = {
@@ -2501,7 +2509,7 @@ async function collectStats(){
     peer.rtt = rtt; peer.relay = relay;
   }
   V.outStats = V.screen ? { br:outBytes, fps:outFps, res:outRes, codec:outCodec, limit:outLimit } : null;
-  if(V.outStats && /av1/i.test(V.outStats.codec||'') && V.outStats.limit==='cpu'){ if(++V.cpuStrikes>=3) fallbackFromAV1(); } else if(V) V.cpuStrikes=0;
+  if(V.outStats && V.outStats.limit==='cpu' && V.outStats.codec && !/vp8/i.test(V.outStats.codec) && !(V.outHw===true)){ if(++V.cpuStrikes>=(/av1/i.test(V.outStats.codec)?3:5)) fallbackCodec(V.outStats.codec); } else if(V) V.cpuStrikes=0;
   renderStats();
 }
 function renderStats(){

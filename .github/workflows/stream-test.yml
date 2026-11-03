@@ -1,0 +1,40 @@
+name: Teste de transmissão
+
+on:
+  workflow_dispatch:
+    inputs:
+      modes:
+        description: 'qualidade:segundos, separados por vírgula'
+        default: 'cinema:180,jogo1080:90'
+
+permissions:
+  contents: write
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Preparar navegadores
+        working-directory: android/ci
+        run: npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null && npx playwright install --with-deps chromium >/dev/null
+      - name: Transmitir e medir
+        working-directory: android/ci
+        env:
+          MODES: ${{ inputs.modes }}
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" node stream_test.mjs 2>&1 | tee ../../stream.log
+      - name: Publicar resultado
+        if: always()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-test
+          name: teste (interno)
+          prerelease: true
+          make_latest: false
+          files: |
+            stream.log
+            android/ci/stream-*.png
+          overwrite_files: true
