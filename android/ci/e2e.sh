@@ -2,8 +2,22 @@
 # Teste ponta a ponta no emulador: login, chat e sala de voz com o site
 set -x
 ui() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml > ui.xml; }
+# o emulador às vezes mostra "Pixel Launcher isn't responding" por cima do app: toca em Wait
+dismiss() {
+  if grep -q "isn't responding\|não está respondendo" ui.xml; then
+    w=$(python3 -c "
+import re
+s=open('ui.xml',encoding='utf-8',errors='ignore').read()
+for m in re.finditer(r'<node [^>]*>', s):
+    n=m.group(0)
+    if re.search(r' text=\"(Wait|Aguardar)\"', n):
+        b=re.search(r'bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"',n); x1,y1,x2,y2=map(int,b.groups()); print((x1+x2)//2,(y1+y2)//2); break")
+    [ -n "$w" ] && adb shell input tap $w && echo "fechei aviso do emulador" && sleep 2 && ui
+  fi
+}
 tap() { # tap "texto" [desc]
-  ui
+  for try in 1 2 3; do
+  ui; dismiss
   xy=$(python3 - "$1" "${2:-}" <<'P'
 import sys,re
 t=sys.argv[1]; mode=sys.argv[2]
@@ -16,7 +30,9 @@ for m in re.finditer(r'<node [^>]*>', s):
         x1,y1,x2,y2=map(int,b.groups()); print((x1+x2)//2,(y1+y2)//2); break
 P
 )
-  if [ -n "$xy" ]; then adb shell input tap $xy; echo "tap $1 -> $xy"; else echo "NAO ACHEI: $1"; fi
+  if [ -n "$xy" ]; then adb shell input tap $xy; echo "tap $1 -> $xy"; return; fi
+  sleep 3; done
+  echo "NAO ACHEI: $1"
 }
 shot() { adb exec-out screencap -p > "$1.png"; }
 adb install -r -g CONCORD.apk
