@@ -31,7 +31,7 @@ for (let i = 0; i < 150; i++) {
     return out;
   });
   if (i % 5 === 0) log('peers', JSON.stringify(st));
-  if (st && st.some(x => x.state === 'connected')) { ok = true; if (i % 5 === 0) log('CONECTADO COM O ANDROID'); }
+  if (st && st.some(x => x.state === 'connected')) { if (!ok) { await p.evaluate(() => toggleCam()); log('câmera do site ligada'); } ok = true; if (i % 5 === 0) log('CONECTADO COM O ANDROID'); }
   if (ok && st.some(x => x.inAudio > 0)) { log('ÁUDIO CHEGANDO DO ANDROID', JSON.stringify(st)); }
   await p.waitForTimeout(2000);
 }
