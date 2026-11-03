@@ -72,6 +72,8 @@ class Concord(val app: Application) {
     var incoming by mutableStateOf<IncomingCall?>(null)
     var autoIdle by mutableStateOf(false)
     var connected by mutableStateOf(true)
+    /** pede a permissão do microfone antes de entrar numa sala (definido pela tela) */
+    var askMic: ((() -> Unit) -> Unit)? = null
 
     private var srvRt: RtChannel? = null
     private var msgRt: RtChannel? = null

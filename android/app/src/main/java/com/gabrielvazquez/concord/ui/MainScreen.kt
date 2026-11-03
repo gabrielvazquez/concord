@@ -114,7 +114,9 @@ fun MainScreen(onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> Unit, onAskC
 
     if (Ui.pip) { PipView(); return }
 
+    val act = LocalContext.current as? android.app.Activity
     BackHandler(enabled = drawer.isClosed) { scope.launch { drawer.open() } }
+    BackHandler(enabled = drawer.isOpen) { act?.moveTaskToBack(true) }
 
     ModalNavigationDrawer(drawerState = drawer, gesturesEnabled = true, scrimColor = Color(0xAA000000), drawerContent = {
         ModalDrawerSheet(drawerContainerColor = C.bg, drawerShape = RoundedCornerShape(0.dp, 20.dp, 20.dp, 0.dp), modifier = Modifier.width(340.dp)) {

@@ -1,0 +1,49 @@
+name: Teste do app Android (emulador)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Baixar APK publicado
+        run: curl -sL -o CONCORD.apk https://github.com/gabrielvazquez/concord/releases/download/android-latest/CONCORD.apk && ls -la CONCORD.apk
+      - name: Rodar no emulador
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -g CONCORD.apk
+            adb logcat -c
+            adb shell am start -n com.gabrielvazquez.concord/.MainActivity
+            sleep 15
+            adb exec-out screencap -p > shot1.png
+            adb shell input tap 540 1400 || true
+            sleep 3
+            adb exec-out screencap -p > shot2.png
+            adb logcat -d | grep -E "AndroidRuntime|FATAL|concord|Concord" | tail -80 || true
+            adb shell pidof com.gabrielvazquez.concord && echo "APP VIVO" || echo "APP MORREU"
+      - name: Publicar capturas
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-test
+          name: teste (interno)
+          prerelease: true
+          make_latest: false
+          files: |
+            shot1.png
+            shot2.png
+          overwrite_files: true

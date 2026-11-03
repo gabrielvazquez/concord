@@ -132,6 +132,10 @@ class Voice(private val c: Concord) {
 
     /* ---------------- Entrar e sair ---------------- */
     fun join(ch: Channel) {
+        if (c.app.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            val ask = c.askMic
+            if (ask != null) { ask { join(ch) }; return }
+        }
         if (channel != null) leave()
         val f = ensureFactory()
         val mc = MediaConstraints().apply {
