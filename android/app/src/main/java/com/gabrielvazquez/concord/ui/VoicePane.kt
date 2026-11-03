@@ -3,6 +3,7 @@ package com.gabrielvazquez.concord.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -140,7 +141,7 @@ fun TvDialog() {
     val on = c.tvsInRoom() > 0
     androidx.compose.material3.AlertDialog(onDismissRequest = { Ui.tvOpen = false }, containerColor = C.panel,
         title = { Text("Enviar para a TV") },
-        text = { Column {
+        text = { Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
             Text("Na TV, abra o app CONCORD TV ou o site gabrielvazquez.github.io/concord/tv. O som continua aqui.", color = C.tx2, fontSize = 14.sp)
             Spacer(Modifier.height(14.dp))
             val ctx = LocalContext.current
@@ -157,6 +158,15 @@ fun TvDialog() {
             Text("ou digite o código", color = C.tx3, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(Modifier.height(8.dp))
             field(code, { code = it.filter(Char::isDigit).take(6) }, "Código da TV", kb = androidx.compose.ui.text.input.KeyboardType.Number)
+            Spacer(Modifier.height(18.dp))
+            androidx.compose.material3.HorizontalDivider(color = C.line)
+            Spacer(Modifier.height(14.dp))
+            androidx.compose.runtime.LaunchedEffect(Unit) { if (c.tvLink == null) c.loadTvLink(create = true) }
+            Text("Vincular a TV à sua conta", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text("Digite este código uma vez na TV, em \"Vincular à conta\". Depois ela abre sozinha sempre que você entrar numa sala de voz.", color = C.tx2, fontSize = 13.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(c.tvLink?.chunked(3)?.joinToString("  ") ?: "· · ·", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Text("Gerar outro código", color = C.tx3, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).clip(RoundedCornerShape(8.dp)).clickable { c.loadTvLink(regen = true) }.padding(8.dp))
         } },
         confirmButton = { androidx.compose.material3.TextButton(enabled = code.length == 6 && !busy, onClick = { busy = true; c.pairTv(code) { ok -> busy = false; if (ok) { Ui.tvOpen = false; c.say("TV conectada. O som continua aqui.") } else c.say("Não achei essa TV. Confira o código.") } }) { Text(if (busy) "Conectando…" else "Conectar", color = Color.White) } },
         dismissButton = { androidx.compose.material3.TextButton(onClick = { if (on) c.pairTv(c.lastTvCode(), unpair = true) { c.say("TV desconectada.") }; Ui.tvOpen = false }) { Text(if (on) "Desconectar TV" else "Cancelar", color = C.tx2) } })

@@ -148,6 +148,9 @@ class Supa(private val ctx: Context) {
 
     suspend fun delete(table: String, query: String) { call("DELETE", "/rest/v1/$table?$query") }
 
+    /** dados privados da conta (user_metadata), usados para o código da TV vinculada */
+    suspend fun userMeta(): JSONObject = (call("GET", "/auth/v1/user") as? JSONObject)?.optJSONObject("user_metadata") ?: JSONObject()
+    suspend fun setUserMeta(key: String, value: String) { call("PUT", "/auth/v1/user", JSONObject().put("data", JSONObject().put(key, value))) }
     suspend fun rpc(fn: String, args: JSONObject): Any? = call("POST", "/rest/v1/rpc/$fn", args)
 
     suspend fun upload(path: String, bytes: ByteArray, mime: String): String {

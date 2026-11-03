@@ -188,7 +188,7 @@ class Voice(private val c: Concord) {
         try { rt?.untrack() } catch (_: Exception) {}
         rt?.leave(); rt = null
         micTrack?.dispose(); micTrack = null; micSource?.dispose(); micSource = null
-        if (!viewer) { CallService.stop(c.app); c.trackServer(); beep(false) }
+        if (!viewer) { CallService.stop(c.app); c.trackServer(); beep(false); if (ch.dmId == null) c.tvLinkLeft(ch.id) }
         viewer = false
     }
 

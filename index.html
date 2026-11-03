@@ -1633,7 +1633,7 @@ async function start(){
   const qtv = new URLSearchParams(location.search).get('tv');
   if(qtv){ history.replaceState(null, '', location.pathname+location.hash); if(/^\d{6}$/.test(qtv)) setTimeout(()=>tvFromQr(qtv), 1500); }
   await loadServers();
-  loadDms().then(startDmRealtime); syncActivity();
+  loadDms().then(startDmRealtime); syncActivity(); tvLinkCode().catch(()=>{});
   let joinedNew=null;
   if(/^[A-Z0-9-]{3,24}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
   if(hashCode) history.replaceState(null, '', location.pathname+location.search);
@@ -2109,6 +2109,7 @@ async function joinVoice(ch){
     .subscribe(st=>{
       if(V!==me) return;
       if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join');
+        if(!ch.dm) tvLinkAnnounce();
         if(PENDING_TV && !ch.dm){ const p=PENDING_TV; PENDING_TV=null; if(Date.now()-p.at<15*60e3) setTimeout(()=>{ if(V===me) tvConnect(p.code); }, 800); } }
       if(st==='CHANNEL_ERROR' || st==='TIMED_OUT') toast('Falha na conexão com a sala de voz. Tente de novo.', true);
     });
@@ -2250,6 +2251,7 @@ function removeStream(stream){
 async function leaveVoice(){
   if(!V) return;
   const v=V; V=null;
+  if(!v.ch.dm && TVLINK_RT){ try{ TVLINK_RT.send({ type:'broadcast', event:'unpair', payload:{ room:v.ch.id } }); }catch{} }
   const safe=f=>{ try{ f(); }catch(e){ console.warn(e); } };
   v.timers.forEach(clearInterval);
   for(const p of v.peers.values()) safe(()=>{ p.pc.close(); p.audio.srcObject=null; p.audio.remove?.(); });
@@ -3320,6 +3322,29 @@ async function tvSend(code, event, payload){
   });
   sb.removeChannel(ch); return ok;
 }
+/* TV vinculada à conta: código fixo e privado da conta (fica nos dados da conta);
+   a TV com esse código abre sozinha a sala de voz em que a pessoa entrar */
+let TVLINK=null, TVLINK_RT=null;
+async function tvLinkCode(create=false, regen=false){
+  let c = regen ? null : (TVLINK || (await sb.auth.getUser()).data?.user?.user_metadata?.tv_link || null);
+  if(!c && (create||regen)){ c=String(Math.floor(100000+Math.random()*900000)); const { error } = await sb.auth.updateUser({ data:{ tv_link:c } }); if(error) throw error; }
+  if(c) setTvLink(c);
+  return c;
+}
+function setTvLink(c){
+  if(TVLINK===c && TVLINK_RT) return;
+  if(TVLINK_RT){ try{ sb.removeChannel(TVLINK_RT); }catch{} }
+  TVLINK=c;
+  TVLINK_RT = sb.channel('dc-tvlink-'+c, { config:{ broadcast:{ self:false } } })
+    .on('broadcast', {event:'hello'}, ()=>tvLinkAnnounce())
+    .subscribe();
+}
+function tvLinkAnnounce(){
+  if(!TVLINK_RT) return;
+  if(V && !V.ch.dm) TVLINK_RT.send({ type:'broadcast', event:'pair', payload:{ room:V.ch.id, roomName:V.ch.name, uid:S.me.id, name:dname(S.me.id) } });
+  else TVLINK_RT.send({ type:'broadcast', event:'linked', payload:{ uid:S.me.id, name:dname(S.me.id) } });
+}
+
 /* QR da TV: o celular abre o site com ?tv=CÓDIGO */
 let PENDING_TV=null;
 async function tvConnect(code){
@@ -3337,7 +3362,16 @@ function openTvModal(){
   const m=modal(`<h3>Enviar para a TV</h3>
     <p class="sub">Na TV, abra o app <b>CONCORD TV</b> (ou <b>${TV_URL}</b>) e digite o código que aparecer. No celular, é só apontar a câmera para o QR code da TV.</p>
     <input class="inp" id="tvCode" inputmode="numeric" maxlength="6" placeholder="Código da TV" style="text-align:center;font-size:26px;font-weight:800;letter-spacing:.3em;margin:12px 0" value="${esc(ls.get('dc_tv_code','')||'')}">
-    <div class="row"><button class="btn sec" data-x>${on?'Desconectar TV':'Cancelar'}</button><button class="btn" data-ok>Conectar</button></div>`);
+    <div class="row"><button class="btn sec" data-x>${on?'Desconectar TV':'Cancelar'}</button><button class="btn" data-ok>Conectar</button></div>
+    <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px">
+      <b>Vincular a TV à sua conta</b>
+      <p class="sub" style="margin-top:4px">Digite este código uma vez na TV, em <b>Vincular à conta</b>. Depois ela abre sozinha sempre que você entrar numa sala de voz.</p>
+      <div id="tvLinkCode" style="text-align:center;font-size:30px;font-weight:800;letter-spacing:.25em;margin:10px 0 4px">· · ·</div>
+      <div style="text-align:center"><button class="btn sec" id="tvLinkNew" style="font-size:12px;padding:6px 12px">Gerar outro código</button></div>
+    </div>`);
+  const showLink=c=>{ const el=m.querySelector('#tvLinkCode'); if(el) el.textContent = c ? c.slice(0,3)+' '+c.slice(3) : '—'; };
+  tvLinkCode(true).then(showLink).catch(()=>{ showLink(null); toast('Não consegui gerar o código da conta agora.', true); });
+  m.querySelector('#tvLinkNew').onclick=async()=>{ try{ showLink(await tvLinkCode(false, true)); toast('Código novo. TVs vinculadas antes foram desligadas.'); }catch{ toast('Não consegui gerar outro código agora.', true); } };
   const inp=m.querySelector('#tvCode'); inp.focus(); inp.oninput=()=>{ inp.value=inp.value.replace(/\D/g,'').slice(0,6); };
   m.querySelector('[data-x]').onclick=async()=>{ closeModal(); if(on){ const c=ls.get('dc_tv_code',''); if(c) await tvSend(c,'unpair',{}); toast('TV desconectada.'); } };
   const go=async()=>{ const code=inp.value; if(code.length!==6) return toast('O código tem 6 números.', true);

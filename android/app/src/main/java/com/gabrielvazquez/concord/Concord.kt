@@ -143,6 +143,7 @@ class Concord(val app: Application) {
         screen = Screen.Main
         rt.connect()
         startPersonalChannels()
+        loadTvLink()
         loadServers()
         loadDms()
     }
@@ -150,7 +151,7 @@ class Concord(val app: Application) {
     fun logout() = scope.launch {
         voice.leave()
         rt.disconnect()
-        srvRt = null; msgRt = null; dmRt = null; userRt = null
+        srvRt = null; msgRt = null; dmRt = null; userRt = null; tvLinkRt = null; tvLink = null
         servers.clear(); channels.clear(); messages.clear(); dms.clear(); online.clear(); members.clear(); unread.clear()
         server = null; view = null; meId = null; home = false
         supa.clearActive()
@@ -525,7 +526,34 @@ class Concord(val app: Application) {
         if (voice.channel != null) pairTv(code) { ok -> say(if (ok) "TV conectada. O som continua aqui." else "Não achei a TV. Confira se ela está na tela do código.") }
         else { pendingTv = code to System.currentTimeMillis(); say("TV encontrada! Entre numa sala de voz e ela conecta sozinha.") }
     }
+    /* TV vinculada à conta: um código fixo da conta; a TV com esse código segue a pessoa nas salas de voz */
+    var tvLink by mutableStateOf<String?>(null)
+    private var tvLinkRt: RtChannel? = null
+    fun loadTvLink(create: Boolean = false, regen: Boolean = false) = scope.launch {
+        try {
+            var code = if (regen) null else supa.userMeta().optString("tv_link").ifEmpty { null }
+            if (code == null && (create || regen)) { code = (100000 + (Math.random() * 900000).toInt()).toString(); supa.setUserMeta("tv_link", code) }
+            if (code != null) setTvLink(code)
+            if (regen) say("Código novo. TVs vinculadas antes foram desligadas.")
+        } catch (_: Exception) { if (create || regen) say("Não consegui gerar o código agora.") }
+    }
+    private fun setTvLink(code: String) {
+        if (tvLink == code && tvLinkRt != null) return
+        tvLinkRt?.leave(); tvLink = code
+        val r = rt.channel("dc-tvlink-$code", null); tvLinkRt = r
+        r.on("hello") { tvLinkAnnounce() }
+    }
+    fun tvLinkAnnounce() {
+        val r = tvLinkRt ?: return
+        val ch = voice.channel
+        if (ch != null && ch.dmId == null && !voice.viewer) r.send("pair", JSONObject().put("room", ch.id).put("roomName", ch.name).put("uid", meId).put("name", name(meId)))
+        else r.send("linked", JSONObject().put("uid", meId).put("name", name(meId)))
+    }
+    fun tvLinkLeft(roomId: String) { tvLinkRt?.send("unpair", JSONObject().put("room", roomId)) }
+
     fun onVoiceJoined() {
+        if (voice.viewer) return
+        if (voice.channel?.dmId == null) tvLinkAnnounce()
         val p = pendingTv ?: return; pendingTv = null
         if (System.currentTimeMillis() - p.second < 15 * 60_000 && voice.channel?.dmId == null) scope.launch { delay(800); tvFromQr(p.first) }
     }

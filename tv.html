@@ -21,6 +21,12 @@ html,body{height:100%;background:#000;color:#fafafa;font-family:Inter,'Segoe UI'
 .sep{width:1px;height:18vw;background:#2a2a2f}
 .way .t{font-size:1.5vw;font-weight:600}
 .way .s{font-size:1.3vw;color:#a1a1aa}
+.link{display:flex;align-items:center;gap:1.2vw;color:#a1a1aa;font-size:1.4vw;min-height:4vw}
+.link b{color:#fafafa}
+.link input{background:#111113;border:1px solid #333338;color:#fff;border-radius:.8vw;padding:.6vw 1vw;font:800 1.8vw/1 inherit;width:17vw;letter-spacing:.3em;text-align:center;cursor:text}
+.link input::placeholder{letter-spacing:0;font-weight:500;color:#71717a}
+.link button{background:none;border:1px solid #333338;color:#fafafa;border-radius:999px;padding:.6vw 1.4vw;font:600 1.3vw/1 inherit}
+.link input:focus,.link button:focus{outline:2px solid #fff;outline-offset:2px}
 .dot{display:inline-block;width:.8vw;height:.8vw;border-radius:50%;background:#3ddc84;margin-right:.6vw;vertical-align:middle}
 .dot.off{background:#fbbf24}
 #stage{position:fixed;inset:0;display:none;background:#000}
@@ -50,6 +56,7 @@ html,body{height:100%;background:#000;color:#fafafa;font-family:Inter,'Segoe UI'
     <div class="way"><div class="code" id="code">······</div><div class="t">PC: na sala de voz, clique em <b>Enviar para a TV</b></div><div class="s">e digite este código</div></div>
   </div>
   <div class="hint" id="net"><span class="dot off"></span>Conectando…</div>
+  <div class="link" id="link"></div>
 </div>
 <div id="stage">
   <video id="main" autoplay playsinline muted></video>
@@ -72,7 +79,7 @@ let CODE = ls.get('tv_code', null); if(!CODE){ CODE = String(Math.floor(100000+M
 $('#code').textContent = CODE;
 try{ const q=qrcode(0,'M'); q.addData('https://gabrielvazquez.github.io/concord/?tv='+CODE); q.make(); $('#qr').innerHTML=q.createSvgTag({ cellSize:4, margin:0, scalable:true }); }catch{ $('#qr').style.display='none'; }
 
-const TV = { pairRt:null, rt:null, room:null, owner:null, peers:new Map(), meta:{}, sel:0, sound:false };
+const TV = { linkRt:null, pairRt:null, rt:null, room:null, owner:null, peers:new Map(), meta:{}, sel:0, sound:false };
 
 /* ---------- pareamento ---------- */
 function listenPair(){
@@ -81,11 +88,40 @@ function listenPair(){
     .on('broadcast', {event:'unpair'}, ()=>unpair())
     .subscribe(st=>{ const n=$('#net'); if(st==='SUBSCRIBED'){ n.innerHTML='<span class="dot"></span>Pronta para conectar'; } else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){ n.innerHTML='<span class="dot off"></span>Sem conexão — tentando de novo'; } });
 }
-function pair(p){
+function pair(p, ch=TV.pairRt){
   if(!p?.room) return;
   TV.owner = { uid:p.uid, name:p.name||'Alguém' };
-  TV.pairRt.send({ type:'broadcast', event:'paired', payload:{ ok:true, room:p.room } });
+  ch.send({ type:'broadcast', event:'paired', payload:{ ok:true, room:p.room } });
+  if(TV.room===p.room) return;
   join(p.room, p.roomName||'Sala de voz');
+}
+
+/* ---------- TV vinculada a uma conta: abre sozinha a sala em que a pessoa entrar ---------- */
+let LINK = ls.get('tv_link', null);   // { code, name }
+function listenLink(){
+  if(TV.linkRt){ sb.removeChannel(TV.linkRt); TV.linkRt=null; }
+  if(!LINK) return;
+  const ch = sb.channel('dc-tvlink-'+LINK.code, { config:{ broadcast:{ self:false } } })
+    .on('broadcast', {event:'pair'}, ({payload})=>{ setLinkName(payload?.name); pair(payload, ch); })
+    .on('broadcast', {event:'unpair'}, ({payload})=>{ if(payload?.room && payload.room===TV.room) unpair(); })
+    .on('broadcast', {event:'linked'}, ({payload})=>setLinkName(payload?.name))
+    .subscribe(st=>{ if(st==='SUBSCRIBED') ch.send({ type:'broadcast', event:'hello', payload:{} }); });
+  TV.linkRt = ch;
+}
+function setLinkName(n){ if(!LINK || !n || LINK.name===n) return; LINK.name=n; ls.set('tv_link', LINK); renderLink(); }
+function doLink(code){ LINK={ code, name:null }; ls.set('tv_link', LINK); renderLink(); listenLink(); }
+function unlink(){ LINK=null; try{ localStorage.removeItem('tv_link'); }catch{} listenLink(); renderLink(); }
+function renderLink(){
+  const el=$('#link'); el.innerHTML='';
+  if(!LINK){
+    el.append('Ou vincule à sua conta:');
+    const i=document.createElement('input'); i.inputMode='numeric'; i.maxLength=6; i.placeholder='código da conta'; el.append(i);
+    i.oninput=()=>{ i.value=i.value.replace(/\D/g,'').slice(0,6); if(i.value.length===6) doLink(i.value); };
+  } else {
+    const b=document.createElement('b'); b.textContent=LINK.name||'…';
+    el.append('Vinculada à conta de ', b, ' · abre sozinha quando entrar numa sala');
+    const u=document.createElement('button'); u.textContent='Desvincular'; u.onclick=unlink; el.append(u);
+  }
 }
 function unpair(){ leave(); $('#pair').style.display='flex'; $('#stage').classList.remove('on'); }
 
@@ -170,7 +206,7 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) wake();
 /* ---------- controle remoto ---------- */
 document.addEventListener('keydown', e=>{
   const k=e.keyCode;
-  if(!TV.room) return;
+  if(!TV.room){ if((k===38||k===40) && !document.activeElement?.closest?.('#link')){ $('#link input, #link button')?.focus(); e.preventDefault(); } return; }
   const { scr } = sources();
   if(k===39 || k===40){ if(scr.length>1){ TV.sel=(TV.sel+1)%scr.length; $('#main').srcObject=null; render(); } e.preventDefault(); }
   else if(k===37 || k===38){ if(scr.length>1){ TV.sel=(TV.sel-1+scr.length)%scr.length; $('#main').srcObject=null; render(); } e.preventDefault(); }
@@ -179,7 +215,7 @@ document.addEventListener('keydown', e=>{
 });
 document.addEventListener('click', ()=>{ if(TV.room){ TV.sound=!TV.sound; $('#main').muted=!TV.sound; render(); osd(TV.sound?'🔊 Som na TV ligado':'🔇 Som só no celular/PC'); } });
 try{ window.tizen?.tvinputdevice?.registerKey('Return'); }catch{}
-listenPair();
+listenPair(); renderLink(); listenLink();
 </script>
 </body>
 </html>

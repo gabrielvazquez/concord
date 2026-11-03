@@ -60,6 +60,12 @@ class TvActivity : ComponentActivity() {
     private var room by mutableStateOf<String?>(null)
     private var owner by mutableStateOf("")
     private var sel by mutableIntStateOf(0)
+    private var roomId: String? = null
+    // TV vinculada a uma conta: segue a pessoa nas salas de voz
+    private var linkCode by mutableStateOf<String?>(null)
+    private var linkName by mutableStateOf<String?>(null)
+    private var linkInput by mutableStateOf("")
+    private var linkRt: RtChannel? = null
     private var osd by mutableStateOf<String?>(null)
     private var osdAt by mutableStateOf(0L)
 
@@ -73,6 +79,8 @@ class TvActivity : ComponentActivity() {
         c.rt.onStatus = { online = it; c.connected = it }
         c.rt.connect()
         listen()
+        linkCode = prefs.getString("tv_link", null); linkName = prefs.getString("tv_link_name", null)
+        linkCode?.let { listenLink(it) }
         Updater.check(c, force = true)
         setContent { ConcordTheme { Screen() } }
     }
@@ -81,18 +89,49 @@ class TvActivity : ComponentActivity() {
         val r = c.rt.channel("dc-tv-$code", null)
         pairRt = r
         r.onJoined = { online = true }
-        r.on("pair") { p ->
-            val roomId = p.optString("room"); if (roomId.isEmpty()) return@on
-            owner = p.optString("name", "alguém")
-            r.send("paired", JSONObject().put("ok", true).put("room", roomId))
-            c.voice.joinAsTv(Channel(roomId, "", p.optString("roomName", "Sala de voz"), "voice", 0, null, null, null, false, 0, 0), p.optString("uid").ifEmpty { null }, owner)
-            room = p.optString("roomName", "Sala de voz"); sel = 0
-            show("Conectada à sala de $owner · OK liga o som na TV")
-        }
-        r.on("unpair") { stopWatching() }
+        attach(r, linked = false)
     }
 
-    private fun stopWatching() { c.voice.leave(); room = null }
+    private fun listenLink(k: String) {
+        linkRt?.leave()
+        val r = c.rt.channel("dc-tvlink-$k", null)
+        linkRt = r
+        r.onJoined = { r.send("hello", JSONObject()) }
+        r.on("linked") { p -> saveLinkName(p.optString("name")) }
+        attach(r, linked = true)
+    }
+
+    private fun saveLinkName(n: String) { if (n.isEmpty()) return; linkName = n; getSharedPreferences("concord", 0).edit().putString("tv_link_name", n).apply() }
+
+    private fun link() {
+        val k = linkInput.filter(Char::isDigit); if (k.length != 6) return
+        getSharedPreferences("concord", 0).edit().putString("tv_link", k).remove("tv_link_name").apply()
+        linkCode = k; linkName = null; linkInput = ""
+        listenLink(k); show("TV vinculada. Ela abre sozinha quando a conta entrar numa sala de voz.")
+    }
+
+    private fun unlink() {
+        linkRt?.leave(); linkRt = null; linkCode = null; linkName = null
+        getSharedPreferences("concord", 0).edit().remove("tv_link").remove("tv_link_name").apply()
+        show("TV desvinculada.")
+    }
+
+    private fun attach(r: RtChannel, linked: Boolean) {
+        r.on("pair") { p ->
+            val rid = p.optString("room"); if (rid.isEmpty()) return@on
+            owner = p.optString("name", "alguém")
+            if (linked) saveLinkName(owner)
+            r.send("paired", JSONObject().put("ok", true).put("room", rid))
+            if (roomId == rid && room != null) return@on
+            if (room != null) c.voice.leave()
+            c.voice.joinAsTv(Channel(rid, "", p.optString("roomName", "Sala de voz"), "voice", 0, null, null, null, false, 0, 0), p.optString("uid").ifEmpty { null }, owner)
+            room = p.optString("roomName", "Sala de voz"); roomId = rid; sel = 0
+            show("Conectada à sala de $owner · OK liga o som na TV")
+        }
+        r.on("unpair") { p -> if (!linked || p.optString("room") == roomId) stopWatching() }
+    }
+
+    private fun stopWatching() { c.voice.leave(); room = null; roomId = null }
     private fun show(s: String) { osd = s; osdAt = System.currentTimeMillis() }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -110,7 +149,7 @@ class TvActivity : ComponentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
-    override fun onDestroy() { if (isFinishing) { c.voice.leave(); pairRt?.leave() }; super.onDestroy() }
+    override fun onDestroy() { if (isFinishing) { c.voice.leave(); pairRt?.leave(); linkRt?.leave() }; super.onDestroy() }
 
     @Composable
     private fun Screen() {
@@ -128,15 +167,15 @@ class TvActivity : ComponentActivity() {
         Column(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xFF18181C), Color.Black), radius = 1400f, center = androidx.compose.ui.geometry.Offset(960f, -100f))),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Row(verticalAlignment = Alignment.CenterVertically) { Logo(40.dp); Spacer(Modifier.width(14.dp)); Text("C O N C O R D   T V", color = C.tx2, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) }
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(22.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(250.dp).clip(RoundedCornerShape(22.dp)).background(Color.White).padding(18.dp)) { QrCode(tvLink(code), Modifier.fillMaxSize()) }
+                    Box(Modifier.size(200.dp).clip(RoundedCornerShape(20.dp)).background(Color.White).padding(14.dp)) { QrCode(tvLink(code), Modifier.fillMaxSize()) }
                     Spacer(Modifier.height(14.dp))
                     Text("Celular: aponte a câmera", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.width(70.dp))
-                Box(Modifier.width(1.dp).height(220.dp).background(C.line2))
+                Box(Modifier.width(1.dp).height(180.dp).background(C.line2))
                 Spacer(Modifier.width(70.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(code.chunked(3).joinToString("  "), fontSize = 96.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
@@ -149,6 +188,18 @@ class TvActivity : ComponentActivity() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(if (online) C.green else C.amber)); Spacer(Modifier.width(10.dp))
                 Text(if (online) "Pronta para conectar" else "Conectando…", color = C.tx2, fontSize = 18.sp)
+            }
+            Spacer(Modifier.height(22.dp))
+            if (linkCode == null) Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Ou vincule à sua conta:", color = C.tx2, fontSize = 18.sp); Spacer(Modifier.width(16.dp))
+                androidx.compose.material3.OutlinedTextField(value = linkInput, onValueChange = { v -> linkInput = v.filter(Char::isDigit).take(6); if (linkInput.length == 6) link() },
+                    singleLine = true, placeholder = { Text("código da conta", color = C.tx3) }, modifier = Modifier.width(260.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { link() }))
+            } else Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Vinculada à conta de ${linkName ?: "…"} · abre sozinha quando entrar numa sala", color = C.tx2, fontSize = 18.sp); Spacer(Modifier.width(16.dp))
+                androidx.compose.material3.OutlinedButton(onClick = { unlink() }) { Text("Desvincular", color = Color.White) }
             }
             Updater.available?.let { ver ->
                 Spacer(Modifier.height(30.dp))

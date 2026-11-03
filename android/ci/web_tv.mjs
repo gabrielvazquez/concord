@@ -38,5 +38,20 @@ for (let i = 0; i < 25; i++) {
   log('site', JSON.stringify(a), '| tv-site', JSON.stringify(t));
 }
 await tv.screenshot({ path: 'tv-site.png' });
+// TV vinculada à conta: digita o código da conta e deve abrir a sala sozinha
+const linkCode = await p.evaluate(() => tvLinkCode(true));
+log('código da conta:', linkCode);
+const tv2 = await ctx.newPage();
+tv2.on('pageerror', e => log('tv2 pageerror', e.message));
+await tv2.goto('https://gabrielvazquez.github.io/concord/tv.html?t=' + Date.now());
+await tv2.waitForTimeout(3000);
+await tv2.fill('#link input', linkCode);
+for (let i = 0; i < 10; i++) { await tv2.waitForTimeout(2000); const r = await tv2.evaluate(() => ({ room: TV.room, link: LINK, peers: [...TV.peers.values()].map(x => x.pc.connectionState), w: document.querySelector('#main').videoWidth })); log('tv vinculada', JSON.stringify(r)); if (r.w) break; }
+await tv2.screenshot({ path: 'tv-vinculada.png' });
+// sair e voltar para a sala: a TV vinculada deve sair e voltar junto
+await p.evaluate(() => leaveVoice()); await p.waitForTimeout(3000);
+log('depois de sair, tv vinculada na sala?', await tv2.evaluate(() => !!TV.room));
+await p.click('#chanlist .ch:has-text("Sala de Jogo")'); await p.waitForTimeout(6000);
+log('depois de voltar, tv vinculada na sala?', await tv2.evaluate(() => !!TV.room));
 await p.screenshot({ path: 'web-sala.png' });
 await b.close();
