@@ -71,6 +71,7 @@ class TvActivity : ComponentActivity() {
         c.rt.onStatus = { online = it; c.connected = it }
         c.rt.connect()
         listen()
+        Updater.check(c, force = true)
         setContent { ConcordTheme { Screen() } }
     }
 
@@ -93,7 +94,10 @@ class TvActivity : ComponentActivity() {
     private fun show(s: String) { osd = s; osdAt = System.currentTimeMillis() }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (room == null) return super.onKeyDown(keyCode, event)
+        if (room == null) {
+            if (Updater.available != null && (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER)) { Updater.install(this, c.scope) { show(it) }; return true }
+            return super.onKeyDown(keyCode, event)
+        }
         val screens = c.voice.videos.filter { c.voice.isScreen(it) }
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_MEDIA_NEXT -> { if (screens.size > 1) { sel = (sel + 1) % screens.size; show("Transmissão ${sel + 1} de ${screens.size}") }; return true }
@@ -130,6 +134,12 @@ class TvActivity : ComponentActivity() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(if (online) C.green else C.amber)); Spacer(Modifier.width(10.dp))
                 Text(if (online) "Pronta para conectar" else "Conectando…", color = C.tx2, fontSize = 18.sp)
+            }
+            Updater.available?.let { ver ->
+                Spacer(Modifier.height(30.dp))
+                val p = Updater.progress
+                Text(if (p < 0f) "Nova versão $ver disponível · aperte OK para atualizar" else if (p > 1f) "Instalando… confirme na tela" else "Baixando atualização… ${(p * 100).toInt()}%",
+                    color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.clip(RoundedCornerShape(30.dp)).background(Color.White).padding(horizontal = 24.dp, vertical = 12.dp))
             }
         }
     }

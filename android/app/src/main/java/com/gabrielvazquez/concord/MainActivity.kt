@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() { super.onStart(); c.onForeground(true) }
+    override fun onStart() { super.onStart(); c.onForeground(true); Updater.check(c) }
     override fun onStop() { super.onStop(); c.onForeground(false) }
 
     /** Saiu do app durante uma transmissão: continua assistindo numa janelinha (PiP) */

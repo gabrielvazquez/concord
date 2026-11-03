@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -128,6 +129,7 @@ fun MainScreen(onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> Unit, onAskC
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
                 TopBar(onMenu = { scope.launch { drawer.open() } })
                 HorizontalDivider(color = C.line)
+                UpdateBanner()
                 Box(Modifier.weight(1f).fillMaxWidth()) {
                     when (val v = c.view) {
                         is View.Text -> ChatPane(v.ch.id, "#" + v.ch.name, readonly = v.ch.readonly && !c.isAdmin)
@@ -155,6 +157,24 @@ fun MainScreen(onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> Unit, onAskC
     if (Ui.newDmOpen) NewDmSheet()
     if (Ui.tvOpen) TvDialog()
     c.incoming?.let { IncomingCallDialog() }
+}
+
+@Composable
+fun UpdateBanner() {
+    val ver = com.gabrielvazquez.concord.Updater.available ?: return
+    val act = LocalContext.current as? android.app.Activity ?: return
+    val c = Concord.I
+    val p = com.gabrielvazquez.concord.Updater.progress
+    Row(Modifier.fillMaxWidth().padding(10.dp, 8.dp).clip(RoundedCornerShape(14.dp)).background(C.card).border(1.dp, C.line2, RoundedCornerShape(14.dp))
+        .clickable(enabled = p < 0f) { com.gabrielvazquez.concord.Updater.install(act, c.scope) { c.say(it) } }.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.SystemUpdate, null, tint = Color.White, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(if (p < 0f) "Nova versão disponível" else if (p > 1f) "Instalando…" else "Baixando atualização… ${(p * 100).toInt()}%", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(if (p < 0f) "Versão $ver · toque para atualizar" else "Confirme \"Atualizar\" quando o Android pedir", color = C.tx3, fontSize = 12.sp)
+            if (p in 0f..1f) androidx.compose.material3.LinearProgressIndicator(progress = { p }, modifier = Modifier.fillMaxWidth().padding(top = 6.dp), color = Color.White, trackColor = C.line2)
+        }
+        if (p < 0f) Text("Atualizar", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).padding(horizontal = 12.dp, vertical = 7.dp))
+    }
 }
 
 @Composable

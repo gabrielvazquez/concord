@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -98,6 +99,11 @@ fun SettingsScreen() {
                 Section("App") {
                     Item(Icons.Default.Notifications, "Notificações do Android") {
                         ctx.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
+                    }
+                    Item(Icons.Default.SystemUpdate, if (com.gabrielvazquez.concord.Updater.available != null) "Atualizar para ${com.gabrielvazquez.concord.Updater.available}" else "Procurar atualização") {
+                        val act = ctx as? android.app.Activity
+                        if (com.gabrielvazquez.concord.Updater.available != null && act != null) com.gabrielvazquez.concord.Updater.install(act, c.scope) { c.say(it) }
+                        else com.gabrielvazquez.concord.Updater.check(c, force = true) { if (!it) c.say("Você já está na versão mais nova.") }
                     }
                     Item(Icons.AutoMirrored.Filled.Logout, "Trocar de conta") { Ui.settingsOpen = false; c.logout() }
                     Text("CONCORD para Android · versão ${BuildConfig.VERSION_NAME}", color = C.tx3, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
