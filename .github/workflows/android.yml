@@ -32,7 +32,7 @@ jobs:
         with:
           tag_name: android-latest
           name: CONCORD para Android
-          body: "Baixe o **CONCORD.apk** no celular Android e instale (permita \"instalar apps desconhecidos\" quando o Android pedir). Atualizações aparecem dentro do próprio app."
+          body: "App nativo de Android (Kotlin + Jetpack Compose, voz e vídeo em WebRTC nativo). Baixe o **CONCORD.apk** no celular e instale (permita \"instalar apps desconhecidos\" quando o Android pedir)."
           prerelease: true
           make_latest: false
           files: |
