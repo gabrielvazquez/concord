@@ -185,7 +185,7 @@ function render(){
   const v=$('#main'), grid=$('#grid'), wait=$('#wait');
   if(scr.length){
     TV.sel = Math.min(TV.sel, scr.length-1); const cur=scr[TV.sel];
-    if(v.srcObject!==cur.stream){ v.srcObject=cur.stream; v.muted=!TV.sound; v.play().catch(()=>{}); osd(`<span class="live">AO VIVO</span> Tela de ${esc(cur.m.name||'alguém')}${scr.length>1?` <small>◀ ▶ trocar (${TV.sel+1}/${scr.length})</small>`:''}`); }
+    if(v.srcObject!==cur.stream){ v.srcObject=cur.stream; v.muted=!TV.sound; v.play().catch(()=>{}); if(scr.length>1) osd(`<small>◀ ▶ trocar transmissão (${TV.sel+1}/${scr.length})</small>`); }
     v.style.display='block'; grid.classList.remove('on'); wait.classList.remove('on');
   } else if(cams.length){
     v.srcObject=null; v.style.display='none'; wait.classList.remove('on'); grid.classList.add('on');

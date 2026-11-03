@@ -220,11 +220,6 @@ class TvActivity : ComponentActivity() {
                 val cur = screens[sel.coerceIn(0, screens.size - 1)]
                 Box(Modifier.fillMaxSize()) {
                     VideoView(cur.track, Modifier.fillMaxSize())
-                    val nm = v.meta[cur.key]?.optString("name") ?: ""
-                    Row(Modifier.align(Alignment.TopStart).padding(30.dp).clip(RoundedCornerShape(8.dp)).background(Color(0x99000000)).padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("AO VIVO", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(C.red).padding(horizontal = 6.dp, vertical = 1.dp))
-                        Spacer(Modifier.width(10.dp)); Text("Tela de $nm", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    }
                 }
             }
             cams.isNotEmpty() -> LazyVerticalGrid(GridCells.Fixed(if (cams.size > 1) 2 else 1), Modifier.fillMaxSize().padding(40.dp), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
