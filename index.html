@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#000000">
 <meta name="theme-color" content="#000000">
 <title>CONCORD</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23000'/%3E%3Ccircle cx='13' cy='16' r='6.5' fill='none' stroke='%23fff' stroke-width='2.2'/%3E%3Ccircle cx='19' cy='16' r='6.5' fill='none' stroke='%23fff' stroke-width='2.2'/%3E%3C/svg%3E">
@@ -641,6 +642,23 @@ button.who-pill:hover,button.who-pill:focus-visible{border-color:var(--tx2);outl
 .who-bottom button{display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:10px;color:var(--tx3);font-size:13px;font-weight:500}
 .who-bottom button:hover{color:var(--tx);background:var(--card)}
 html.is-desktop #who{top:34px}
+/* ---------- Celular ---------- */
+html.touch *{-webkit-tap-highlight-color:transparent}
+html.touch body{overscroll-behavior:none}
+html.touch .fmtbar{display:none!important}
+html.is-android #cScreen,html.is-android #vbScreen{display:none}
+html.is-android #cSpk.active{background:#fff;color:#000}
+@media (max-width: 760px){
+  #app{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  #toasts{top:calc(env(safe-area-inset-top) + 70px)}
+  .inp,textarea,select,#msgInp{font-size:16px}
+  .main-head{min-height:56px}
+  .ctrl-bar .cbtn{width:50px;height:50px}
+  .ch,.dmrow{min-height:42px}
+  #callPop{left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));width:auto}
+  .set-body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+  #userbar{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+}
 /* ---------- Status e atividade ---------- */
 #meAvW{cursor:pointer;border-radius:50%}
 #userbar .who{cursor:pointer;min-width:0}
@@ -1510,7 +1528,7 @@ function showAuth(view, msg, fromWho, prefill){
       </form>
       <div class="alt">Primeira vez aqui? <button data-go="signup">Criar conta</button></div>
       ${accList().length?`<div class="alt" style="margin-top:6px"><button data-who>${ic('users','sm')} Voltar para as contas</button></div>`:''}
-      ${IS_WIN_PC?`<a class="dlapp" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Prefere app? <b>Baixar para Windows</b></a>`:''}`;
+      ${IS_WIN_PC?`<a class="dlapp" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Prefere app? <b>Baixar para Windows</b></a>`:''}${IS_ANDROID_WEB?`<a class="dlapp" href="${APK_DOWNLOAD}">${ic('down','sm')} <b>Baixar app para Android</b></a>`:''}`;
     $('#fLogin').onsubmit = async e=>{ e.preventDefault(); const fd=new FormData(e.target); const btn=e.target.querySelector('button[type=submit]'); busy(btn,true);
       const { data, error } = await sb.auth.signInWithPassword({ email:fd.get('email').trim(), password:fd.get('pass') });
       busy(btn,false); if(error) return showAuth('login', {text:authMsg(error)});
@@ -2087,7 +2105,7 @@ async function joinVoice(ch){
     .on('presence', {event:'sync'}, onVoicePresence)
     .subscribe(st=>{
       if(V!==me) return;
-      if(st==='SUBSCRIBED'){ V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join'); }
+      if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join'); }
       if(st==='CHANNEL_ERROR' || st==='TIMED_OUT') toast('Falha na conexão com a sala de voz. Tente de novo.', true);
     });
   renderControls(); renderTiles();
@@ -2234,7 +2252,7 @@ async function leaveVoice(){
   safe(()=>v.audioCtx?.close().catch(()=>{}));
   // remove na hora: o supabase reaproveita canais com o mesmo nome, e um canal "morrendo" quebrava a volta rápida para a mesma sala
   if(v.rt){ try{ v.rt.untrack()?.catch?.(()=>{}); }catch{} try{ sb.removeChannel(v.rt); }catch{} }
-safe(()=>setTheater(false)); $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
+  safe(()=>AND?.callEnd()); safe(()=>setTheater(false)); $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
   trackServerPresence();
   if(S.voiceSrvRt && S.voiceSrvRt!==S.srvRt){ try{ sb.removeChannel(S.voiceSrvRt); }catch{} } S.voiceSrvRt=null;
   renderMe(); renderMembers(); renderChannels(); sfx('leave');
@@ -2254,7 +2272,7 @@ function setDeaf(d, silent){ if(!silent && d!==S.deaf) sfx(d?'deaf':'undeaf'); S
   if(V){ for(const p of V.peers.values()) p.audio.muted=d; document.querySelectorAll('#tiles .tile[data-kind=screen] video').forEach(v=>{ if(!v.dataset.local) v.muted=d; });
     updateMicEnabled(); }
   if(!silent) afterToggle(); }
-function afterToggle(){ renderMe(); renderControls(); if(V) V.rt?.track(myVoiceMeta()); trackServerPresence(); renderTiles(); }
+function afterToggle(){ try{ if(V) AND?.callUpdate(andCallTitle(), !micLive()); }catch{} renderMe(); renderControls(); if(V) V.rt?.track(myVoiceMeta()); trackServerPresence(); renderTiles(); }
 function camConstraints(){ const p=P(), C=CAM_Q[p.camRes]||CAM_Q['720'];
   return { width:{ideal:C.w}, height:{ideal:C.h}, frameRate:{ideal:p.camFps, max:p.camFps}, deviceId: p.camId?{ideal:p.camId}:undefined }; }
 async function toggleCam(){
@@ -2552,10 +2570,18 @@ function renderTiles(){
    ===================================================================== */
 const DESK = window.concordDesktop || null;
 const APP_DOWNLOAD = 'https://github.com/gabrielvazquez/concord/releases/latest/download/CONCORD-Setup.exe';
+const AND = window.concordAndroid || null;
+const IS_ANDROID_WEB = !AND && /Android/i.test(navigator.userAgent);
+const APK_DOWNLOAD = 'https://github.com/gabrielvazquez/concord/releases/download/android-latest/CONCORD.apk';
+if(AND) document.documentElement.classList.add('is-android');
+if(matchMedia('(pointer:coarse)').matches) document.documentElement.classList.add('touch');
 const IS_WIN_PC = !DESK && /Windows/i.test(navigator.userAgent) && !/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
 function renderAppBanner(){
   const el=$('#appBanner'); if(!el) return;
   const last=ls.get('dc_app_banner', 0);
+  if(IS_ANDROID_WEB && S.server && Date.now()-last >= 14*864e5){
+    el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>CONCORD para Android</b><span>Chamada com a tela bloqueada e notificações.</span></div><a class="btn" href="${APK_DOWNLOAD}" data-ab="dl">Baixar</a><button class="ibtn" title="Agora não" data-ab="x">${ic('x','sm')}</button>`;
+    el.classList.remove('hidden'); el.querySelectorAll('[data-ab]').forEach(b=>b.addEventListener('click', ()=>{ ls.set('dc_app_banner', Date.now()); el.classList.add('hidden'); })); return; }
   if(!IS_WIN_PC || !S.server || Date.now()-last < 14*864e5){ el.classList.add('hidden'); return; }
   el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>Baixe o CONCORD para PC</b><span>Push-to-talk dentro do jogo, som do PC na transmissão e ícone perto do relógio. Mesma conta.</span></div>
     <a class="btn" href="${APP_DOWNLOAD}" target="_blank" rel="noopener" data-ab="dl">${ic('down','sm')} Baixar para Windows</a><button class="ibtn" title="Agora não" data-ab="x">${ic('x','sm')}</button>`;
@@ -2630,6 +2656,7 @@ window.addEventListener('blur', ()=>{ if(!DESK && S.pttHeld) pttPress(false); })
 function notifyMessage(m){
   if(!P().notify || m.user_id===S.me?.id || myStatus()==='dnd') return;
   const ch=S.channels.find(c=>c.id===m.channel_id); if(!ch) return;
+  if(AND){ if(!AND.isVisible()) AND.notify(`${dname(m.user_id, m.author)} em #${ch.name}`, String(m.content).slice(0,300), 'ch-'+ch.id, 'msg'); return; }
   const focusedHere = document.hasFocus() && S.view?.ch?.id===m.channel_id;
   if(focusedHere) return;
   DESK?.attention();
@@ -3273,6 +3300,62 @@ async function restartMicInputs(){
   catch(e){ toast('Não foi possível trocar o microfone: '+(e.name||e.message), true); }
 }
 /* =====================================================================
+   App para Android: ponte com o app nativo
+   ===================================================================== */
+function andCallTitle(){ return V ? (V.ch.dm ? 'Chamada com '+V.ch.name : V.ch.name+' · '+(V.srv?.name||'CONCORD')) : 'CONCORD'; }
+// botão voltar do Android: fecha o que estiver aberto, um de cada vez
+window.__concordBack = ()=>{
+  if(document.querySelector('.pop,.menu')){ closePop(); return true; }
+  if($('#modalRoot')?.children.length){ closeModal(); return true; }
+  if(!$('#settings').classList.contains('hidden')){ closeSettings(); return true; }
+  if(document.body.classList.contains('show-members-drawer')){ document.body.classList.remove('show-members-drawer'); $('#scrim').classList.add('hidden'); return true; }
+  if($('#drawer').classList.contains('open')){ closeDrawer(); return true; }
+  if(document.body.classList.contains('theater')){ setTheater(false); return true; }
+  if(window.innerWidth<=760){ $('#drawer').classList.add('open'); $('#scrim').classList.remove('hidden'); return true; }   // como no Discord: voltar abre a lista
+  return false;
+};
+window.__concordInvite = async code=>{ code=String(code||'').replace('#','').trim().toUpperCase(); if(!/^[A-Z0-9-]{3,24}$/.test(code) || !S.me) return; const ex=S.servers.find(s=>s.code===code); const s=ex || await joinByCode(code); if(s) selectServer(s); };
+window.__concordNative = async (ev, data, newer)=>{
+  if(ev==='mute'){ setMuted(!(S.muted||S.deaf)); return; }
+  if(ev==='leave'){ if(V) leaveVoice(); return; }
+  if(ev==='trim'){ trimMemory(); return; }
+  if(ev==='resume'){ document.body.classList.remove('page-hidden'); return; }
+  if(ev==='update'){ if(newer){ let v={}; try{ v=JSON.parse(data); }catch{} showAndUpdate(v.versionName); } return; }
+  const [kind, id] = String(ev).split(/:(.*)/s);
+  if(kind==='open' && id){ if(id.startsWith('dm-')){ const d=DM.list.find(x=>x.id===id.slice(3)); if(d) openDm(d); }
+    else if(id.startsWith('ch-')){ const c=S.channels.find(x=>x.id===id.slice(3)); if(c) openText(c); } closeDrawer(); return; }
+  if(kind==='call-open' || kind==='call-accept'){ const d=DM.list.find(x=>x.id===id); if(!d) return; if(kind==='call-accept' || DM.incoming?.dm===id){ const y=document.querySelector('#callPop [data-yes]'); if(y) y.click(); else { if(V) await leaveVoice(); await openDm(d); openVoice(dmVoiceCh(d)); } } else openDm(d); return; }
+  if(kind==='call-decline'){ document.querySelector('#callPop [data-no]')?.click(); return; }
+};
+function showAndUpdate(ver){
+  const el=$('#appBanner'); if(!el) return;
+  el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>Nova versão do app${ver?' · '+esc(ver):''}</b><span>Baixe e instale por cima. Nada se perde.</span></div><button class="btn" data-ab="dl">Atualizar</button><button class="ibtn" title="Depois" data-ab="x">${ic('x','sm')}</button>`;
+  el.classList.remove('hidden');
+  el.querySelector('[data-ab=dl]').onclick=()=>{ AND.downloadUpdate(); el.classList.add('hidden'); };
+  el.querySelector('[data-ab=x]').onclick=()=>el.classList.add('hidden');
+}
+if(AND){
+  setTimeout(()=>{ try{ AND.checkUpdate(); }catch{} }, 6000);
+  // alto-falante / fone durante a chamada
+  const spk=document.createElement('button'); spk.className='cbtn'; spk.id='cSpk'; spk.title='Alto-falante';
+  const drawSpk=()=>{ let on=true; try{ on=AND.speakerOn(); }catch{} spk.innerHTML=ic(on?'vol':'phone'); spk.classList.toggle('active', on); spk.title=on?'Alto-falante ligado':'Áudio no fone/ouvido'; };
+  spk.onclick=()=>{ let on=true; try{ on=AND.speakerOn(); }catch{} try{ AND.setSpeaker(!on); }catch{} setTimeout(drawSpk, 120); };
+  $('#cDeaf').after(spk); drawSpk();
+}
+// gestos: arrastar da borda abre a lista de canais / membros (celular)
+(function(){
+  let x0=null, y0=0, t0=0;
+  addEventListener('touchstart', e=>{ if(innerWidth>760 || e.touches.length!==1) return; const t=e.touches[0]; x0=t.clientX; y0=t.clientY; t0=Date.now(); }, {passive:true});
+  addEventListener('touchend', e=>{ if(x0==null) return; const t=e.changedTouches[0]; const dx=t.clientX-x0, dy=t.clientY-y0; const sx=x0; x0=null;
+    if(Date.now()-t0>600 || Math.abs(dx)<70 || Math.abs(dy)>Math.abs(dx)*0.7) return;
+    if(e.target.closest('input,textarea,.djbar,#tiles video,.slider,input[type=range]')) return;
+    const drawer=$('#drawer').classList.contains('open'), mem=document.body.classList.contains('show-members-drawer');
+    if(dx>0){ if(mem){ document.body.classList.remove('show-members-drawer'); $('#scrim').classList.add('hidden'); } else if(!drawer && sx<innerWidth*0.5 && $('#settings').classList.contains('hidden')){ $('#drawer').classList.add('open'); $('#scrim').classList.remove('hidden'); } }
+    else { if(drawer) closeDrawer(); else if(!mem && sx>innerWidth*0.5 && $('#settings').classList.contains('hidden') && S.server && !S.home){ document.body.classList.add('show-members-drawer'); $('#scrim').classList.remove('hidden'); } }
+  }, {passive:true});
+})();
+
+/* =====================================================================
    Status (online, ocupado, ausente, offline) e ausência automática
    ===================================================================== */
 async function setMyStatus(st){
@@ -3410,6 +3493,7 @@ async function onDmMessage(m){
   if(!(S.view?.type==='dm' && S.view.dm.id===m.dm_id)){ DM.unread.add(m.dm_id); saveDmUnread(); }
   renderRail(); if(S.home) renderDmSide(); if(myStatus()==='dnd') return; sfx('msg');
   if(!P().notify) return; DESK?.attention();
+  if(AND){ if(!AND.isVisible()) AND.notify(dname(m.user_id), String(m.content).slice(0,300), 'dm-'+m.dm_id, 'msg'); return; }
   if(!('Notification' in window) || Notification.permission!=='granted' || document.hasFocus()) return;
   try{ const n=new Notification(dname(m.user_id), { body:String(m.content).slice(0,160), tag:'concord-dm-'+m.dm_id });
     n.onclick=()=>{ window.focus(); DESK?.focus(); const dd=DM.list.find(x=>x.id===m.dm_id); if(dd) openDm(dd); n.close(); }; }catch{}
@@ -3439,7 +3523,7 @@ function ringtone(on){
   clearInterval(DM.ringT); DM.ringT=null; if(!on) return;
   const play=()=>sfxPlay(sfxKey('call')); play(); DM.ringT=setInterval(play, 1800);
 }
-function closeCallPop(){ $('#callPop')?.remove(); ringtone(false); DM.incoming=null; }
+function closeCallPop(){ if(DM.incoming && AND){ try{ AND.clearNotification(DM.incoming.dm); }catch{} } $('#callPop')?.remove(); ringtone(false); DM.incoming=null; }
 async function onCallSignal(p){
   if(p.t==='answered'){ if(p.sid!==S.sid && DM.incoming?.dm===p.dm) closeCallPop(); return; }
   if(!p.dm || p.from===S.me.id) return;
@@ -3450,7 +3534,8 @@ async function onCallSignal(p){
     const el=document.createElement('div'); el.id='callPop';
     el.innerHTML=`<div class="ring">${avatarU(p.from, 64, null, {noDeco:true})}</div><div class="who">${esc(dname(p.from))}</div><small>Chamada de voz</small>
       <div class="row"><button class="btn danger" data-no>${ic('phone-off','sm')} Recusar</button><button class="btn go" data-yes>${ic('phone','sm')} Atender</button></div>`;
-    document.body.appendChild(el); if(myStatus()!=='dnd') ringtone(true); DESK?.attention(); DESK?.focus?.();
+    document.body.appendChild(el); if(myStatus()!=='dnd') ringtone(true);
+    if(AND){ try{ if(!AND.isVisible()) AND.notify(dname(p.from)+' está ligando', 'Chamada de voz no CONCORD', d.id, 'call'); else AND.vibrate(400); }catch{} } DESK?.attention(); DESK?.focus?.();
     if('Notification' in window && Notification.permission==='granted' && !document.hasFocus()){ try{ new Notification(dname(p.from)+' está ligando', { tag:'concord-call' }); }catch{} }
     el.querySelector('[data-no]').onclick=()=>{ closeCallPop(); sendToUser(S.me.id, { t:'answered', dm:d.id, sid:S.sid }); sendToUser(p.from, { t:'decline', dm:d.id, from:S.me.id }); };
     el.querySelector('[data-yes]').onclick=async()=>{ closeCallPop(); sendToUser(S.me.id, { t:'answered', dm:d.id, sid:S.sid }); if(V) await leaveVoice(); await openDm(d); openVoice(dmVoiceCh(d)); };
