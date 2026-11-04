@@ -1924,11 +1924,15 @@ function syncVoiceObs(){
   const want = new Set(S.server ? S.channels.filter(c=>c.kind==='voice' && !(V && V.ch.id===c.id)).map(c=>c.id) : []);
   for(const [id, ch] of S.voiceObs) if(!want.has(id)){ try{ sb.removeChannel(ch); }catch{} S.voiceObs.delete(id); delete S.voicePres[id]; }
   for(const id of want){ if(S.voiceObs.has(id)) continue;
+    const live={};   // mutar/sem som/câmera chegam por mensagem rápida, não pela presença
+    const rebuild=()=>{ const st=ch.presenceState(); const by=new Map();
+        for(const [k,arr] of Object.entries(st)){ if(k.startsWith('obs-')) continue; const m0=arr.reduce((a,b)=>((b.jt||0)>(a.jt||0)?b:a), arr[0]); if(!m0 || m0.tv || !m0.uid) continue;
+          const m={...m0, ...(live[k]||{}), key:k}; const o=by.get(m.uid); if(!o || (m.jt||0)>(o.jt||0)) by.set(m.uid, m); }
+        for(const k of Object.keys(live)) if(!st[k]) delete live[k];
+        S.voicePres[id]=[...by.values()]; if(!S.home) renderChannels(); if(S.view?.type==='voice' && S.view.ch.id===id && (!V || V.ch.id!==id)) renderJoinCta(); };
     const ch = sb.channel('dc-voice-'+id, { config:{ presence:{ key:'obs-'+S.sid }, broadcast:{ self:false } } })
-      .on('presence', {event:'sync'}, ()=>{ const st=ch.presenceState(); const by=new Map();
-        for(const [k,arr] of Object.entries(st)){ if(k.startsWith('obs-')) continue; const m=arr.reduce((a,b)=>((b.jt||0)>(a.jt||0)?b:a), arr[0]); if(!m || m.tv || !m.uid) continue;
-          const o=by.get(m.uid); if(!o || (m.jt||0)>(o.jt||0)) by.set(m.uid, {...m, key:k}); }
-        S.voicePres[id]=[...by.values()]; if(!S.home) renderChannels(); if(S.view?.type==='voice' && S.view.ch.id===id && (!V || V.ch.id!==id)) renderJoinCta(); })
+      .on('presence', {event:'sync'}, rebuild)
+      .on('broadcast', {event:'meta'}, ({payload:p})=>{ if(!p?.k) return; live[p.k]={ muted:p.muted, deaf:p.deaf, camId:p.camId, screenId:p.screenId }; rebuild(); })
       .subscribe();
     S.voiceObs.set(id, ch); }
 }

@@ -314,16 +314,22 @@ class Concord(val app: Application) {
         want.forEach { id ->
             if (voiceObs.containsKey(id)) return@forEach
             val r = rt.channel("dc-voice-$id", "obs-$sid"); voiceObs[id] = r
-            r.onPresence = {
+            val live = HashMap<String, JSONObject>()   // mutar/sem som do site chegam por mensagem rápida
+            val rebuild = {
                 val by = HashMap<String, JSONObject>()
                 r.presence.forEach { (k, metas) ->
                     if (k.startsWith("obs-")) return@forEach
-                    val m = metas.maxByOrNull { it.optLong("jt") } ?: return@forEach
-                    val u = m.optString("uid"); if (m.optBoolean("tv") || u.isEmpty()) return@forEach
-                    val o = by[u]; if (o == null || m.optLong("jt") > o.optLong("jt")) by[u] = JSONObject(m.toString()).put("_key", k)
+                    val m0 = metas.maxByOrNull { it.optLong("jt") } ?: return@forEach
+                    val u = m0.optString("uid"); if (m0.optBoolean("tv") || u.isEmpty()) return@forEach
+                    val m = JSONObject(m0.toString()).put("_key", k)
+                    live[k]?.let { l -> listOf("muted", "deaf", "camId", "screenId").forEach { f -> if (l.has(f)) m.put(f, l.get(f)) } }
+                    val o = by[u]; if (o == null || m.optLong("jt") > o.optLong("jt")) by[u] = m
                 }
+                live.keys.retainAll(r.presence.keys)
                 voicePres[id] = by.values.toList()
             }
+            r.onPresence = { rebuild() }
+            r.on("meta") { p -> val k = p.optString("k"); if (k.isNotEmpty()) { live[k] = p; rebuild() } }
         }
     }
     fun dropVoiceObs(id: String) { voiceObs.remove(id)?.leave(); voicePres.remove(id) }
