@@ -62,6 +62,7 @@ fun SettingsScreen() {
     var name by remember { mutableStateOf(me.name) }
     var status by remember { mutableStateOf(me.statusText ?: "") }
     var pronouns by remember { mutableStateOf(me.pronouns ?: "") }
+    var username by remember { mutableStateOf(me.username ?: "") }
     var bio by remember { mutableStateOf(me.bio ?: "") }
     var busy by remember { mutableStateOf(false) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? -> if (uri != null) c.uploadAvatar(uri) }
@@ -83,10 +84,11 @@ fun SettingsScreen() {
                     }
                     Spacer(Modifier.height(14.dp))
                     field(name, { name = it.take(24) }, "Nome de exibição"); Spacer(Modifier.height(10.dp))
+                    field(username, { username = it.lowercase().filter { ch -> ch.isLetterOrDigit() || ch == '.' || ch == '_' }.take(20) }, "Nome de usuário (@) · é como os amigos te acham"); Spacer(Modifier.height(10.dp))
                     field(pronouns, { pronouns = it.take(24) }, "Pronomes"); Spacer(Modifier.height(10.dp))
                     field(status, { status = it.take(80) }, "Status personalizado"); Spacer(Modifier.height(10.dp))
                     field(bio, { bio = it.take(300) }, "Sobre mim"); Spacer(Modifier.height(14.dp))
-                    PrimaryButton("Salvar", busy) { busy = true; c.saveProfile(name, status, bio, pronouns) { busy = false } }
+                    PrimaryButton("Salvar", busy) { busy = true; c.saveProfile(name, status, bio, pronouns, username) { busy = false } }
                     Text("Decorações, efeitos e banner animado são editados pelo site ou pelo app de PC.", color = C.tx3, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
                 }
                 Section("Status") {

@@ -136,6 +136,7 @@ fun MainScreen(onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> Unit, onAskC
                         is View.DmChat -> ChatPane("dm-" + v.dm.id, "@" + c.name(v.dm.other(c.meId!!)), readonly = false)
                         is View.Voice -> VoicePane(v.ch, onAskMic, onScreenShare, onAskCam)
                         is View.Home -> HomePane()
+                        is View.Friends -> FriendsPane()
                         null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Logo(56.dp, C.tx3); Spacer(Modifier.height(16.dp))
@@ -193,6 +194,7 @@ private fun TopBar(onMenu: () -> Unit) {
             is View.Voice -> { Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = C.tx3, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) { Text(v.ch.name, fontWeight = FontWeight.Bold, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(c.voice.state, color = if (c.voice.state == "Voz conectada") C.green else C.amber, fontSize = 12.sp) } }
+            is View.Friends -> Text("Amigos", fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f).padding(start = 6.dp))
             is View.Home -> Text("Mensagens diretas", fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f).padding(start = 6.dp))
             null -> Text(c.server?.name ?: "CONCORD", fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f).padding(start = 6.dp))
         }
@@ -317,6 +319,12 @@ private fun Chip(icon: ImageVector, text: String, onClick: () -> Unit) {
 private fun androidx.compose.foundation.layout.ColumnScope.DmList(close: () -> Unit) {
     val c = Concord.I
     ColumnScopeHeader("Mensagens diretas")
+    val pend = c.pendingIn().size
+    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp).height(52.dp).clip(RoundedCornerShape(12.dp)).background(if (c.view is View.Friends) C.card2 else Color.Transparent).clickable { c.view = View.Friends; close() }.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(36.dp).clip(CircleShape).background(C.card2), contentAlignment = Alignment.Center) { Icon(Icons.Default.People, null, tint = C.tx, modifier = Modifier.size(20.dp)) }
+        Spacer(Modifier.width(10.dp)); Text("Amigos", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        if (pend > 0) Text("$pend", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.clip(RoundedCornerShape(9.dp)).background(C.red).padding(horizontal = 7.dp, vertical = 1.dp))
+    }
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) { Chip(Icons.Default.Add, "Nova conversa") { Ui.newDmOpen = true } }
     Spacer(Modifier.height(6.dp))
     LazyColumn(Modifier.weight(1f).padding(horizontal = 8.dp)) {
@@ -423,7 +431,7 @@ private fun ProfileSheet(uid: String) {
                     Text(c.name(uid), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = p?.nameColor?.let { parseColor(it) } ?: C.tx)
                     if (c.admins.contains(uid)) { Spacer(Modifier.width(8.dp)); Text("ADM", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color.White).padding(5.dp, 1.dp)) }
                 }
-                Text(listOfNotNull(p?.name, p?.pronouns).joinToString(" · "), color = C.tx2, fontSize = 14.sp)
+                Text(listOfNotNull(p?.username?.let { "@$it" } ?: p?.name, p?.pronouns).joinToString(" · "), color = C.tx2, fontSize = 14.sp)
                 p?.statusText?.let { Spacer(Modifier.height(8.dp)); Text(it, color = C.tx) }
                 val act = c.online.find { it.uid == uid }?.act
                 Column(Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -524,6 +532,69 @@ private fun IncomingCallDialog() {
 }
 
 @Composable
+private fun FriendsPane() {
+    val c = Concord.I
+    var q by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<com.gabrielvazquez.concord.Profile>>(emptyList()) }
+    LaunchedEffect(q) { kotlinx.coroutines.delay(300); results = c.searchUsers(q) }
+    LaunchedEffect(Unit) { c.loadFriends() }
+    val me = c.me
+    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp)) {
+        item {
+            Spacer(Modifier.height(12.dp))
+            Text("Adicionar amigo", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("Procure pelo @ ou pelo nome. O seu é @${me?.username ?: "…"}.", color = C.tx2, fontSize = 13.sp)
+            Spacer(Modifier.height(10.dp))
+            field(q, { q = it.take(30) }, "@nome ou nome")
+            Spacer(Modifier.height(6.dp))
+        }
+        if (q.trim().removePrefix("@").length >= 2) {
+            if (results.isEmpty()) item { Text("Ninguém com esse nome.", color = C.tx3, modifier = Modifier.padding(10.dp)) }
+            items(results, key = { "r-" + it.id }) { p -> FriendRow(p.id) }
+            item { HorizontalDivider(color = C.line, modifier = Modifier.padding(vertical = 10.dp)) }
+        }
+        val pin = c.friends.filter { it.status == "pending" && it.requester != c.meId }
+        val fr = c.friends.filter { it.status == "accepted" }
+        val pout = c.friends.filter { it.status == "pending" && it.requester == c.meId }
+        listOf("Pedidos recebidos" to pin, "Amigos" to fr, "Pedidos enviados" to pout).forEach { (t, l) ->
+            if (l.isNotEmpty()) {
+                item { Text("${t.uppercase()} — ${l.size}", color = C.tx3, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp)) }
+                items(l, key = { t + it.other(c.meId!!) }) { f -> FriendRow(f.other(c.meId!!)) }
+            }
+        }
+        if (c.friends.isEmpty() && q.isBlank()) item { Text("Você ainda não adicionou ninguém. Procure um amigo acima.", color = C.tx3, modifier = Modifier.padding(vertical = 18.dp)) }
+        item { Spacer(Modifier.height(30.dp)) }
+    }
+}
+
+@Composable
+private fun FriendRow(uid: String) {
+    val c = Concord.I
+    val p = c.profiles[uid]
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { Ui.profile = uid }.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Avatar(uid, 42.dp, c.statusOf(uid).takeIf { it != "offline" }); Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(c.name(uid), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            p?.username?.let { Text("@$it", color = C.tx3, fontSize = 12.sp) }
+        }
+        when (if (uid == c.meId) "me" else c.friendState(uid)) {
+            "me" -> Text("Você", color = C.tx3, fontSize = 12.sp)
+            "friend" -> {
+                IconButton(onClick = { c.openDmWith(uid) }) { Icon(Icons.Default.Chat, "Mensagem", tint = C.tx2) }
+                IconButton(onClick = { c.openDmWith(uid, call = true) }) { Icon(Icons.Default.Call, "Ligar", tint = C.tx2) }
+            }
+            "received" -> {
+                Text("Aceitar", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).clickable { c.friendRespond(uid, true) }.padding(horizontal = 12.dp, vertical = 7.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Recusar", color = C.tx, fontSize = 13.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).border(1.dp, C.line2, RoundedCornerShape(10.dp)).clickable { c.friendRespond(uid, false) }.padding(horizontal = 12.dp, vertical = 7.dp))
+            }
+            "sent" -> Text("Cancelar pedido", color = C.tx2, fontSize = 12.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).border(1.dp, C.line2, RoundedCornerShape(10.dp)).clickable { c.friendRespond(uid, false) }.padding(horizontal = 10.dp, vertical = 6.dp))
+            else -> Text("Adicionar", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).clickable { c.friendRequest(uid) }.padding(horizontal = 12.dp, vertical = 7.dp))
+        }
+    }
+}
+
+@Composable
 private fun HomePane() {
     val c = Concord.I
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -531,6 +602,7 @@ private fun HomePane() {
             Icon(Icons.Default.Chat, null, tint = C.tx3, modifier = Modifier.size(48.dp)); Spacer(Modifier.height(12.dp))
             Text(if (c.dms.isEmpty()) "Nenhuma conversa ainda" else "Escolha uma conversa", color = C.tx2)
             TextButton(onClick = { Ui.newDmOpen = true }) { Text("Nova conversa", color = Color.White) }
+            TextButton(onClick = { c.view = View.Friends }) { Text("Procurar amigos", color = C.tx2) }
         }
     }
 }

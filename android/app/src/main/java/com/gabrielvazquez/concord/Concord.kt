@@ -37,6 +37,7 @@ sealed class View {
     data class Voice(val ch: Channel) : View()
     data class DmChat(val dm: Dm) : View()
     object Home : View()
+    object Friends : View()
 }
 
 data class IncomingCall(val dm: Dm, val from: String)
@@ -147,6 +148,7 @@ class Concord(val app: Application) {
         presenceJob?.cancel(); presenceJob = scope.launch { while (true) { delay(30_000); if (meId != null) trackServer() } }
         loadServers()
         loadDms()
+        loadFriends()
     }
 
     fun logout() = scope.launch {
@@ -155,7 +157,7 @@ class Concord(val app: Application) {
         voice.leave()
         rt.disconnect()
         srvRt = null; msgRt = null; dmRt = null; userRt = null; tvLinkRt = null; tvLink = null
-        servers.clear(); channels.clear(); messages.clear(); dms.clear(); online.clear(); members.clear(); unread.clear()
+        servers.clear(); channels.clear(); messages.clear(); dms.clear(); friends.clear(); online.clear(); members.clear(); unread.clear()
         server = null; view = null; meId = null; home = false
         supa.clearActive()
         screen = Screen.Accounts
@@ -435,12 +437,53 @@ class Concord(val app: Application) {
     /* ===================== Mensagens diretas e chamadas ===================== */
     private fun startPersonalChannels() {
         val me = meId ?: return
-        dmRt = rt.channel("dc-dmrt-$me-${System.currentTimeMillis()}", null, listOf(PgSub("dc_dm_messages", "INSERT"), PgSub("dc_dms")))
-        dmRt!!.onChange = { table, _, rec, _ ->
-            if (table == "dc_dm_messages") onDmMessage(Msg.from(rec), rec.optString("dm_id")) else scope.launch { loadDms() }
+        dmRt = rt.channel("dc-dmrt-$me-${System.currentTimeMillis()}", null, listOf(PgSub("dc_dm_messages", "INSERT"), PgSub("dc_dms"), PgSub("dc_friends")))
+        dmRt!!.onChange = { table, type, rec, _ ->
+            when (table) {
+                "dc_dm_messages" -> onDmMessage(Msg.from(rec), rec.optString("dm_id"))
+                "dc_friends" -> scope.launch {
+                    loadFriends()
+                    val mine = rec.optString("user_a") == me || rec.optString("user_b") == me
+                    if (mine && type == "INSERT" && rec.optString("requester") != me) { val who = rec.optString("requester"); say("${name(who)} quer ser seu amigo."); Notifier.message(app, "Pedido de amizade", "${name(who)} quer ser seu amigo no CONCORD.", "friends", true) }
+                    if (mine && type == "UPDATE" && rec.optString("status") == "accepted" && rec.optString("requester") == me) say("${name(if (rec.optString("user_a") == me) rec.optString("user_b") else rec.optString("user_a"))} aceitou seu pedido de amizade.")
+                }
+                else -> scope.launch { loadDms() }
+            }
         }
         userRt = rt.channel("dc-user-$me", null)
         userRt!!.on("call") { p -> onCallSignal(p) }
+    }
+
+    /* ===================== Amigos ===================== */
+    val friends = mutableStateListOf<Friend>()
+    fun friendState(uid: String): String? { val f = friends.find { it.other(meId ?: "") == uid } ?: return null
+        return if (f.status == "accepted") "friend" else if (f.requester == meId) "sent" else "received" }
+    fun pendingIn() = friends.filter { it.status == "pending" && it.requester != meId }
+    suspend fun loadFriends() {
+        val me = meId ?: return
+        try {
+            val r = supa.select("dc_friends", "select=*&or=(user_a.eq.$me,user_b.eq.$me)")
+            val list = (0 until r.length()).map { Friend.from(r.getJSONObject(it)) }
+            friends.clear(); friends.addAll(list)
+            loadProfiles(list.map { it.other(me) }.filter { !profiles.containsKey(it) })
+        } catch (_: Exception) {}
+    }
+    fun friendRequest(uid: String) = scope.launch {
+        try { val r = supa.rpc("dc_friend_request", JSONObject().put("p_other", uid)); say(if (r.toString().contains("accepted")) "Agora vocês são amigos!" else "Pedido de amizade enviado."); loadFriends() }
+        catch (e: Exception) { say("Não foi possível enviar: ${authMessage(e)}") }
+    }
+    fun friendRespond(uid: String, accept: Boolean) = scope.launch {
+        try { supa.rpc("dc_friend_respond", JSONObject().put("p_other", uid).put("p_accept", accept)); loadFriends() }
+        catch (e: Exception) { say("Erro: ${authMessage(e)}") }
+    }
+    suspend fun searchUsers(q: String): List<Profile> {
+        val t = q.trim().removePrefix("@").lowercase().filter { it.isLetterOrDigit() || it == '.' || it == '_' || it == ' ' }
+        if (t.length < 2) return emptyList()
+        return try {
+            val enc = java.net.URLEncoder.encode("(username.ilike.$t*,display_name.ilike.*$t*)", "UTF-8")
+            val r = supa.select("dc_profiles", "select=*&or=$enc&limit=12")
+            (0 until r.length()).map { Profile.from(r.getJSONObject(it)) }.also { l -> l.forEach { profiles[it.id] = it } }
+        } catch (_: Exception) { emptyList() }
     }
 
     suspend fun loadDms() {
@@ -491,7 +534,7 @@ class Concord(val app: Application) {
                 val r = supa.rpc("dc_open_dm", JSONObject().put("p_other", uid))
                 val o = (r as? JSONObject) ?: (r as? org.json.JSONArray)?.optJSONObject(0)
                 if (o != null) { d = Dm.from(o); if (dms.none { it.id == d.id }) dms.add(0, d) }
-            } catch (e: Exception) { say("Não foi possível abrir a conversa: ${authMessage(e)}"); return@launch }
+            } catch (e: Exception) { say(if (authMessage(e).contains("no_shared_server")) "Vocês ainda não são amigos. Mande um pedido em Amigos." else "Não foi possível abrir a conversa: ${authMessage(e)}"); return@launch }
         }
         val dm = d ?: return@launch
         openDm(dm)
@@ -620,10 +663,13 @@ class Concord(val app: Application) {
     }
 
     /* ===================== Perfil ===================== */
-    fun saveProfile(name: String, statusText: String, bio: String, pronouns: String, done: () -> Unit) = scope.launch {
+    fun saveProfile(name: String, statusText: String, bio: String, pronouns: String, username: String? = null, done: () -> Unit) = scope.launch {
         val p = me ?: return@launch
+        val un = username?.trim()?.lowercase()?.removePrefix("@")
+        if (un != null && !Regex("^[a-z0-9_.]{3,20}$").matches(un)) { say("Nome de usuário: de 3 a 20 letras minúsculas, números, ponto ou _."); done(); return@launch }
         try {
             val patch = JSONObject().put("display_name", name.trim().take(24).ifEmpty { p.name })
+            if (un != null) patch.put("username", un)
                 .put("status_text", statusText.trim().ifEmpty { null } ?: JSONObject.NULL)
                 .put("bio", bio.trim().ifEmpty { null } ?: JSONObject.NULL)
                 .put("pronouns", pronouns.trim().ifEmpty { null } ?: JSONObject.NULL)
@@ -633,7 +679,7 @@ class Concord(val app: Application) {
             srvRt?.send("profile", JSONObject().put("id", p.id))
             supa.rememberAccount(me?.name, me?.color, me?.avatar)
             trackServer(); say("Perfil salvo."); done()
-        } catch (e: Exception) { say(authMessage(e)) }
+        } catch (e: Exception) { val m = authMessage(e); say(if (m.contains("username") || m.contains("duplicate")) "Esse nome de usuário já tem dono. Escolha outro." else m); done() }
     }
 
     fun uploadAvatar(uri: Uri) = scope.launch {

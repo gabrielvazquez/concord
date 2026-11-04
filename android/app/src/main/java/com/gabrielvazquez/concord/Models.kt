@@ -18,11 +18,12 @@ fun parseTime(s: String?): Long {
 data class Profile(
     val id: String, val name: String, val color: String, val avatar: String?, val banner: String?, val bannerColor: String?,
     val bio: String?, val pronouns: String?, val statusText: String?, val presence: String, val nameColor: String?, val createdAt: String?,
+    val username: String? = null,
 ) {
     companion object {
         fun from(o: JSONObject) = Profile(
             o.getString("id"), o.s("display_name") ?: "…", o.s("color") ?: "#6366f1", o.s("avatar_url"), o.s("banner_url"), o.s("banner_color"),
-            o.s("bio"), o.s("pronouns"), o.s("status_text"), o.s("presence_status") ?: "online", o.s("name_color"), o.s("created_at"),
+            o.s("bio"), o.s("pronouns"), o.s("status_text"), o.s("presence_status") ?: "online", o.s("name_color"), o.s("created_at"), o.s("username"),
         )
     }
 }
@@ -54,6 +55,12 @@ data class Msg(val id: Long, val userId: String?, val author: String, val color:
         fun from(o: JSONObject) = Msg(o.optLong("id"), o.s("user_id"), o.optString("author", ""), o.optString("author_color", "#6366f1"),
             o.optString("content"), parseTime(o.s("created_at")))
     }
+}
+
+/** amizade: a e b em ordem; quem pediu; "pending" ou "accepted" */
+data class Friend(val a: String, val b: String, val requester: String, val status: String) {
+    fun other(me: String) = if (a == me) b else a
+    companion object { fun from(o: JSONObject) = Friend(o.getString("user_a"), o.getString("user_b"), o.getString("requester"), o.optString("status", "pending")) }
 }
 
 data class Dm(val id: String, val a: String, val b: String, val lastAt: Long) {
