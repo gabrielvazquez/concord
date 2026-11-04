@@ -1,0 +1,24 @@
+// Capturas da interface: modo escuro e claro, com a chamada aberta
+import { chromium } from 'playwright';
+const b = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
+const ctx = await b.newContext({ permissions: ['microphone', 'camera'], viewport: { width: 1440, height: 860 } });
+const p = await ctx.newPage();
+p.on('pageerror', e => console.log('pageerror', e.message));
+await p.goto('https://gabrielvazquez.github.io/concord/?t=' + Date.now());
+await p.waitForSelector('#fLogin', { timeout: 30000 });
+await p.fill('#fLogin [name=email]', 'web.teste@concord.app'); await p.fill('#fLogin [name=pass]', 'TesteWeb2026'); await p.click('#fLogin button[type=submit]');
+await p.waitForSelector('#chanlist .ch', { timeout: 40000 });
+await p.click('#chanlist .ch:has-text("geral")'); await p.waitForTimeout(2500);
+await p.screenshot({ path: 'ui-escuro-chat.png' });
+await p.click('#chanlist .ch:has-text("Sala de Jogo")'); await p.waitForTimeout(5000);
+await p.screenshot({ path: 'ui-escuro-chamada.png' });
+await p.evaluate(() => { setPref('mode', 'light'); applyAppearance(); });
+await p.waitForTimeout(800);
+await p.screenshot({ path: 'ui-claro-chamada.png' });
+await p.click('#chanlist .ch:has-text("geral")'); await p.waitForTimeout(2000);
+await p.screenshot({ path: 'ui-claro-chat.png' });
+await p.evaluate(() => { toast('Exemplo de aviso no modo claro'); }); await p.waitForTimeout(300);
+await p.evaluate(() => { const b = document.querySelector('#ubSet'); b && b.click(); }); await p.waitForTimeout(1500);
+await p.screenshot({ path: 'ui-claro-config.png' });
+await p.evaluate(() => { setPref('mode', 'dark'); applyAppearance(); });
+await b.close();

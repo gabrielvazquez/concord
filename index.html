@@ -150,6 +150,8 @@ a.btn{text-decoration:none}
 .vc-btns button{flex:1;background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:7px 0;display:grid;place-items:center;color:var(--tx2)}
 .vc-btns button:hover{color:var(--tx)}
 .vc-btns button.on{background:var(--ac);color:var(--act);border-color:var(--ac)}
+.vc-btns button.off{color:var(--red)}
+#side:has(#voicecard:not(.hidden)) #ubMute,#side:has(#voicecard:not(.hidden)) #ubDeaf{display:none}
 .vc-btns button.leave:hover{background:var(--red);border-color:var(--red);color:#fff}
 
 #userbar{margin:0 10px 10px;background:var(--card);border:1px solid var(--line);border-radius:16px;display:flex;align-items:center;gap:6px;padding:8px}
@@ -905,6 +907,23 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
 @media (min-width: 761px){ #scrim{display:none!important} }
 body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fixed;inset:0;z-index:29;background:#0008}
 .sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
+/* ===== modo claro ===== */
+body.light{color-scheme:light}
+body.light .msg .txt a,body.light .msg .txt b,body.light .mdh1,body.light .mdh2,body.light .mdh3,body.light .join-cta .big{color:var(--tx)}
+body.light .toast:not(.err),body.light .badge,body.light .cine-badge,body.light .who-pill span,body.light .who-pill button,body.light .set-close{background:#0a0a0b;color:#fff}
+body.light .set-close kbd{background:#fff;color:#0a0a0b}
+body.light .menu button:hover{background:#0a0a0b;color:#fff}
+body.light .sw.on,body.light .fontgrid button.on,body.light .radio label:has(input:checked){outline-color:#0a0a0b;border-color:#0a0a0b}
+body.light .opt:has(input:checked) .dot{border-color:#0a0a0b}
+body.light .tile.speaking{box-shadow:0 0 0 2px #0a0a0b}
+body.light .av.speaking{box-shadow:0 0 0 2px var(--panel),0 0 0 3.5px #0a0a0b}
+body.light .bars i,body.light .dmrow .ub{background:#0a0a0b}
+body.light .slider,body.light .tile .tools input[type=range]{accent-color:#0a0a0b}
+body.light .savebar{background:linear-gradient(transparent,var(--panel) 30%)}
+body.light .actb{background:#0000000a}
+body.light .msg .txt a{text-decoration-color:#a1a1aa}
+body.light .tile{background:var(--card)}
+body.light .adm{background:linear-gradient(135deg,#0a0a0b,#3f3f46);color:#fff}
 </style>
 </head>
 <body>
@@ -951,7 +970,7 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></symbol>
   <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/></symbol>
   <symbol id="i-net" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
-  <symbol id="i-logo" viewBox="0 0 32 32"><circle cx="12.5" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/><circle cx="19.5" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 32 32"><circle cx="12.5" cy="16" r="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19.5" cy="16" r="7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
 </svg>
 
 <!-- ============ Entrada ============ -->
@@ -1005,6 +1024,8 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
           <div class="vc-status"><b id="vcState">Voz conectada</b><small id="vbChan" title="Ver sala"></small></div>
         </div>
         <div class="vc-btns">
+          <button id="vbMute" title="Silenciar microfone (Ctrl+Shift+M)"></button>
+          <button id="vbDeaf" title="Ensurdecer (Ctrl+Shift+D)"></button>
           <button id="vbCam" title="Câmera"><svg class="i sm"><use href="#i-cam"/></svg></button>
           <button id="vbScreen" title="Transmitir tela"><svg class="i sm"><use href="#i-cast"/></svg></button>
           <button id="vbLeave" class="leave" title="Desconectar"><svg class="i sm"><use href="#i-leave"/></svg></button>
@@ -1124,11 +1145,17 @@ function themeFromBase(hex){
 }
 function applyAppearance(){
   const isApp = !!window.concordDesktop;
-  const c = isApp && /^#[0-9a-f]{6}$/i.test(PREFS.accent||'') ? PREFS.accent : '#ffffff';
+  const light = PREFS.mode==='light';
+  let c = isApp && /^#[0-9a-f]{6}$/i.test(PREFS.accent||'') ? PREFS.accent : '#ffffff';
+  if(light && c.toLowerCase()==='#ffffff') c='#0a0a0b';
+  document.body.classList.toggle('light', light);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', light?'#f4f4f5':'#000000');
   const n=parseInt(c.slice(1),16), r=n>>16&255, g=n>>8&255, b=n&255; const lum=(0.299*r+0.587*g+0.114*b)/255;
   const root=document.documentElement.style; root.setProperty('--ac', c);
   const T = isApp ? (PREFS.appTheme==='custom' && /^#[0-9a-f]{6}$/i.test(PREFS.themeBase||'') ? themeFromBase(PREFS.themeBase) : (APP_THEMES[PREFS.appTheme]||APP_THEMES.oled)) : APP_THEMES.oled;
-  for(const k of ['bg','panel','side','main','card','card2','line','line2']) root.setProperty('--'+k, T[k]);
+  const L = { bg:'#ececef', panel:'#ffffff', side:'#f7f7f8', main:'#ffffff', card:'#f1f1f3', card2:'#e8e8eb', line:'#e2e2e6', line2:'#d1d1d6' };
+  for(const k of ['bg','panel','side','main','card','card2','line','line2']) root.setProperty('--'+k, light ? L[k] : T[k]);
+  for(const [k,v] of Object.entries(light ? { tx:'#0a0a0b', tx2:'#4b4b53', tx3:'#7c7c85', white:'#0a0a0b' } : { tx:'#fafafa', tx2:'#a1a1aa', tx3:'#63636b', white:'#fff' })) root.setProperty('--'+k, v);
   document.body.classList.toggle('bg-glow', isApp && !!PREFS.bgGlow); root.setProperty('--act', lum>0.6?'#000000':'#ffffff'); document.body.style.zoom = String(isApp ? (PREFS.fontScale||1) : 1);
   document.body.classList.toggle('compact', !!PREFS.compact); document.body.classList.toggle('reduce', !!PREFS.reduce);
   const lay = isApp ? (PREFS.layout || 'flat') : 'cards'; document.body.classList.toggle('flat', lay==='flat');
@@ -1852,6 +1879,8 @@ function renderMe(){
   $('#meStatus').textContent = V ? (P().voiceMode==='ptt' ? (S.pttHeld?'Falando…':'Push-to-talk') : 'Em voz · '+V.ch.name) : (S.activity && P().showActivity && myStatus()!=='invisible' ? (S.activity.game ? 'Jogando '+S.activity.game.name : 'Ouvindo '+S.activity.music.title) : (p.status_text || STATUS[myStatus()][0]));
   setIcon($('#ubMute'), S.muted||S.deaf ? 'mic-off' : 'mic'); $('#ubMute').classList.toggle('off', S.muted||S.deaf);
   setIcon($('#ubDeaf'), S.deaf ? 'head-off' : 'head'); $('#ubDeaf').classList.toggle('off', S.deaf);
+  setIcon($('#vbMute'), S.muted||S.deaf ? 'mic-off' : 'mic'); $('#vbMute').classList.toggle('off', S.muted||S.deaf);
+  setIcon($('#vbDeaf'), S.deaf ? 'head-off' : 'head'); $('#vbDeaf').classList.toggle('off', S.deaf);
 }
 /* =====================================================================
    Chat
@@ -2636,7 +2665,7 @@ function renderAppBanner(){
     el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>CONCORD para Android</b><span>Chamada com a tela bloqueada e notificações.</span></div><a class="btn" href="${APK_DOWNLOAD}" data-ab="dl">Baixar</a><button class="ibtn" title="Agora não" data-ab="x">${ic('x','sm')}</button>`;
     el.classList.remove('hidden'); el.querySelectorAll('[data-ab]').forEach(b=>b.addEventListener('click', ()=>{ ls.set('dc_app_banner', Date.now()); el.classList.add('hidden'); })); return; }
   if(!IS_WIN_PC || !S.server || Date.now()-last < 14*864e5){ el.classList.add('hidden'); return; }
-  el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>Baixe o CONCORD para PC</b><span>Push-to-talk dentro do jogo, som do PC na transmissão e ícone perto do relógio. Mesma conta.</span></div>
+  el.innerHTML=`<div class="ab-ico">${ic('down','sm')}</div><div class="ab-txt"><b>Baixe o CONCORD para PC</b><span>Mais leve, personalizável e com a mesma conta.</span></div>
     <a class="btn" href="${APP_DOWNLOAD}" target="_blank" rel="noopener" data-ab="dl">${ic('down','sm')} Baixar para Windows</a><button class="ibtn" title="Agora não" data-ab="x">${ic('x','sm')}</button>`;
   el.classList.remove('hidden');
   el.querySelector('[data-ab=x]').onclick=()=>{ ls.set('dc_app_banner', Date.now()); el.classList.add('hidden'); toast('Tudo bem. O link fica em Configurações → Atalhos.'); };
@@ -2838,7 +2867,7 @@ async function renderSettings(){
   else if(SET.sec==='atalhos'){
     const pttLabel = DESK ? (p.pttKey?.label || 'Nenhuma') : (p.pttWeb ? p.pttWeb.replace(/^Key/,'').replace(/^Digit/,'') : 'Nenhuma');
     body.innerHTML = `<h2>Atalhos e push-to-talk</h2><p class="sub">${DESK?'Funcionam em qualquer lugar do PC, inclusive dentro do jogo.':'No navegador, só funcionam com a aba do CONCORD em foco. No app para PC, funcionam dentro do jogo.'}</p>
-      ${DESK?'':`<div class="sc" style="background:linear-gradient(135deg,#17171a,#0e0e10)"><h3>${ic('down','sm')} CONCORD para PC</h3><p>Atalhos e push-to-talk dentro do jogo, seletor de tela com som do PC, ícone perto do relógio e notificações. Usa a mesma conta e conversa com quem está no navegador.</p>
+      ${DESK?'':`<div class="sc" style="background:linear-gradient(135deg,#17171a,#0e0e10)"><h3>${ic('down','sm')} CONCORD para PC</h3><p>Mais leve, personalizável e com a mesma conta.</p>
         <div class="row" style="margin:0"><a class="btn auto" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Baixar para Windows</a></div>
         <p class="hint keep">Se o Windows avisar "O Windows protegeu o computador", clique em <b>Mais informações → Executar assim mesmo</b> (o app não tem assinatura paga).</p></div>`}
       <div class="sc"><h3>Modo de voz</h3><p>Como seu microfone abre.</p>
@@ -2881,7 +2910,8 @@ async function renderSettings(){
     const ACS=['#ffffff','#a78bfa','#818cf8','#60a5fa','#22d3ee','#34d399','#a3e635','#fbbf24','#fb923c','#f87171','#f472b6','#e879f9'];
     const curT = P().appTheme||'oled';
     body.innerHTML = `<h2>Aparência</h2>
-      <div class="sc"><h3>Tema</h3>
+      <div class="sc"><h3>Modo</h3><p>Claro ou escuro. O logo acompanha.</p><div class="seg" id="modeSeg"><button data-mode="dark" class="${P().mode!=='light'?'on':''}">Escuro</button><button data-mode="light" class="${P().mode==='light'?'on':''}">Claro</button></div></div>
+      <div class="sc"><h3>Tema</h3><p>${P().mode==='light'?'Os temas valem para o modo escuro.':''}</p>
         <div class="themegrid">${Object.entries(APP_THEMES).map(([k,t])=>`<button class="tcard ${curT===k?'on':''}" data-theme-app="${k}"><div class="tprev" style="background:${t.bg}"><i style="background:${t.side}"></i><i style="background:${t.main}"><b style="background:${t.card}"></b><b style="background:var(--ac)"></b></i></div><span>${t.label}</span></button>`).join('')}
           <button class="tcard ${curT==='custom'?'on':''}" data-theme-app="custom"><div class="tprev" style="background:conic-gradient(from 45deg,#1e1b4b,#064e3b,#7f1d1d,#1e1b4b)"></div><span>Personalizado</span></button></div>
         <div class="colorrow" id="customBase" style="margin-top:12px;${curT==='custom'?'':'display:none'}"><span style="font-size:13px;color:var(--tx2)">Cor base</span><label class="cpick" style="background:${P().themeBase}"><input type="color" id="tbPick" value="${P().themeBase}"></label></div>
@@ -2896,7 +2926,8 @@ async function renderSettings(){
         ${sw('hideFx','Esconder efeitos dos outros','Desliga decorações, efeitos e placas animadas nas listas e na call (continua aparecendo no cartão de perfil).')}
         ${sw('reduce','Reduzir animações','Para tudo que se mexe. Bom para PC fraco ou para quem enjoa com movimento.')}</div>`;
     body.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ setPref('accent', b.dataset.ac); applyAppearance(); renderSettings(); });
-    body.querySelectorAll('[data-theme-app]').forEach(b=>b.onclick=()=>{ setPref('appTheme', b.dataset.themeApp); applyAppearance(); renderSettings(); });
+    body.querySelectorAll('[data-theme-app]').forEach(b=>b.onclick=()=>{ setPref('appTheme', b.dataset.themeApp); if(P().mode==='light') setPref('mode','dark'); applyAppearance(); renderSettings(); });
+    body.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ setPref('mode', b.dataset.mode); applyAppearance(); renderSettings(); });
     $('#tbPick')?.addEventListener('input', e=>{ setPref('themeBase', e.target.value); e.target.parentElement.style.background=e.target.value; applyAppearance(); });
     $('#bgGlow').onchange=e=>{ setPref('bgGlow', e.target.checked); applyAppearance(); };
     $('#acPick').oninput=e=>{ setPref('accent', e.target.value); applyAppearance(); };
@@ -3808,6 +3839,8 @@ function openInvite(){
    ===================================================================== */
 $('#ubMute').onclick=()=>setMuted(!(S.muted||S.deaf));
 $('#ubDeaf').onclick=()=>setDeaf(!S.deaf);
+$('#vbMute').onclick=()=>setMuted(!(S.muted||S.deaf));
+$('#vbDeaf').onclick=()=>setDeaf(!S.deaf);
 $('#cMute').onclick=()=>setMuted(!(S.muted||S.deaf));
 $('#cDeaf').onclick=()=>setDeaf(!S.deaf);
 $('#cCam').onclick=toggleCam; $('#vbCam').onclick=toggleCam;

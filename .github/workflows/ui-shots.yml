@@ -1,0 +1,29 @@
+name: Capturas da interface
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Capturar
+        working-directory: android/ci
+        run: npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null && npx playwright install --with-deps chromium >/dev/null && node ui_shots.mjs
+      - name: Publicar
+        if: always()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-test
+          name: teste (interno)
+          prerelease: true
+          make_latest: false
+          files: android/ci/ui-*.png
+          overwrite_files: true
