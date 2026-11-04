@@ -151,6 +151,7 @@ class Concord(val app: Application) {
 
     fun logout() = scope.launch {
         presenceJob?.cancel(); presenceJob = null
+        voiceObs.clear(); voicePres.clear()
         voice.leave()
         rt.disconnect()
         srvRt = null; msgRt = null; dmRt = null; userRt = null; tvLinkRt = null; tvLink = null
@@ -230,7 +231,7 @@ class Concord(val app: Application) {
             val r = supa.select("dc_channels", "select=*&server_id=eq.${s.id}&order=position,created_at")
             val list = (0 until r.length()).map { Channel.from(r.getJSONObject(it)) }
             channels.clear(); channels.addAll(list)
-            subscribeMessages()
+            subscribeMessages(); syncVoiceObs()
         } catch (e: Exception) { say("Erro ao carregar canais: ${authMessage(e)}") }
     }
 
@@ -303,18 +304,45 @@ class Concord(val app: Application) {
         voice.onServerPresence()
     }
 
-    /** quem está na sala: presença do servidor + a própria sala de voz (quando estou nela), para ninguém sumir da lista */
-    fun voiceUsers(chId: String): List<Online> {
-        val list = online.filter { it.voice == chId }.toMutableList()
-        if (voice.channel?.id == chId && !voice.viewer) {
-            val have = list.map { it.uid }.toMutableSet()
-            voice.meta.forEach { (k, m) ->
-                val u = m.optString("uid"); if (m.optBoolean("tv") || u.isEmpty() || !have.add(u)) return@forEach
-                list.add(Online(k, u, m.optString("name"), m.optString("color", "#6366f1"), chId, m.optBoolean("muted"), m.optBoolean("deaf"),
-                    m.optString("camId").let { it.isNotEmpty() && it != "null" }, m.optString("screenId").let { it.isNotEmpty() && it != "null" }, "online", null, 0L, 0L, false))
+    /* Quem está em cada sala de voz: observa a presença da própria sala (sem entrar).
+       A presença do servidor podia ficar velha: quem saiu continuava na lista e quem estava lá sumia. */
+    private val voiceObs = HashMap<String, RtChannel>()
+    val voicePres = mutableStateMapOf<String, List<JSONObject>>()
+    fun syncVoiceObs() {
+        val want = if (server != null) channels.filter { it.isVoice && voice.channel?.id != it.id }.map { it.id }.toSet() else emptySet()
+        voiceObs.keys.toList().forEach { id -> if (id !in want) { voiceObs.remove(id)?.leave(); voicePres.remove(id) } }
+        want.forEach { id ->
+            if (voiceObs.containsKey(id)) return@forEach
+            val r = rt.channel("dc-voice-$id", "obs-$sid"); voiceObs[id] = r
+            r.onPresence = {
+                val by = HashMap<String, JSONObject>()
+                r.presence.forEach { (k, metas) ->
+                    if (k.startsWith("obs-")) return@forEach
+                    val m = metas.maxByOrNull { it.optLong("jt") } ?: return@forEach
+                    val u = m.optString("uid"); if (m.optBoolean("tv") || u.isEmpty()) return@forEach
+                    val o = by[u]; if (o == null || m.optLong("jt") > o.optLong("jt")) by[u] = JSONObject(m.toString()).put("_key", k)
+                }
+                voicePres[id] = by.values.toList()
             }
         }
-        return list
+    }
+    fun dropVoiceObs(id: String) { voiceObs.remove(id)?.leave(); voicePres.remove(id) }
+
+    private fun metaUser(k: String, m: JSONObject, chId: String): Online {
+        val u = m.optString("uid"); val o = online.find { it.uid == u }
+        return Online(k, u, m.optString("name"), m.optString("color", "#6366f1"), chId, m.optBoolean("muted"), m.optBoolean("deaf"),
+            m.optString("camId").let { it.isNotEmpty() && it != "null" }, m.optString("screenId").let { it.isNotEmpty() && it != "null" },
+            o?.st ?: "online", o?.act, o?.since ?: 0L, o?.ts ?: 0L, false)
+    }
+    fun voiceUsers(chId: String): List<Online> {
+        if (voice.channel?.id == chId && !voice.viewer) {
+            val list = ArrayList<Online>(); val have = HashSet<String>()
+            voice.meta.forEach { (k, m) -> val u = m.optString("uid"); if (!m.optBoolean("tv") && u.isNotEmpty() && have.add(u)) list.add(metaUser(k, m, chId)) }
+            if (meId != null && have.add(meId!!)) online.find { it.uid == meId }?.let { list.add(0, it.copy(voice = chId, muted = voice.muted, deaf = voice.deaf)) }
+            return list
+        }
+        voicePres[chId]?.let { l -> return l.map { metaUser(it.optString("_key"), it, chId) } }
+        return online.filter { it.voice == chId }
     }
     private var presenceJob: kotlinx.coroutines.Job? = null
 

@@ -141,6 +141,7 @@ class Voice(private val c: Concord) {
         ensureFactory()
         viewer = true; this.ownerUid = owner; this.ownerName = ownerName
         channel = ch; jt = 0; state = "Conectando…"
+        if (ch.dmId == null) c.dropVoiceObs(ch.id)
         val r = c.rt.channel("dc-voice-${ch.id}", c.sid)
         rt = r
         r.on("sig") { p -> if (p.optString("to") == c.sid) onSignal(p.optString("from"), p) }
@@ -174,7 +175,7 @@ class Voice(private val c: Concord) {
         rt = r
         r.on("sig") { p -> if (p.optString("to") == c.sid) onSignal(p.optString("from"), p) }
         r.onPresence = { onPresence() }
-        r.onJoined = { r.track(myMeta()); c.trackServer(); beep(true); state = "Voz conectada"; c.onVoiceJoined() }
+        r.onJoined = { r.track(myMeta()); c.trackServer(); beep(true); state = "Voz conectada"; c.onVoiceJoined(); c.syncVoiceObs() }
         startStats()
     }
 
@@ -188,7 +189,7 @@ class Voice(private val c: Concord) {
         try { rt?.untrack() } catch (_: Exception) {}
         rt?.leave(); rt = null
         micTrack?.dispose(); micTrack = null; micSource?.dispose(); micSource = null
-        if (!viewer) { CallService.stop(c.app); c.trackServer(); beep(false); if (ch.dmId == null) c.tvLinkLeft(ch.id) }
+        if (!viewer) { CallService.stop(c.app); c.trackServer(); beep(false); if (ch.dmId == null) c.tvLinkLeft(ch.id); c.syncVoiceObs() }
         viewer = false
     }
 

@@ -1745,7 +1745,7 @@ async function start(){
   await loadServers();
   loadDms().then(startDmRealtime); loadFriends();
   // reenvia a presença de tempos em tempos: se a conexão caiu e voltou, ninguém some da lista
-  if(!S.presT) S.presT=setInterval(()=>{ if(!document.hidden || V) trackServerPresence(); }, 30000); syncActivity(); tvLinkCode().catch(()=>{});
+  if(!S.presT) S.presT=setInterval(()=>{ if(!document.hidden || V) trackServerPresence(); }, 20000); syncActivity(); tvLinkCode().catch(()=>{});
   let joinedNew=null;
   if(/^[A-Z0-9-]{3,24}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
   if(hashCode) history.replaceState(null, '', location.pathname+location.search);
@@ -1812,7 +1812,7 @@ async function selectServer(s){
   if(S.srvRt){ if(V && !V.ch.dm && V.srv?.id===S.server?.id && !S.voiceSrvRt) S.voiceSrvRt=S.srvRt; else sb.removeChannel(S.srvRt); S.srvRt=null; }
   if(S.voiceSrvRt && V?.srv?.id===s.id){ sb.removeChannel(S.voiceSrvRt); S.voiceSrvRt=null; }
   if(S.msgRt) { sb.removeChannel(S.msgRt); S.msgRt=null; }
-  S.server=s; S.unread.clear(); S.srvPresence={}; S.nicks=new Map(); ls.set('dc_last', s.code);
+  S.server=s; S.unread.clear(); S.srvPresence={}; S.srvLive={}; S.nicks=new Map(); ls.set('dc_last', s.code);
   $('.composer').classList.remove('hidden');
   renderServerHead(); renderRail(); renderAppBanner(); applyServerTheme(s);
   await Promise.all([loadChannels(), loadMemberProfiles()]);
@@ -1822,6 +1822,8 @@ async function selectServer(s){
   S.srvRt = sb.channel('dc-srv-'+s.id, { config:{ presence:{ key:S.sid }, broadcast:{ self:false } } })
     .on('presence', {event:'sync'}, ()=>{ S.srvPresence = S.srvRt.presenceState(); renderChannels(); renderMembers(); renderSub(); renderMe(); if(S.view?.type==='voice' && !V) renderJoinCta(); })
     .on('broadcast', {event:'typing'}, ({payload})=>onTyping(payload))
+    .on('broadcast', {event:'st'}, ({payload})=>onServerState(payload))
+    .on('broadcast', {event:'st-req'}, ()=>setTimeout(()=>{ try{ S.srvRt?.send({ type:'broadcast', event:'st', payload:{ k:S.sid, ...myServerState() } }); }catch{} }, Math.random()*900))
     .on('broadcast', {event:'profile'}, ({payload})=>{ if(payload?.id) { S.profiles.set(payload.id, {...(S.profiles.get(payload.id)||{}), ...payload}); fxCache.clear(); renderMembers(); renderChannels(); if(V) renderTiles(); } })
     .on('postgres_changes', {event:'*', schema:'public', table:'dc_channels', filter:'server_id=eq.'+s.id}, ()=>loadChannels())
     .on('postgres_changes', {event:'DELETE', schema:'public', table:'dc_channels'}, ({old})=>{ if(S.channels.find(c=>c.id===old?.id)) loadChannels(); })
@@ -1831,30 +1833,43 @@ async function selectServer(s){
     .on('postgres_changes', {event:'DELETE', schema:'public', table:'dc_members'}, ({old})=>{ if(old?.user_id===S.me.id && old?.server_id===s.id){ toast('Você saiu de '+s.name+'.'); dropServer(s.id); } else loadMemberProfiles(); })
     .on('postgres_changes', {event:'UPDATE', schema:'public', table:'dc_servers', filter:'id=eq.'+s.id}, refreshServer)
     .on('postgres_changes', {event:'UPDATE', schema:'public', table:'dc_profiles'}, ({new:p})=>{ if(p && (S.profiles.has(p.id))){ S.profiles.set(p.id, p); fxCache.clear(); renderMembers(); renderChannels(); renderMe(); if(V) renderTiles(); } })
-    .subscribe(st=>{ if(st==='SUBSCRIBED') trackServerPresence(); });
+    .subscribe(st=>{ if(st==='SUBSCRIBED'){ const ch=S.srvRt; SRV_SLOW.delete(ch); trackServerPresence(); try{ ch.send({ type:'broadcast', event:'st-req', payload:{} }); }catch{} } });
   const first = S.channels.find(c=>c.kind==='text');
   if(first) openText(first); else S.view=null;
 }
-/* presença com freio: o Supabase corta quem manda presença demais (ClientPresenceRateLimitReached),
-   e aí a lista fica errada (gente que saiu continua, gente que entrou não aparece). Junta as mudanças e manda no máximo 1 a cada 2 s por canal. */
-const TRK=new WeakMap();
-function ptrack(ch, meta){
-  if(!ch) return; let s=TRK.get(ch); if(!s){ s={ last:0, t:null, meta:null }; TRK.set(ch, s); }
-  s.meta=meta; const send=()=>{ s.last=Date.now(); try{ const r=ch.track(s.meta); r?.catch?.(()=>{}); }catch{} };
-  const wait=2000-(Date.now()-s.last);
-  if(wait<=0 && !s.t) send(); else if(!s.t) s.t=setTimeout(()=>{ s.t=null; send(); }, Math.max(wait, 50));
+/* Presença do Supabase: cada conexão só pode mandar 5 atualizações a cada 30 s; passou disso, o canal é FECHADO
+   (ClientPresenceRateLimitReached) e a lista congela. Então a presença guarda só o que muda pouco (quem está online e em qual sala)
+   e o resto (mutado, sem som, câmera, tela, atividade) vai por broadcast, que não tem esse limite. */
+const PRES={ sent:[], q:new Map(), t:null };
+function ptrack(ch, meta){ if(!ch) return; PRES.q.set(ch, meta); pflush(); }
+function pflush(){
+  if(PRES.t) return;
+  const now=Date.now(); PRES.sent=PRES.sent.filter(t=>now-t<30000);
+  while(PRES.q.size && PRES.sent.length<4){
+    const [ch, meta]=PRES.q.entries().next().value; PRES.q.delete(ch); PRES.sent.push(Date.now());
+    try{ const r=ch.track(meta); r?.catch?.(()=>{}); }catch{}
+  }
+  if(PRES.q.size) PRES.t=setTimeout(()=>{ PRES.t=null; pflush(); }, 30000-(now-PRES.sent[0])+300);
 }
+function myServerState(){
+  const st=myStatus();
+  return { uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, voice:V?.ch.id||null, muted:S.muted, deaf:S.deaf, cam:!!V?.cam, screen:!!V?.screen, since:S.since, inv:st==='invisible', st, act: st==='invisible' ? null : activityOf(S.me.id), ts:Date.now() };
+}
+const SRV_SLOW = new WeakMap();   // canal -> o que foi para a presença da última vez (só o que muda pouco)
 function trackServerPresence(){
   if(!S.me) return;
-  const p=S.profiles.get(S.me.id)||{};
-  const st=myStatus(); const meta={ uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, voice:V?.ch.id||null, muted:S.muted, deaf:S.deaf, cam:!!V?.cam, screen:!!V?.screen, since:S.since, inv:st==='invisible', st, act: st==='invisible' ? null : activityOf(S.me.id), ts:Date.now() };
-  ptrack(S.srvRt, meta);
-  if(S.voiceSrvRt && S.voiceSrvRt!==S.srvRt) ptrack(S.voiceSrvRt, meta);
+  const meta=myServerState();
+  const slow=JSON.stringify([meta.uid, meta.name, meta.color, meta.voice, meta.since, meta.inv, meta.st]);
+  for(const ch of new Set([S.srvRt, S.voiceSrvRt].filter(Boolean))){
+    if(SRV_SLOW.get(ch)!==slow){ SRV_SLOW.set(ch, slow); ptrack(ch, meta); }
+    try{ ch.send({ type:'broadcast', event:'st', payload:{ k:S.sid, ...meta } }); }catch{}
+  }
 }
+function onServerState(p){ if(!p?.k) return; S.srvLive[p.k]=p; clearTimeout(S.liveT); S.liveT=setTimeout(()=>{ renderChannels(); renderMembers(); renderSub(); if(S.view?.type==='voice' && !V) renderJoinCta(); }, 120); }
 async function loadChannels(){
   const { data, error } = await sb.from('dc_channels').select('*').eq('server_id', S.server.id).order('position').order('created_at');
   if(error){ toast('Erro ao carregar canais: '+error.message, true); return; }
-  S.channels = data; renderChannels(); subscribeMessages();
+  S.channels = data; renderChannels(); subscribeMessages(); syncVoiceObs();
 }
 async function loadMemberProfiles(){
   if(!S.server) return;
@@ -1886,21 +1901,51 @@ function subscribeMessages(){
 function onlineList(){
   const seen=new Set(); const out=[];
   for(const [k,arr] of Object.entries(S.srvPresence)){
-    const best = arr.reduce((a,b)=>((b.ts||0)>(a.ts||0)?b:a), arr[0]); if(!best) continue;
+    let best = arr.reduce((a,b)=>((b.ts||0)>(a.ts||0)?b:a), arr[0]); if(!best) continue;
+    const live=S.srvLive?.[k]; if(live && (live.ts||0)>=(best.ts||0)) best={ ...best, ...live };
     if(best.inv && best.uid!==S.me?.id && !best.voice) continue;      // invisível
     const id=best.uid||k; if(seen.has(id)){ const ex=out.find(o=>(o.uid||o.key)===id); if(best.voice && ex && !ex.voice) Object.assign(ex, best, {key:k}); continue; }
     seen.add(id); out.push({...best, key:k});
   }
+  // corrige a sala de cada um com o que as próprias salas de voz dizem (a presença do servidor pode estar velha)
+  const inRoom=new Map(); for(const [cid,arr] of Object.entries(S.voicePres||{})) arr.forEach(m=>inRoom.set(m.uid, cid));
+  if(V && !V.ch.dm){ Object.values(V.meta).forEach(m=>{ if(m?.uid && !m.tv) inRoom.set(m.uid, V.ch.id); }); inRoom.set(S.me?.id, V.ch.id); }
+  for(const o of out){
+    const known = o.voice && ((S.voicePres||{})[o.voice] || (V && V.ch.id===o.voice) || (o.uid===S.me?.id && !V));
+    if(known && inRoom.get(o.uid)!==o.voice) o.voice=null;
+    if(!o.voice && inRoom.has(o.uid)) o.voice=inRoom.get(o.uid);
+  }
   return out;
 }
-// quem está na sala: presença do servidor + a própria sala de voz (quando estou nela), para ninguém sumir da lista
+/* Lista de quem está em cada sala de voz: olha direto a presença da própria sala (só observando, sem entrar).
+   A presença do servidor podia ficar velha (gente que já saiu continuava na lista, e quem estava lá sumia). */
+S.voiceObs=new Map(); S.voicePres={};
+function syncVoiceObs(){
+  const want = new Set(S.server ? S.channels.filter(c=>c.kind==='voice' && !(V && V.ch.id===c.id)).map(c=>c.id) : []);
+  for(const [id, ch] of S.voiceObs) if(!want.has(id)){ try{ sb.removeChannel(ch); }catch{} S.voiceObs.delete(id); delete S.voicePres[id]; }
+  for(const id of want){ if(S.voiceObs.has(id)) continue;
+    const ch = sb.channel('dc-voice-'+id, { config:{ presence:{ key:'obs-'+S.sid }, broadcast:{ self:false } } })
+      .on('presence', {event:'sync'}, ()=>{ const st=ch.presenceState(); const by=new Map();
+        for(const [k,arr] of Object.entries(st)){ if(k.startsWith('obs-')) continue; const m=arr.reduce((a,b)=>((b.jt||0)>(a.jt||0)?b:a), arr[0]); if(!m || m.tv || !m.uid) continue;
+          const o=by.get(m.uid); if(!o || (m.jt||0)>(o.jt||0)) by.set(m.uid, {...m, key:k}); }
+        S.voicePres[id]=[...by.values()]; if(!S.home) renderChannels(); if(S.view?.type==='voice' && S.view.ch.id===id && (!V || V.ch.id!==id)) renderJoinCta(); })
+      .subscribe();
+    S.voiceObs.set(id, ch); }
+}
+async function dropVoiceObs(id){ const ch=S.voiceObs.get(id); if(!ch) return; S.voiceObs.delete(id); delete S.voicePres[id]; try{ await sb.removeChannel(ch); }catch{} }
+
 function voiceUsers(chId){
-  const list=onlineList().filter(p=>p.voice===chId);
+  if(S.voicePres[chId] && !(V && V.ch.id===chId)){
+    const on=new Map(onlineList().map(o=>[o.uid,o]));
+    return S.voicePres[chId].map(m=>({ ...(on.get(m.uid)||{}), key:m.key, uid:m.uid, name:m.name, color:m.color, voice:chId, muted:!!m.muted, deaf:!!m.deaf, cam:!!m.camId, screen:!!m.screenId }));
+  }
+  const list = (V && V.ch.id===chId) ? [] : onlineList().filter(p=>p.voice===chId);
   if(V && V.ch.id===chId && !V.ch.dm){
+    const on=new Map(onlineList().map(o=>[o.uid,o]));
     const have=new Set(list.map(u=>u.uid));
     if(!have.has(S.me.id)){ have.add(S.me.id); list.push({ key:S.sid, uid:S.me.id, name:dname(S.me.id), color:S.me.color, voice:chId, muted:S.muted, deaf:S.deaf, cam:!!V.cam, screen:!!V.screen }); }
     for(const [k,m] of Object.entries(V.meta)){ if(!m || m.tv || !m.uid || have.has(m.uid)) continue; have.add(m.uid);
-      list.push({ key:k, uid:m.uid, name:m.name, color:m.color, voice:chId, muted:!!m.muted, deaf:!!m.deaf, cam:!!m.camId, screen:!!m.screenId }); }
+      list.push({ ...(on.get(m.uid)||{}), key:k, uid:m.uid, name:m.name, color:m.color, voice:chId, muted:!!m.muted, deaf:!!m.deaf, cam:!!m.camId, screen:!!m.screenId }); }
   }
   return list;
 }
@@ -2227,7 +2272,8 @@ function showStage(){ $('#joinCta').classList.add('hidden'); $('#tiles').classLi
 async function joinVoice(ch){
   if(!ch.dm && ch.user_limit && !S.isAdmin && voiceUsers(ch.id).filter(u=>u.uid!==S.me.id).length>=ch.user_limit){ toast('Sala cheia ('+ch.user_limit+').', true); if(S.view?.type==='voice') renderJoinCta(); return; }
   if(V) await leaveVoice();
-  V = { srv:ch.dm?null:S.server, jt:Date.now(), cineSeen:new Set(), noAV1:false, cpuStrikes:0, ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
+  if(!ch.dm) await dropVoiceObs(ch.id);
+  V = { srv:ch.dm?null:S.server, jt:Date.now(), cineSeen:new Set(), live:{}, noAV1:false, cpuStrikes:0, ch, rt:null, peers:new Map(), mic:null, pipe:null, cam:null, screen:null, focus:null, meta:{}, audioCtx:null, meters:new Map(), tiles:new Map(), timers:[], outStats:null };
   showStage(); $('#voicecard').classList.remove('hidden'); $('#vbChan').textContent = ch.dm ? ch.name+' / Chamada' : ch.name+' / '+(S.server?.name||'');
   const me=V; const pipe=new MicPipeline(); me.pipe=pipe;
   try{
@@ -2241,12 +2287,15 @@ async function joinVoice(ch){
   try{ V.audioCtx = new AudioContext(); }catch{}
   V.timers.push(setInterval(tickMeters, 100));
   V.timers.push(setInterval(collectStats, 2000));
+  V.timers.push(setInterval(pushVoiceMeta, 15000));
   V.rt = sb.channel('dc-voice-'+ch.id, { config:{ presence:{ key:S.sid }, broadcast:{ self:false } } })
     .on('broadcast', {event:'sig'}, ({payload})=>{ if(payload.to===S.sid) onSignal(payload.from, payload); })
+    .on('broadcast', {event:'meta'}, ({payload})=>onVoiceMeta(payload))
+    .on('broadcast', {event:'meta-req'}, ()=>setTimeout(pushVoiceMeta, Math.random()*700))
     .on('presence', {event:'sync'}, onVoicePresence)
     .subscribe(st=>{
       if(V!==me) return;
-      if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} ptrack(V.rt, myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join');
+      if(st==='SUBSCRIBED'){ syncVoiceObs(); try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} ptrack(V.rt, myVoiceMeta()); pushVoiceMeta(); try{ V.rt.send({ type:'broadcast', event:'meta-req', payload:{} }); }catch{} trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join');
         if(!ch.dm) tvLinkAnnounce();
         if(PENDING_TV && !ch.dm){ const p=PENDING_TV; PENDING_TV=null; if(Date.now()-p.at<15*60e3) setTimeout(()=>{ if(V===me) tvConnect(p.code); }, 800); } }
       if(st==='CHANNEL_ERROR' || st==='TIMED_OUT') toast('Falha na conexão com a sala de voz. Tente de novo.', true);
@@ -2254,10 +2303,16 @@ async function joinVoice(ch){
   renderControls(); renderTiles();
 }
 function myVoiceMeta(){ return { jt:V?.jt||0, uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, screenMode:V?.screen && SHARE_Q[V.screenQ]?.cinema ? 'cinema' : null, muted:S.muted, deaf:S.deaf }; }
+function pushVoiceMeta(){ if(!V?.rt) return; try{ V.rt.send({ type:'broadcast', event:'meta', payload:{ k:S.sid, ...myVoiceMeta(), mts:Date.now() } }); }catch{} }
+function onVoiceMeta(p){
+  if(!V || !p?.k || p.k===S.sid) return;
+  V.live[p.k]=p;
+  if(V.meta[p.k]){ Object.assign(V.meta[p.k], p); renderTiles(); renderTvBtn(); if(!S.home) renderChannels(); }
+}
 function onVoicePresence(){
   if(!V) return;
   const state=V.rt.presenceState(); V.meta={};
-  for(const [k,arr] of Object.entries(state)) V.meta[k]=arr[0];
+  for(const [k,arr] of Object.entries(state)) V.meta[k]={ ...arr[0], ...(V.live[k]||{}) };
   // mesma conta em outro aparelho (site + app): fica só a entrada mais recente
   for(const [k,m] of Object.entries(V.meta)){ if(k===S.sid || m?.uid!==S.me.id || m?.tv) continue;
     if((m.jt||0) > (V.jt||0) || ((m.jt||0)===(V.jt||0) && k>S.sid)){ toast('Você entrou nesta chamada em outro aparelho.'); leaveVoice(); return; }
@@ -2396,10 +2451,11 @@ async function leaveVoice(){
   safe(()=>v.pipe?.stop()); [v.cam,v.screen].forEach(st=>st&&safe(()=>st.getTracks().forEach(t=>t.stop())));
   safe(()=>v.audioCtx?.close().catch(()=>{}));
   // remove na hora: o supabase reaproveita canais com o mesmo nome, e um canal "morrendo" quebrava a volta rápida para a mesma sala
-  if(v.rt){ try{ v.rt.untrack()?.catch?.(()=>{}); }catch{} try{ sb.removeChannel(v.rt); }catch{} }
+  if(v.rt){ PRES.q.delete(v.rt); try{ sb.removeChannel(v.rt); }catch{} }
   safe(()=>AND?.callEnd()); safe(()=>setTheater(false)); $('#tiles').innerHTML=''; $('#voicecard').classList.add('hidden'); $('#statsBtn').classList.add('hidden');
   trackServerPresence();
   if(S.voiceSrvRt && S.voiceSrvRt!==S.srvRt){ try{ sb.removeChannel(S.voiceSrvRt); }catch{} } S.voiceSrvRt=null;
+  setTimeout(()=>{ if(!V) syncVoiceObs(); }, 600);
   renderMe(); renderMembers(); renderChannels(); sfx('leave');
   if(v.ch.dm){ endCallUi(v.ch.dm); if(S.view?.type==='voice' && S.view.ch.id===v.ch.id){ const d=DM.list.find(x=>x.id===v.ch.dm); if(d && S.home) return openDm(d); } }
   if(S.view?.type==='voice') renderJoinCta();
@@ -2417,7 +2473,7 @@ function setDeaf(d, silent){ if(!silent && d!==S.deaf) sfx(d?'deaf':'undeaf'); S
   if(V){ for(const p of V.peers.values()) p.audio.muted=d; document.querySelectorAll('#tiles .tile[data-kind=screen] video').forEach(v=>{ if(!v.dataset.local) v.muted=d; });
     updateMicEnabled(); }
   if(!silent) afterToggle(); }
-function afterToggle(){ try{ if(V) AND?.callUpdate(andCallTitle(), !micLive()); }catch{} renderMe(); renderControls(); if(V) ptrack(V.rt, myVoiceMeta()); trackServerPresence(); renderTiles(); }
+function afterToggle(){ try{ if(V) AND?.callUpdate(andCallTitle(), !micLive()); }catch{} renderMe(); renderControls(); if(V) pushVoiceMeta(); trackServerPresence(); renderTiles(); }
 function camConstraints(){ const p=P(), C=CAM_Q[p.camRes]||CAM_Q['720'];
   return { width:{ideal:C.w}, height:{ideal:C.h}, frameRate:{ideal:p.camFps, max:p.camFps}, deviceId: p.camId?{ideal:p.camId}:undefined }; }
 async function toggleCam(){
@@ -3281,7 +3337,7 @@ ${true?`    <div class="sc"><h3>${ic('img','sm')} Avatares prontos</h3><p></p>
     busy(btn,false);
     S.profiles.set(S.me.id, data); fxCache.clear(); SET.draft=null;
     S.srvRt?.send({type:'broadcast', event:'profile', payload:data});
-    renderMe(); trackServerPresence(); if(V){ ptrack(V.rt, myVoiceMeta()); renderTiles(); } renderMembers(); renderChannels();
+    renderMe(); trackServerPresence(); if(V){ pushVoiceMeta(); renderTiles(); } renderMembers(); renderChannels();
     renderProfileEditor(body); toast('Perfil salvo!');
   };
 }

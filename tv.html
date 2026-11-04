@@ -79,7 +79,7 @@ let CODE = ls.get('tv_code', null); if(!CODE){ CODE = String(Math.floor(100000+M
 $('#code').textContent = CODE;
 try{ const q=qrcode(0,'M'); q.addData('https://gabrielvazquez.github.io/concord/?tv='+CODE); q.make(); $('#qr').innerHTML=q.createSvgTag({ cellSize:4, margin:0, scalable:true }); }catch{ $('#qr').style.display='none'; }
 
-const TV = { linkRt:null, pairRt:null, rt:null, room:null, owner:null, peers:new Map(), meta:{}, sel:0, sound:false };
+const TV = { live:{}, linkRt:null, pairRt:null, rt:null, room:null, owner:null, peers:new Map(), meta:{}, sel:0, sound:false };
 
 /* ---------- pareamento ---------- */
 function listenPair(){
@@ -131,19 +131,20 @@ function join(room, name){
   TV.room=room; $('#roomName').textContent=name; $('#pair').style.display='none'; $('#stage').classList.add('on'); render();
   TV.rt = sb.channel('dc-voice-'+room, { config:{ presence:{ key:SID }, broadcast:{ self:false } } })
     .on('broadcast', {event:'sig'}, ({payload})=>{ if(payload.to===SID) onSignal(payload.from, payload); })
+    .on('broadcast', {event:'meta'}, ({payload})=>{ if(!payload?.k || payload.k===SID) return; TV.live[payload.k]=payload; if(TV.meta[payload.k]){ Object.assign(TV.meta[payload.k], payload); render(); } })
     .on('presence', {event:'sync'}, onPresence)
-    .subscribe(st=>{ if(st==='SUBSCRIBED') TV.rt.track({ tv:true, viewer:true, uid:TV.owner?.uid||null, name:'TV de '+(TV.owner?.name||''), jt:0, micId:null, camId:null, screenId:null, muted:true, deaf:!TV.sound }); });
+    .subscribe(st=>{ if(st==='SUBSCRIBED'){ TV.rt.track({ tv:true, viewer:true, uid:TV.owner?.uid||null, name:'TV de '+(TV.owner?.name||''), jt:0, micId:null, camId:null, screenId:null, muted:true, deaf:!TV.sound }); TV.rt.send({ type:'broadcast', event:'meta-req', payload:{} }); } });
   wake();
 }
 function leave(){
   for(const p of TV.peers.values()){ try{ p.pc.close(); }catch{} }
-  TV.peers.clear(); TV.meta={};
-  if(TV.rt){ try{ TV.rt.untrack(); }catch{} sb.removeChannel(TV.rt); TV.rt=null; }
+  TV.peers.clear(); TV.meta={}; TV.live={};
+  if(TV.rt){ sb.removeChannel(TV.rt); TV.rt=null; }
   TV.room=null; $('#main').srcObject=null; $('#grid').innerHTML='';
 }
 function onPresence(){
   const st=TV.rt.presenceState(); TV.meta={};
-  for(const [k,arr] of Object.entries(st)){ const m=arr.reduce((a,b)=>((b.jt||0)>(a.jt||0)?b:a), arr[0]); if(k!==SID && !m.tv) TV.meta[k]=m; }
+  for(const [k,arr] of Object.entries(st)){ const m=arr.reduce((a,b)=>((b.jt||0)>(a.jt||0)?b:a), arr[0]); if(k!==SID && !m.tv) TV.meta[k]={ ...m, ...(TV.live[k]||{}) }; }
   for(const k of Object.keys(TV.meta)) if(!TV.peers.has(k)) createPeer(k);
   for(const k of [...TV.peers.keys()]) if(!TV.meta[k]){ try{ TV.peers.get(k).pc.close(); }catch{} TV.peers.delete(k); }
   render();
@@ -210,7 +211,7 @@ document.addEventListener('keydown', e=>{
   const { scr } = sources();
   if(k===39 || k===40){ if(scr.length>1){ TV.sel=(TV.sel+1)%scr.length; $('#main').srcObject=null; render(); } e.preventDefault(); }
   else if(k===37 || k===38){ if(scr.length>1){ TV.sel=(TV.sel-1+scr.length)%scr.length; $('#main').srcObject=null; render(); } e.preventDefault(); }
-  else if(k===13){ TV.sound=!TV.sound; $('#main').muted=!TV.sound; render(); osd(TV.sound?'🔊 Som na TV ligado':'🔇 Som só no celular/PC'); TV.rt?.track({ tv:true, viewer:true, uid:TV.owner?.uid||null, name:'TV de '+(TV.owner?.name||''), jt:0, muted:true, deaf:!TV.sound }); e.preventDefault(); }
+  else if(k===13){ TV.sound=!TV.sound; $('#main').muted=!TV.sound; render(); osd(TV.sound?'🔊 Som na TV ligado':'🔇 Som só no celular/PC'); TV.rt?.send({ type:'broadcast', event:'meta', payload:{ k:SID, tv:true, viewer:true, uid:TV.owner?.uid||null, name:'TV de '+(TV.owner?.name||''), jt:0, muted:true, deaf:!TV.sound } }); e.preventDefault(); }
   else if(k===10009 || k===461 || k===8 || k===27){ unpair(); e.preventDefault(); }
 });
 document.addEventListener('click', ()=>{ if(TV.room){ TV.sound=!TV.sound; $('#main').muted=!TV.sound; render(); osd(TV.sound?'🔊 Som na TV ligado':'🔇 Som só no celular/PC'); } });
