@@ -1,25 +1,25 @@
-// Lista da sala: entra, muta várias vezes rápido, sai — quem está de fora tem que ver tudo certo
+// Lista das salas de voz: quem entra aparece, quem sai some (visto por quem está fora da sala)
 import { chromium } from 'playwright';
-const log = (...a) => console.log('[presenca]', ...a);
 const b = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
-async function login(email, pass) {
-  const ctx = await b.newContext({ permissions: ['microphone'] }); const p = await ctx.newPage();
-  p.on('pageerror', e => log('pageerror', e.message));
+async function user(email, pass) {
+  const ctx = await b.newContext({ permissions: ['microphone', 'camera'] }); const p = await ctx.newPage();
+  p.on('pageerror', e => console.log('pageerror', email, e.message));
   await p.goto('https://gabrielvazquez.github.io/concord/?t=' + Date.now());
   await p.waitForSelector('#fLogin', { timeout: 30000 });
   await p.fill('#fLogin [name=email]', email); await p.fill('#fLogin [name=pass]', pass); await p.click('#fLogin button[type=submit]');
-  await p.waitForSelector('#chanlist .ch', { timeout: 40000 }); await p.waitForTimeout(2000); return p;
+  await p.waitForSelector('#chanlist .ch', { timeout: 40000 }); await p.click('#chanlist .ch:has-text("geral")'); await p.waitForTimeout(2500);
+  return p;
 }
-const a = await login('web.teste@concord.app', 'TesteWeb2026');
-const o = await login('android.teste@concord.app', 'TesteAndroid2026');
-const seen = () => o.evaluate(() => { const ch = S.channels.find(c => c.name === 'Sala de Jogo'); return voiceUsers(ch.id).map(u => dname(u.uid) + (u.deaf ? '[sem som]' : u.muted ? '[mutado]' : '')); });
-for (let round = 1; round <= 3; round++) {
-  await a.click('#chanlist .ch:has-text("Sala de Jogo")'); await a.waitForTimeout(5000);
-  log(`rodada ${round} entrou →`, await seen(), '| quem entrou:', await a.evaluate(() => ({ V: !!V, rt: V?.rt?.state, srv: S.srvRt?.state, minha: (() => { const ch = S.channels.find(c => c.name === 'Sala de Jogo'); return voiceUsers(ch.id).map(u => u.uid === S.me.id); })(), pres: Object.values(S.srvPresence).flat().map(m => m.name + ':' + (m.voice ? 'voz' : '-')) })), '| observador:', await o.evaluate(() => ({ srv: S.srvRt?.state, pres: Object.values(S.srvPresence).flat().map(m => m.name + ':' + (m.voice ? 'voz' : '-')) })));
-  for (let i = 0; i < 12; i++) { await a.evaluate(() => setMuted(!S.muted)); await a.waitForTimeout(120); }
-  await a.evaluate(() => { setMuted(true); setDeaf(true); }); await a.waitForTimeout(4000);
-  log(`rodada ${round} mutou e tirou o som →`, await seen());
-  await a.evaluate(() => { setDeaf(false); setMuted(false); }); await a.evaluate(() => leaveVoice()); await a.waitForTimeout(4000);
-  log(`rodada ${round} saiu →`, await seen());
-}
+const A = await user('web.teste@concord.app', 'TesteWeb2026');
+const B = await user('android.teste@concord.app', 'TesteAndroid2026');
+const list = p => p.evaluate(() => Object.fromEntries(S.channels.filter(c => c.kind === 'voice').map(c => [c.name, voiceUsers(c.id).map(u => dname(u.uid) + (u.muted ? '(mutado)' : '') + (u.deaf ? '(sem som)' : ''))])));
+const step = async (t) => { await A.waitForTimeout(4000); console.log(t, '| A vê', JSON.stringify(await list(A)), '| B vê', JSON.stringify(await list(B))); };
+await step('ninguém na sala');
+await A.click('#chanlist .ch:has-text("Sala de Jogo")'); await step('A entrou');
+await A.evaluate(() => setDeaf(true)); await step('A sem som');
+await B.click('#chanlist .ch:has-text("Sala de Jogo")'); await B.waitForTimeout(2000); await B.evaluate(() => document.querySelector('#joinBtn')?.click()); await step('B entrou também');
+await A.evaluate(() => leaveVoice()); await step('A saiu');
+await B.evaluate(() => leaveVoice()); await step('B saiu');
+await A.click('#chanlist .ch:has-text("Bate-papo")'); await step('A entrou no Bate-papo');
+await A.evaluate(() => leaveVoice()); await step('A saiu de novo');
 await b.close();
