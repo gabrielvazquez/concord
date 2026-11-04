@@ -54,8 +54,13 @@ object Updater {
     fun install(act: Activity, scope: CoroutineScope, say: (String) -> Unit) {
         if (progress >= 0f) return
         if (!act.packageManager.canRequestPackageInstalls()) {
-            say("Permita \"instalar apps\" para o CONCORD e toque em Atualizar de novo.")
-            act.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${act.packageName}")))
+            // algumas TVs não têm essa tela direta: tenta a do app e, se não der, a geral de segurança
+            val tries = listOf(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${act.packageName}")),
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES), Intent(Settings.ACTION_SECURITY_SETTINGS),
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${act.packageName}")))
+            val opened = tries.any { i -> try { act.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true } catch (_: Exception) { false } }
+            say(if (opened) "Permita \"instalar apps desconhecidos\" para o CONCORD e aperte Atualizar de novo."
+                else "Em Configurações › Apps › Acesso especial › Instalar apps desconhecidos, permita o CONCORD e aperte Atualizar de novo.")
             return
         }
         progress = 0f

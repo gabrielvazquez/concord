@@ -34,6 +34,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -134,6 +138,17 @@ class TvActivity : ComponentActivity() {
     private fun stopWatching() { c.voice.leave(); room = null; roomId = null }
     private fun show(s: String) { osd = s; osdAt = System.currentTimeMillis() }
 
+    // OK do controle na tela do código: se há atualização e não se está digitando, atualiza (o Compose às vezes engolia a tecla)
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val ok = event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || event.keyCode == KeyEvent.KEYCODE_BUTTON_A
+        val typing = currentFocus is android.widget.EditText
+        if (ok && room == null && Updater.available != null && Updater.progress < 0f && linkInput.isEmpty() && !typing) {
+            if (event.action == KeyEvent.ACTION_UP) Updater.install(this, c.scope) { show(it) }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (room == null) {
             if (Updater.available != null && (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER)) { Updater.install(this, c.scope) { show(it) }; return true }
@@ -204,8 +219,17 @@ class TvActivity : ComponentActivity() {
             Updater.available?.let { ver ->
                 Spacer(Modifier.height(30.dp))
                 val p = Updater.progress
+                // botão de verdade: recebe o foco do controle e o OK clica nele
+                val fr = androidx.compose.runtime.remember { androidx.compose.ui.focus.FocusRequester() }
+                var focused by androidx.compose.runtime.remember { mutableStateOf(false) }
+                androidx.compose.runtime.LaunchedEffect(ver) { kotlinx.coroutines.delay(300); try { fr.requestFocus() } catch (_: Exception) {} }
                 Text(if (p < 0f) "Nova versão $ver disponível · aperte OK para atualizar" else if (p > 1f) "Instalando… confirme na tela" else "Baixando atualização… ${(p * 100).toInt()}%",
-                    color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.clip(RoundedCornerShape(30.dp)).background(Color.White).padding(horizontal = 24.dp, vertical = 12.dp))
+                    color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                    modifier = Modifier.focusRequester(fr).onFocusChanged { focused = it.isFocused }
+                        .border(if (focused) 3.dp else 0.dp, if (focused) C.green else Color.Transparent, RoundedCornerShape(30.dp))
+                        .clip(RoundedCornerShape(30.dp)).background(Color.White)
+                        .clickable { Updater.install(this@TvActivity, c.scope) { show(it) } }
+                        .padding(horizontal = 24.dp, vertical = 12.dp))
             }
         }
     }
