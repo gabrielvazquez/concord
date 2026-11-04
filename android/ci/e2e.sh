@@ -52,5 +52,8 @@ tap "Sala de Jogo"; sleep 30; shot e5-voz
 sleep 30; shot e6-voz2
 tap "Teste Web" ; sleep 4; shot e7-perfil; adb shell input keyevent 4; sleep 2
 tap "Mensagem"; sleep 4; shot e8-dm
+adb shell input keyevent 4; sleep 2
+tap "Menu" desc; sleep 3; tap "Mensagens diretas" desc; sleep 3; tap "Amigos"; sleep 4; shot e9-amigos
+tap "@nome ou nome"; adb shell input text "teste"; sleep 5; adb shell input keyevent 111; sleep 1; shot e10-busca
 adb logcat -d | grep -iE "AndroidRuntime|FATAL|webrtc|concord" | grep -v "SplashScreen" | tail -60
 adb shell pidof com.gabrielvazquez.concord && echo "APP VIVO" || echo "APP MORREU"

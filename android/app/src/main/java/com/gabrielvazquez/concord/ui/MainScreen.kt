@@ -81,6 +81,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -211,7 +213,7 @@ private fun DrawerContent(close: () -> Unit, onAskMic: (() -> Unit) -> Unit) {
         // trilho de servidores
         Column(Modifier.width(72.dp).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val unreadDm = c.dms.count { c.unread.contains(it.id) }
-            RailButton(selected = c.home, badge = unreadDm, onClick = { c.openHome() }) { Logo(28.dp) }
+            RailButton(selected = c.home, badge = unreadDm, onClick = { c.openHome() }) { Box(Modifier.semantics { contentDescription = "Mensagens diretas" }) { Logo(28.dp) } }
             HorizontalDivider(Modifier.width(28.dp), color = C.line2)
             c.servers.forEach { s -> RailButton(selected = !c.home && c.server?.id == s.id, onClick = { c.selectServer(s) }) { ServerIcon(s) } }
             RailButton(selected = false, onClick = { Ui.joinOpen = true }) { Icon(Icons.Default.Add, "Entrar em servidor", tint = C.tx2) }
