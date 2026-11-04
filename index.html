@@ -211,7 +211,7 @@ a.btn{text-decoration:none}
 .tile.cam video{object-fit:cover}
 .tile.mirror video{transform:scaleX(-1)}
 .tile .av{width:76px;height:76px;font-size:30px}
-.tile .label{position:absolute;left:10px;bottom:10px;background:#000c;backdrop-filter:blur(6px);padding:5px 10px;border-radius:999px;font-size:12.5px;font-weight:600;display:flex;gap:6px;align-items:center;max-width:calc(100% - 20px)}
+.tile .label{position:absolute;left:10px;bottom:10px;background:#000c;color:#fff;backdrop-filter:blur(6px);padding:5px 10px;border-radius:999px;font-size:12.5px;font-weight:600;display:flex;gap:6px;align-items:center;max-width:calc(100% - 20px)}
 .tile .label .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tile .label .ic{display:flex;align-items:center;gap:4px}
 .tile .tools{position:absolute;right:10px;top:10px;display:flex;gap:6px;opacity:0;transition:.15s}
@@ -923,6 +923,9 @@ body.light .savebar{background:linear-gradient(transparent,var(--panel) 30%)}
 body.light .actb{background:#0000000a}
 body.light .msg .txt a{text-decoration-color:#a1a1aa}
 body.light .tile{background:var(--card)}
+body.light .msg .txt{color:#27272a}
+body.light .welcome,body.light .live-card{background:linear-gradient(135deg,#f7f7f8,#ededf0)}
+body.light .live-card b[style]{color:var(--tx)!important}
 body.light .adm{background:linear-gradient(135deg,#0a0a0b,#3f3f46);color:#fff}
 </style>
 </head>
