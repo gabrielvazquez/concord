@@ -195,8 +195,8 @@ private fun ParticipantTile(t: Tile, cam: RemoteVideo?, mine: Boolean) {
         }
         Row(Modifier.align(Alignment.BottomStart).padding(8.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xAA000000)).padding(horizontal = 8.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(if (mine) "${t.name} (você)" else t.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (t.deaf) { Spacer(Modifier.width(4.dp)); Icon(Icons.Default.HeadsetOff, null, tint = C.red, modifier = Modifier.size(13.dp)) }
-            else if (t.muted) { Spacer(Modifier.width(4.dp)); Icon(Icons.Default.MicOff, null, tint = C.red, modifier = Modifier.size(13.dp)) }
+            if (t.muted || t.deaf) { Spacer(Modifier.width(4.dp)); Icon(Icons.Default.MicOff, null, tint = C.red, modifier = Modifier.size(13.dp)) }
+            if (t.deaf) { Spacer(Modifier.width(3.dp)); Icon(Icons.Default.HeadsetOff, null, tint = C.red, modifier = Modifier.size(13.dp)) }
         }
         if (mine && v.camOn) Box(Modifier.align(Alignment.TopEnd).padding(6.dp).size(32.dp).clip(CircleShape).background(Color(0xAA000000)).clickable { v.flipCam() }, contentAlignment = Alignment.Center) {
             Icon(Icons.Default.Cameraswitch, "Trocar câmera", tint = Color.White, modifier = Modifier.size(16.dp))

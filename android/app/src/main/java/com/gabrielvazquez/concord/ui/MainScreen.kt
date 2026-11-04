@@ -295,7 +295,8 @@ private fun androidx.compose.foundation.layout.ColumnScope.ChannelList(close: ()
                             Avatar(u.uid, 26.dp, fallbackName = u.name, fallbackColor = u.color, speaking = c.voice.channel?.id == ch.id && (c.voice.speaking[u.key] == true || (u.uid == c.meId && c.voice.speaking[c.sid] == true)))
                             Spacer(Modifier.width(8.dp)); Text(c.name(u.uid, u.name), color = C.tx, fontSize = 13.5.sp, modifier = Modifier.weight(1f), maxLines = 1)
                             if (u.screen) Text("AO VIVO", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(C.red).padding(4.dp, 1.dp))
-                            if (u.deaf) Icon(Icons.Default.HeadsetOff, "Não está ouvindo", tint = C.red, modifier = Modifier.padding(start = 4.dp).size(17.dp)) else if (u.muted) Icon(Icons.Default.MicOff, "Mutado", tint = C.red, modifier = Modifier.padding(start = 4.dp).size(17.dp))
+                            if (u.muted || u.deaf) Icon(Icons.Default.MicOff, "Mutado", tint = C.red, modifier = Modifier.padding(start = 4.dp).size(17.dp))
+                            if (u.deaf) Icon(Icons.Default.HeadsetOff, "Não está ouvindo", tint = C.red, modifier = Modifier.padding(start = 4.dp).size(17.dp))
                             Spacer(Modifier.width(8.dp))
                         }
                     }

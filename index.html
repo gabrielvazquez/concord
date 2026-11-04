@@ -1907,7 +1907,7 @@ function renderChannels(){
     b.onclick=e=>{ if(e.target.closest('.gear')){ e.stopPropagation(); openChannelOptions(c); return; } kind==='text'?openText(c):openVoice(c); closeDrawer(); };
     L.appendChild(b);
     if(users.length){ const w=document.createElement('div'); w.className='vusers';
-      w.innerHTML = users.map(u=>`<div class="vu${plateClass(S.profiles.get(u.uid))}" data-key="${esc(u.key)}" data-pu="${esc(u.uid||'')}">${avatarU(u.uid, 22, {name:u.name,color:u.color})}<span class="nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameHtml(u.uid, dname(u.uid,u.name))}</span><span class="flags">${u.screen?'<span class="live">AO VIVO</span>':''}${u.cam?`<span class="camon" title="Câmera ligada">${ic('cam','sm')}</span>`:''}${u.deaf?`<span class="muted" title="Não está ouvindo">${ic('head-off','sm')}</span>`:u.muted?`<span class="muted" title="Mutado">${ic('mic-off','sm')}</span>`:''}</span></div>`).join('');
+      w.innerHTML = users.map(u=>`<div class="vu${plateClass(S.profiles.get(u.uid))}" data-key="${esc(u.key)}" data-pu="${esc(u.uid||'')}">${avatarU(u.uid, 22, {name:u.name,color:u.color})}<span class="nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameHtml(u.uid, dname(u.uid,u.name))}</span><span class="flags">${u.screen?'<span class="live">AO VIVO</span>':''}${u.cam?`<span class="camon" title="Câmera ligada">${ic('cam','sm')}</span>`:''}${u.muted||u.deaf?`<span class="muted" title="Mutado">${ic('mic-off','sm')}</span>`:''}${u.deaf?`<span class="muted" title="Não está ouvindo">${ic('head-off','sm')}</span>`:''}</span></div>`).join('');
       L.appendChild(w); }
   };
   const sec = (key, title, chans, addKind) => {
@@ -2665,14 +2665,14 @@ function renderTiles(){
   if(!V) return;
   renderControls();
   const want=[];
-  want.push({key:'user:'+S.sid, sid:S.sid, uid:S.me.id, kind:'user', stream:V.cam, name:dname(S.me.id)+' (você)', color:S.me.color, local:true, muted:S.muted||S.deaf});
+  want.push({key:'user:'+S.sid, sid:S.sid, uid:S.me.id, kind:'user', stream:V.cam, name:dname(S.me.id)+' (você)', color:S.me.color, local:true, muted:S.muted||S.deaf, deaf:S.deaf});
   if(V.screen) want.push({key:'screen:'+S.sid, sid:S.sid, uid:S.me.id, kind:'screen', stream:V.screen, name:'Sua transmissão', color:S.me.color, local:true});
   for(const [id,p] of V.peers){
     const m=V.meta[id]||{}; if(m.tv) continue; const name=dname(m.uid, m.name||'…');
     const mic = m.micId && p.streams.get(m.micId);
     if(mic && p.audio.srcObject!==mic){ p.audio.srcObject=mic; applyPeerVolume(p); p.audio.play().catch(()=>toast('Clique em qualquer lugar para liberar o áudio')); addMeter(id, mic); }
     const cam = m.camId && p.streams.get(m.camId);
-    want.push({key:'user:'+id, sid:id, uid:m.uid, kind:'user', stream: cam && cam.getVideoTracks().length ? cam : null, name, color:m.color, muted:m.muted||m.deaf, state:p.pc.connectionState});
+    want.push({key:'user:'+id, sid:id, uid:m.uid, kind:'user', stream: cam && cam.getVideoTracks().length ? cam : null, name, color:m.color, muted:m.muted||m.deaf, deaf:!!m.deaf, state:p.pc.connectionState});
     const scr = m.screenId && p.streams.get(m.screenId);
     if(scr && scr.getVideoTracks().length){
       want.push({key:'screen:'+id, sid:id, uid:m.uid, kind:'screen', stream:scr, name:'Tela de '+name, color:m.color, cinema:m.screenMode==='cinema'});
@@ -2716,7 +2716,7 @@ function renderTiles(){
       if(fxEl.dataset.h!==fx){ fxEl.innerHTML=fx; fxEl.dataset.h=fx; }
     }
     el.querySelector('.label').dataset.pu = w.uid||''; el.querySelector('.nm').textContent = w.name;
-    const icn = w.kind==='screen' ? '<span class="live">AO VIVO</span>' : (w.muted?ic('mic-off','sm'):'');
+    const icn = w.kind==='screen' ? '<span class="live">AO VIVO</span>' : (w.muted?ic('mic-off','sm'):'')+(w.deaf?ic('head-off','sm'):'');
     const icEl=el.querySelector('.ic'); if(icEl.dataset.h!==icn){ icEl.innerHTML=icn; icEl.dataset.h=icn; }
     const conn=el.querySelector('.conn');
     if(!w.local && w.state && w.state!=='connected'){ conn.textContent = w.state==='failed'?'Falha na conexão — rede bloqueando?':w.state==='disconnected'?'Reconectando…':'Conectando…'; conn.classList.remove('hidden'); }
