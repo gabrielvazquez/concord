@@ -89,6 +89,13 @@ class Voice(private val c: Concord) {
     private var rt: RtChannel? = null
     private val peers = HashMap<String, Peer>()
     val meta = mutableStateMapOf<String, JSONObject>()        // chave -> estado publicado de cada um
+    private val live = HashMap<String, JSONObject>()           // mudanças rápidas (tela, câmera, mutar) que chegam por mensagem
+    private fun withLive(k: String, m: JSONObject): JSONObject {
+        val l = live[k] ?: return m
+        val o = JSONObject(m.toString())
+        for (f in listOf("muted", "deaf", "micId", "camId", "screenId", "screenMode")) if (l.has(f)) o.put(f, l.get(f))
+        return o
+    }
     val videos = mutableStateListOf<RemoteVideo>()
     val speaking = mutableStateMapOf<String, Boolean>()
     var channel by mutableStateOf<Channel?>(null); private set
@@ -145,6 +152,7 @@ class Voice(private val c: Concord) {
         val r = c.rt.channel("dc-voice-${ch.id}", c.sid)
         rt = r
         r.on("sig") { p -> if (p.optString("to") == c.sid) onSignal(p.optString("from"), p) }
+        r.on("meta") { p -> val k = p.optString("k"); if (k.isNotEmpty() && k != c.sid) { live[k] = p; meta[k]?.let { meta[k] = withLive(k, it) } } }
         r.onPresence = { onPresence() }
         r.onJoined = { r.track(myMeta()); state = "Voz conectada" }
         startStats()
@@ -174,6 +182,7 @@ class Voice(private val c: Concord) {
         val r = c.rt.channel("dc-voice-${ch.id}", c.sid)
         rt = r
         r.on("sig") { p -> if (p.optString("to") == c.sid) onSignal(p.optString("from"), p) }
+        r.on("meta") { p -> val k = p.optString("k"); if (k.isNotEmpty() && k != c.sid) { live[k] = p; meta[k]?.let { meta[k] = withLive(k, it) } } }
         r.onPresence = { onPresence() }
         r.onJoined = { r.track(myMeta()); c.trackServer(); beep(true); state = "Voz conectada"; c.onVoiceJoined(); c.syncVoiceObs() }
         startStats()
@@ -184,7 +193,7 @@ class Voice(private val c: Concord) {
         channel = null
         statsJob?.cancel()
         peers.values.forEach { try { it.pc.close() } catch (_: Exception) {} }
-        peers.clear(); videos.clear(); speaking.clear(); meta.clear(); senders.clear()
+        peers.clear(); videos.clear(); speaking.clear(); meta.clear(); senders.clear(); live.clear()
         stopCam(); stopScreen()
         try { rt?.untrack() } catch (_: Exception) {}
         rt?.leave(); rt = null
@@ -233,7 +242,8 @@ class Voice(private val c: Concord) {
             now.remove(k); closePeer(k)
         }
         meta.keys.toList().forEach { if (!now.containsKey(it)) meta.remove(it) }
-        now.forEach { (k, v) -> if (k != c.sid) meta[k] = v }
+        live.keys.retainAll(now.keys)
+        now.forEach { (k, v) -> if (k != c.sid) meta[k] = withLive(k, v) }
         for (k in now.keys) if (k != c.sid && !peers.containsKey(k)) { createPeer(k); if (!viewer && now[k]?.optBoolean("tv") != true) beep(true) }
         for (k in peers.keys.toList()) if (!now.containsKey(k)) { val wasTv = meta[k]?.optBoolean("tv") == true; closePeer(k); if (!viewer && !wasTv) beep(false) }
     }

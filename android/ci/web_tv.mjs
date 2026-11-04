@@ -12,9 +12,6 @@ await p.fill('#fLogin [name=email]', 'web.teste@concord.app'); await p.fill('#fL
 await p.waitForSelector('#chanlist .ch', { timeout: 40000 });
 await p.click('#chanlist .ch:has-text("Sala de Jogo")');
 await p.waitForTimeout(4000);
-// "transmissão" simulada com a câmera falsa
-await p.evaluate(async () => { const s = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } }); V.screen = s; V.screenQ = 'cinema'; addStream(s, 'screen'); afterToggle(); V.rt.track(myVoiceMeta()); });
-log('transmitindo (simulado)');
 // página de TV do site
 const tv = await ctx.newPage();
 tv.on('pageerror', e => log('tv pageerror', e.message));
@@ -31,10 +28,16 @@ let andCode = null;
 for (let i = 0; i < 90 && !andCode; i++) { try { andCode = fs.readFileSync('/tmp/tvcode.txt', 'utf8').trim(); } catch {} if (!andCode) await p.waitForTimeout(2000); }
 log('código da TV (Android):', andCode);
 if (andCode) log('parear TV do Android:', await pair(andCode));
+await p.waitForTimeout(8000);
+// começa a transmitir DEPOIS que as TVs entraram (como na vida real): a TV tem que entender que é tela, não câmera
+await p.evaluate(async () => { const s = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } }); V.screen = s; V.screenQ = 'cinema'; addStream(s, 'screen'); afterToggle(); });
+log('transmitindo (simulado, depois do pareamento)');
 for (let i = 0; i < 25; i++) {
   await p.waitForTimeout(3000);
   const a = await p.evaluate(() => ({ tvs: myTvs().length, peers: [...V.peers.values()].map(x => (V.meta[x.id]?.name || '?') + ':' + x.pc.connectionState), tiles: V.tiles.size }));
-  const t = await tv.evaluate(() => ({ room: !!TV.room, peers: [...TV.peers.values()].map(x => x.pc.connectionState), w: document.querySelector('#main').videoWidth }));
+  const t = await tv.evaluate(() => ({ room: !!TV.room, peers: [...TV.peers.values()].map(x => x.pc.connectionState), w: document.querySelector('#main').videoWidth, telaCheia: document.querySelector('#main').style.display !== 'none' && !!document.querySelector('#main').srcObject }));
+  const codecs = await p.evaluate(async () => { const o = []; for (const x of V.peers.values()) { const r = await x.pc.getStats(); const cs = {}; r.forEach(z => { if (z.type === 'codec') cs[z.id] = z.mimeType; }); r.forEach(z => { if (z.type === 'outbound-rtp' && z.kind === 'video') o.push((V.meta[x.id]?.name || '?') + ':' + cs[z.codecId] + ' ' + z.frameWidth + 'x' + z.frameHeight); }); } return o; });
+  log('codecs enviados', JSON.stringify(codecs));
   log('site', JSON.stringify(a), '| tv-site', JSON.stringify(t));
 }
 await tv.screenshot({ path: 'tv-site.png' });
