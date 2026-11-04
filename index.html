@@ -750,6 +750,8 @@ button.rchip{cursor:pointer}
 .tprev{height:58px;border-radius:9px;display:flex;gap:4px;padding:5px;overflow:hidden}
 .tprev i{display:block;border-radius:5px}
 .tprev i:first-child{width:28%}
+.tcard>span{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.tdel{color:var(--tx3);display:grid;place-items:center;border-radius:6px;padding:1px}.tdel:hover{color:var(--red)}
 .tprev i:last-child{flex:1;display:flex;flex-direction:column;gap:4px;padding:5px}
 .tprev b{display:block;height:10px;border-radius:4px}
 .tprev b:last-child{width:45%}
@@ -1165,9 +1167,67 @@ function themeFromBase(hex){
   const mix=(k)=>'#'+[r,g,b].map(v=>Math.min(255,Math.round(v+(255-v)*k))).map(v=>v.toString(16).padStart(2,'0')).join('');
   return { bg:sh(.45), panel:sh(.8), side:sh(.72), main:sh(.62), card:hex, card2:mix(.05), line:mix(.08), line2:mix(.14) };
 }
+async function loadStoreThemes(){
+  const { data } = await sb.from('dc_themes').select('*').order('created_at', { ascending:false }).limit(60);
+  S.storeThemes = (data||[]).filter(r=>r.data?.base).map(r=>({ id:r.id, name:r.name, author:r.author, mode:r.data.mode==='light'?'light':'dark', base:r.data.base, accent:r.data.accent||'#6366f1' }));
+  if(!$('#settings').classList.contains('hidden') && SET.sec==='aparencia') renderSettings();
+}
+/* ---------- Loja de temas (app de PC): cada tema é só { modo, cor base, destaque } ---------- */
+function lightFromBase(hex){
+  const n=parseInt(hex.slice(1),16); const r=n>>16&255, g=n>>8&255, b=n&255;
+  const mix=k=>'#'+[r,g,b].map(v=>Math.round(v+(255-v)*k)).map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+  return { bg:mix(.80), panel:mix(.95), side:mix(.91), main:mix(.97), card:mix(.88), card2:mix(.83), line:mix(.76), line2:mix(.66) };
+}
+const themePalette = t => t.mode==='light' ? lightFromBase(t.base) : themeFromBase(t.base);
+const STORE_THEMES = [
+  { id:'areia',   name:'Areia',   mode:'light', base:'#c8a97e', accent:'#b45309' },
+  { id:'nevoa',   name:'Névoa',   mode:'light', base:'#8aa1b8', accent:'#2563eb' },
+  { id:'lavanda', name:'Lavanda', mode:'light', base:'#b9a3f5', accent:'#7c3aed' },
+  { id:'menta',   name:'Menta',   mode:'light', base:'#8fdcbc', accent:'#047857' },
+  { id:'pessego', name:'Pêssego', mode:'light', base:'#f8b98a', accent:'#c2410c' },
+];
+function installTheme(t){
+  setPref('appTheme', 'store:'+t.id); setPref('storeTheme', { id:t.id, name:t.name, mode:t.mode, base:t.base, accent:t.accent });
+  setPref('mode', t.mode); setPref('accent', t.accent); applyAppearance();
+}
+function themeCard(t, on, del){
+  const pl=themePalette(t);
+  return `<div class="tcard ${on?'on':''}" data-store="${esc(t.id)}"><div class="tprev" style="background:${pl.bg}"><i style="background:${pl.side}"></i><i style="background:${pl.main}"><b style="background:${pl.card}"></b><b style="background:${t.accent}"></b></i></div><span>${esc(t.name)}${del?`<button class="tdel" data-tdel="${esc(t.id)}" title="Tirar da loja">${ic('x','sm')}</button>`:''}</span></div>`;
+}
+function openPublishTheme(){
+  const cur=P(); const st=cur.storeTheme;
+  const D={ name:'', mode: cur.mode==='light'?'light':'dark', base: st?.base || cur.themeBase || '#3b3f5c', accent: /^#[0-9a-f]{6}$/i.test(cur.accent||'') && cur.accent!=='#ffffff' ? cur.accent : '#6366f1' };
+  const m=modal(`<h3>Publicar um tema</h3><p class="sub">Escolha as cores. Ele aparece na loja para todo mundo do CONCORD instalar.</p>
+    <div id="ptPrev" style="margin:10px 0"></div>
+    <label class="field"><span>Nome</span><input class="inp" id="ptName" maxlength="24" placeholder="Meu tema"></label>
+    <div class="seg" id="ptMode" style="margin-bottom:12px"><button data-m="dark">Escuro</button><button data-m="light">Claro</button></div>
+    <div class="colorrow" style="margin-bottom:14px"><span style="font-size:13px;color:var(--tx2)">Cor base</span><label class="cpick" id="ptBaseL"><input type="color" id="ptBase"></label>
+      <span style="font-size:13px;color:var(--tx2);margin-left:10px">Destaque</span><label class="cpick" id="ptAccL"><input type="color" id="ptAcc"></label></div>
+    <div class="row"><button class="btn sec" data-try>Só usar</button><button class="btn" data-pub>Publicar</button></div>`);
+  const draw=()=>{ m.querySelector('#ptPrev').innerHTML=`<div class="themegrid" style="grid-template-columns:1fr">${themeCard({ ...D, id:'prev', name:D.name||'Prévia' }, false)}</div>`;
+    m.querySelectorAll('#ptMode button').forEach(b=>b.classList.toggle('on', b.dataset.m===D.mode));
+    m.querySelector('#ptBaseL').style.background=D.base; m.querySelector('#ptAccL').style.background=D.accent; };
+  m.querySelector('#ptBase').value=D.base; m.querySelector('#ptAcc').value=D.accent;
+  m.querySelector('#ptName').oninput=e=>{ D.name=e.target.value.trim(); draw(); };
+  m.querySelector('#ptBase').oninput=e=>{ D.base=e.target.value; draw(); };
+  m.querySelector('#ptAcc').oninput=e=>{ D.accent=e.target.value; draw(); };
+  m.querySelectorAll('#ptMode button').forEach(b=>b.onclick=()=>{ D.mode=b.dataset.m; draw(); });
+  m.querySelector('[data-try]').onclick=()=>{ installTheme({ ...D, id:'meu', name:D.name||'Meu tema' }); closeModal(); renderSettings(); };
+  m.querySelector('[data-pub]').onclick=async e=>{
+    if(D.name.length<2) return toast('Dê um nome ao tema.', true);
+    busy(e.target,true);
+    const { data, error } = await sb.from('dc_themes').insert({ name:D.name, data:{ mode:D.mode, base:D.base, accent:D.accent } }).select().single();
+    busy(e.target,false);
+    if(error) return toast('Não foi possível publicar: '+error.message, true);
+    S.storeThemes=null; installTheme({ ...D, id:data.id }); closeModal(); renderSettings(); toast('Tema publicado na loja!');
+  };
+  draw();
+}
+
 function applyAppearance(){
   const isApp = !!window.concordDesktop;
-  const light = PREFS.mode==='light';
+  const ST = isApp && String(PREFS.appTheme||'').startsWith('store:') && PREFS.storeTheme?.base ? PREFS.storeTheme : null;
+  const light = ST ? ST.mode==='light' : PREFS.mode==='light';
   let c = isApp && /^#[0-9a-f]{6}$/i.test(PREFS.accent||'') ? PREFS.accent : '#ffffff';
   if(light && c.toLowerCase()==='#ffffff') c='#0a0a0b';
   document.body.classList.toggle('light', light);
@@ -1176,7 +1236,8 @@ function applyAppearance(){
   const root=document.documentElement.style; root.setProperty('--ac', c);
   const T = isApp ? (PREFS.appTheme==='custom' && /^#[0-9a-f]{6}$/i.test(PREFS.themeBase||'') ? themeFromBase(PREFS.themeBase) : (APP_THEMES[PREFS.appTheme]||APP_THEMES.oled)) : APP_THEMES.oled;
   const L = { bg:'#ececef', panel:'#ffffff', side:'#f7f7f8', main:'#ffffff', card:'#f1f1f3', card2:'#e8e8eb', line:'#e2e2e6', line2:'#d1d1d6' };
-  for(const k of ['bg','panel','side','main','card','card2','line','line2']) root.setProperty('--'+k, light ? L[k] : T[k]);
+  const SP = ST ? themePalette(ST) : null;
+  for(const k of ['bg','panel','side','main','card','card2','line','line2']) root.setProperty('--'+k, SP ? SP[k] : light ? L[k] : T[k]);
   for(const [k,v] of Object.entries(light ? { tx:'#0a0a0b', tx2:'#4b4b53', tx3:'#7c7c85', white:'#0a0a0b' } : { tx:'#fafafa', tx2:'#a1a1aa', tx3:'#63636b', white:'#fff' })) root.setProperty('--'+k, v);
   document.body.classList.toggle('bg-glow', isApp && !!PREFS.bgGlow); root.setProperty('--act', lum>0.6?'#000000':'#ffffff'); document.body.style.zoom = String(isApp ? (PREFS.fontScale||1) : 1);
   document.body.classList.toggle('compact', !!PREFS.compact); document.body.classList.toggle('reduce', !!PREFS.reduce);
@@ -2945,6 +3006,9 @@ async function renderSettings(){
     const ACS=['#ffffff','#a78bfa','#818cf8','#60a5fa','#22d3ee','#34d399','#a3e635','#fbbf24','#fb923c','#f87171','#f472b6','#e879f9'];
     const curT = P().appTheme||'oled';
     body.innerHTML = `<h2>Aparência</h2>
+      <div class="sc"><h3>Loja de temas</h3><p>Instale com um clique. Criou um tema bonito? Publique para os amigos.</p>
+        <div class="themegrid" id="storeGrid">${[...STORE_THEMES, ...(S.storeThemes||[])].map(t=>themeCard(t, P().appTheme==='store:'+t.id, t.author && (t.author===S.me.id || S.isAdmin))).join('')}</div>
+        <div class="row" style="margin:12px 0 0;justify-content:flex-start"><button class="btn sec auto" id="pubTheme">${ic('plus','sm')} Publicar um tema</button></div></div>
       <div class="sc"><h3>Modo</h3><p>Claro ou escuro. O logo acompanha.</p><div class="seg" id="modeSeg"><button data-mode="dark" class="${P().mode!=='light'?'on':''}">Escuro</button><button data-mode="light" class="${P().mode==='light'?'on':''}">Claro</button></div></div>
       <div class="sc"><h3>Tema</h3><p>${P().mode==='light'?'Os temas valem para o modo escuro.':''}</p>
         <div class="themegrid">${Object.entries(APP_THEMES).map(([k,t])=>`<button class="tcard ${curT===k?'on':''}" data-theme-app="${k}"><div class="tprev" style="background:${t.bg}"><i style="background:${t.side}"></i><i style="background:${t.main}"><b style="background:${t.card}"></b><b style="background:var(--ac)"></b></i></div><span>${t.label}</span></button>`).join('')}
@@ -2962,9 +3026,14 @@ async function renderSettings(){
         ${sw('reduce','Reduzir animações','Para tudo que se mexe. Bom para PC fraco ou para quem enjoa com movimento.')}</div>`;
     body.querySelectorAll('[data-ac]').forEach(b=>b.onclick=()=>{ setPref('accent', b.dataset.ac); applyAppearance(); renderSettings(); });
     body.querySelectorAll('[data-theme-app]').forEach(b=>b.onclick=()=>{ setPref('appTheme', b.dataset.themeApp); if(P().mode==='light') setPref('mode','dark'); applyAppearance(); renderSettings(); });
-    body.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ setPref('mode', b.dataset.mode); applyAppearance(); renderSettings(); });
+    body.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ setPref('mode', b.dataset.mode); if(String(P().appTheme||'').startsWith('store:')) setPref('appTheme','oled'); applyAppearance(); renderSettings(); });
     $('#tbPick')?.addEventListener('input', e=>{ setPref('themeBase', e.target.value); e.target.parentElement.style.background=e.target.value; applyAppearance(); });
     $('#bgGlow').onchange=e=>{ setPref('bgGlow', e.target.checked); applyAppearance(); };
+    $('#pubTheme').onclick=openPublishTheme;
+    body.querySelectorAll('[data-store]').forEach(el=>el.onclick=e=>{ if(e.target.closest('[data-tdel]')) return; const t=[...STORE_THEMES, ...(S.storeThemes||[])].find(x=>x.id===el.dataset.store); if(t){ installTheme(t); renderSettings(); toast('Tema '+t.name+' instalado.'); } });
+    body.querySelectorAll('[data-tdel]').forEach(b=>b.onclick=async e=>{ e.stopPropagation(); if(!confirm('Tirar este tema da loja?')) return;
+      const { error } = await sb.from('dc_themes').delete().eq('id', b.dataset.tdel); if(error) return toast('Erro: '+error.message, true); S.storeThemes=null; loadStoreThemes(); });
+    if(!S.storeThemes) loadStoreThemes();
     $('#acPick').oninput=e=>{ setPref('accent', e.target.value); applyAppearance(); };
     { const cur = P().layout || (DESK?'flat':'cards'); const g=body.querySelector('[data-seg=layout]'); g.querySelectorAll('button').forEach(b=>{ b.classList.toggle('on', b.dataset.v===cur); b.onclick=()=>{ setPref('layout', b.dataset.v); applyAppearance(); g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); }; }); }
     body.querySelector('[data-seg=fontScale]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('fontScale', +b.dataset.v); applyAppearance(); b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });

@@ -40,4 +40,22 @@ console.log('aceitar:', await p2.evaluate(async () => { const f = frPendingIn()[
 await p.waitForTimeout(2500);
 console.log('quem pediu vê:', await p.evaluate(id => frState(id), andId));
 await p.evaluate(async id => { await frRespond(id, false); }, andId);
+// loja de temas (simula o app de PC)
+const dctx = await b.newContext({ viewport: { width: 1440, height: 860 } });
+await dctx.addInitScript(() => { const mk = () => new Proxy(function () { return Promise.resolve(null); }, { get: (t, k) => (k === 'then' ? undefined : mk()), apply: () => Promise.resolve(null) }); window.concordDesktop = mk(); });
+const d = await dctx.newPage(); d.on('pageerror', e => console.log('pageerror pc', e.message));
+await d.goto('https://gabrielvazquez.github.io/concord/?t=' + Date.now());
+await d.waitForSelector('#fLogin', { timeout: 30000 });
+await d.fill('#fLogin [name=email]', 'web.teste@concord.app'); await d.fill('#fLogin [name=pass]', 'TesteWeb2026'); await d.click('#fLogin button[type=submit]');
+await d.waitForSelector('#chanlist .ch', { timeout: 40000 }); await d.waitForTimeout(1500);
+console.log('publicar:', await d.evaluate(async () => { const r = await sb.from('dc_themes').insert({ name: 'Teste CI', data: { mode: 'dark', base: '#1e3a5f', accent: '#38bdf8' } }).select().single(); return r.error?.message || 'ok'; }));
+await d.evaluate(() => { openSettings ? openSettings('aparencia') : null; }).catch(() => {});
+await d.evaluate(() => { SET.sec = 'aparencia'; $('#settings').classList.remove('hidden'); renderSettings(); });
+await d.waitForTimeout(2500);
+console.log('loja:', await d.evaluate(() => [...document.querySelectorAll('#storeGrid .tcard span')].map(x => x.textContent)));
+await d.screenshot({ path: 'ui-loja.png' });
+await d.click('[data-store="lavanda"]'); await d.waitForTimeout(800);
+await d.evaluate(() => { $('#settings').classList.add('hidden'); }); await d.click('#chanlist .ch:has-text("geral")'); await d.waitForTimeout(1500);
+await d.screenshot({ path: 'ui-tema-lavanda.png' });
+console.log('apagar:', await d.evaluate(async () => { const { data } = await sb.from('dc_themes').select('id').eq('name', 'Teste CI'); for (const r of data || []) await sb.from('dc_themes').delete().eq('id', r.id); setPref('appTheme', 'oled'); setPref('mode', 'dark'); setPref('accent', '#ffffff'); return (data || []).length; }));
 await b.close();
