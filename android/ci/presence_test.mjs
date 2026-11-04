@@ -15,7 +15,7 @@ const o = await login('android.teste@concord.app', 'TesteAndroid2026');
 const seen = () => o.evaluate(() => { const ch = S.channels.find(c => c.name === 'Sala de Jogo'); return voiceUsers(ch.id).map(u => dname(u.uid) + (u.deaf ? '[sem som]' : u.muted ? '[mutado]' : '')); });
 for (let round = 1; round <= 3; round++) {
   await a.click('#chanlist .ch:has-text("Sala de Jogo")'); await a.waitForTimeout(5000);
-  log(`rodada ${round} entrou →`, await seen());
+  log(`rodada ${round} entrou →`, await seen(), '| quem entrou:', await a.evaluate(() => ({ V: !!V, rt: V?.rt?.state, srv: S.srvRt?.state, minha: (() => { const ch = S.channels.find(c => c.name === 'Sala de Jogo'); return voiceUsers(ch.id).map(u => u.uid === S.me.id); })(), pres: Object.values(S.srvPresence).flat().map(m => m.name + ':' + (m.voice ? 'voz' : '-')) })), '| observador:', await o.evaluate(() => ({ srv: S.srvRt?.state, pres: Object.values(S.srvPresence).flat().map(m => m.name + ':' + (m.voice ? 'voz' : '-')) })));
   for (let i = 0; i < 12; i++) { await a.evaluate(() => setMuted(!S.muted)); await a.waitForTimeout(120); }
   await a.evaluate(() => { setMuted(true); setDeaf(true); }); await a.waitForTimeout(4000);
   log(`rodada ${round} mutou e tirou o som →`, await seen());
