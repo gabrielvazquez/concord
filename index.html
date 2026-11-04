@@ -134,7 +134,13 @@ a.btn{text-decoration:none}
 .ch .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vusers{padding:0 0 6px 18px;margin-left:8px;border-left:1px solid var(--line)}
 .vu{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:9px;font-size:13px;color:var(--tx2)}
-.vu .av{width:22px;height:22px;font-size:10px}
+.vu .av{width:26px;height:26px;font-size:11px;box-shadow:0 0 0 2px var(--line2)}
+.vu{color:var(--tx)}
+.vu .av.speaking{box-shadow:0 0 0 2.5px var(--green)!important}
+.vu .flags .i{width:17px;height:17px;stroke-width:2.2}
+.vu .flags>span{display:grid;place-items:center}
+.vu .flags .muted{color:var(--red)}
+.vu .flags .camon{color:var(--tx)}
 .vu .flags{margin-left:auto;display:flex;gap:5px;align-items:center;color:var(--tx3)}
 
 #voicecard{margin:0 10px 10px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
@@ -206,7 +212,7 @@ a.btn{text-decoration:none}
 #tiles.focus .tile.big{grid-column:1/-1;aspect-ratio:auto;height:min(62vh,calc(100vh - 340px))}
 #tiles.focus .tile:not(.big){aspect-ratio:16/9}
 .tile{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;aspect-ratio:16/9;display:grid;place-items:center;cursor:pointer;transition:box-shadow .12s}
-.tile.speaking{box-shadow:0 0 0 2px #fff}
+.tile.speaking{box-shadow:0 0 0 3px var(--green)}
 .tile video{width:100%;height:100%;object-fit:contain;background:#000;position:absolute;inset:0}
 .tile.cam video{object-fit:cover}
 .tile.mirror video{transform:scaleX(-1)}
@@ -928,7 +934,7 @@ body.light .set-close kbd{background:#fff;color:#0a0a0b}
 body.light .menu button:hover{background:#0a0a0b;color:#fff}
 body.light .sw.on,body.light .fontgrid button.on,body.light .radio label:has(input:checked){outline-color:#0a0a0b;border-color:#0a0a0b}
 body.light .opt:has(input:checked) .dot{border-color:#0a0a0b}
-body.light .tile.speaking{box-shadow:0 0 0 2px #0a0a0b}
+body.light .tile.speaking{box-shadow:0 0 0 3px var(--green)}
 body.light .av.speaking{box-shadow:0 0 0 2px var(--panel),0 0 0 3.5px #0a0a0b}
 body.light .bars i,body.light .dmrow .ub{background:#0a0a0b}
 body.light .slider,body.light .tile .tools input[type=range]{accent-color:#0a0a0b}
@@ -1676,7 +1682,9 @@ async function start(){
   const qtv = new URLSearchParams(location.search).get('tv');
   if(qtv){ history.replaceState(null, '', location.pathname+location.hash); if(/^\d{6}$/.test(qtv)) setTimeout(()=>tvFromQr(qtv), 1500); }
   await loadServers();
-  loadDms().then(startDmRealtime); loadFriends(); syncActivity(); tvLinkCode().catch(()=>{});
+  loadDms().then(startDmRealtime); loadFriends();
+  // reenvia a presença de tempos em tempos: se a conexão caiu e voltou, ninguém some da lista
+  if(!S.presT) S.presT=setInterval(()=>{ if(!document.hidden || V) trackServerPresence(); }, 30000); syncActivity(); tvLinkCode().catch(()=>{});
   let joinedNew=null;
   if(/^[A-Z0-9-]{3,24}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
   if(hashCode) history.replaceState(null, '', location.pathname+location.search);
@@ -1815,7 +1823,17 @@ function onlineList(){
   }
   return out;
 }
-function voiceUsers(chId){ return onlineList().filter(p=>p.voice===chId); }
+// quem está na sala: presença do servidor + a própria sala de voz (quando estou nela), para ninguém sumir da lista
+function voiceUsers(chId){
+  const list=onlineList().filter(p=>p.voice===chId);
+  if(V && V.ch.id===chId && !V.ch.dm){
+    const have=new Set(list.map(u=>u.uid));
+    if(!have.has(S.me.id)){ have.add(S.me.id); list.push({ key:S.sid, uid:S.me.id, name:dname(S.me.id), color:S.me.color, voice:chId, muted:S.muted, deaf:S.deaf, cam:!!V.cam, screen:!!V.screen }); }
+    for(const [k,m] of Object.entries(V.meta)){ if(!m || m.tv || !m.uid || have.has(m.uid)) continue; have.add(m.uid);
+      list.push({ key:k, uid:m.uid, name:m.name, color:m.color, voice:chId, muted:!!m.muted, deaf:!!m.deaf, cam:!!m.camId, screen:!!m.screenId }); }
+  }
+  return list;
+}
 function renderChannels(){
   if(S.home) return renderDmSide();
   const L = $('#chanlist'); L.innerHTML=''; const edit=canEditServer(); const coll=new Set(ls.get('dc_fold', []));
@@ -1828,7 +1846,7 @@ function renderChannels(){
     b.onclick=e=>{ if(e.target.closest('.gear')){ e.stopPropagation(); openChannelOptions(c); return; } kind==='text'?openText(c):openVoice(c); closeDrawer(); };
     L.appendChild(b);
     if(users.length){ const w=document.createElement('div'); w.className='vusers';
-      w.innerHTML = users.map(u=>`<div class="vu${plateClass(S.profiles.get(u.uid))}" data-key="${esc(u.key)}" data-pu="${esc(u.uid||'')}">${avatarU(u.uid, 22, {name:u.name,color:u.color})}<span class="nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameHtml(u.uid, dname(u.uid,u.name))}</span><span class="flags">${u.screen?'<span class="live">AO VIVO</span>':''}${u.cam?ic('cam','sm'):''}${u.deaf?ic('head-off','sm'):u.muted?ic('mic-off','sm'):''}</span></div>`).join('');
+      w.innerHTML = users.map(u=>`<div class="vu${plateClass(S.profiles.get(u.uid))}" data-key="${esc(u.key)}" data-pu="${esc(u.uid||'')}">${avatarU(u.uid, 22, {name:u.name,color:u.color})}<span class="nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameHtml(u.uid, dname(u.uid,u.name))}</span><span class="flags">${u.screen?'<span class="live">AO VIVO</span>':''}${u.cam?`<span class="camon" title="Câmera ligada">${ic('cam','sm')}</span>`:''}${u.deaf?`<span class="muted" title="Não está ouvindo">${ic('head-off','sm')}</span>`:u.muted?`<span class="muted" title="Mutado">${ic('mic-off','sm')}</span>`:''}</span></div>`).join('');
       L.appendChild(w); }
   };
   const sec = (key, title, chans, addKind) => {
@@ -2176,7 +2194,7 @@ function onVoicePresence(){
     delete V.meta[k]; if(V.peers.has(k)) closePeer(k); }
   let changed=false;
   for(const k of Object.keys(V.meta)) if(k!==S.sid && !V.peers.has(k)) { createPeer(k); if(!V.meta[k]?.tv) playJoinSound(S.profiles.get(V.meta[k]?.uid)?.join_sound); changed=true; }
-  renderTvBtn();
+  renderTvBtn(); if(!S.home) renderChannels();
   for(const k of [...V.peers.keys()]) if(!V.meta[k]) { closePeer(k); beep(false); changed=true; }
   if(changed) V.peers.forEach(p=>tuneSenders(p.pc));   // redistribui o upload entre os espectadores
   renderTiles();

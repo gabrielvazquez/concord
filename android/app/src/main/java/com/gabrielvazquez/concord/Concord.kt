@@ -144,11 +144,13 @@ class Concord(val app: Application) {
         rt.connect()
         startPersonalChannels()
         loadTvLink()
+        presenceJob?.cancel(); presenceJob = scope.launch { while (true) { delay(30_000); if (meId != null) trackServer() } }
         loadServers()
         loadDms()
     }
 
     fun logout() = scope.launch {
+        presenceJob?.cancel(); presenceJob = null
         voice.leave()
         rt.disconnect()
         srvRt = null; msgRt = null; dmRt = null; userRt = null; tvLinkRt = null; tvLink = null
@@ -301,7 +303,20 @@ class Concord(val app: Application) {
         voice.onServerPresence()
     }
 
-    fun voiceUsers(chId: String) = online.filter { it.voice == chId }
+    /** quem está na sala: presença do servidor + a própria sala de voz (quando estou nela), para ninguém sumir da lista */
+    fun voiceUsers(chId: String): List<Online> {
+        val list = online.filter { it.voice == chId }.toMutableList()
+        if (voice.channel?.id == chId && !voice.viewer) {
+            val have = list.map { it.uid }.toMutableSet()
+            voice.meta.forEach { (k, m) ->
+                val u = m.optString("uid"); if (m.optBoolean("tv") || u.isEmpty() || !have.add(u)) return@forEach
+                list.add(Online(k, u, m.optString("name"), m.optString("color", "#6366f1"), chId, m.optBoolean("muted"), m.optBoolean("deaf"),
+                    m.optString("camId").let { it.isNotEmpty() && it != "null" }, m.optString("screenId").let { it.isNotEmpty() && it != "null" }, "online", null, 0L, 0L, false))
+            }
+        }
+        return list
+    }
+    private var presenceJob: kotlinx.coroutines.Job? = null
 
     fun statusOf(uid: String?): String {
         if (uid == null) return "offline"
