@@ -50,9 +50,20 @@ class RtChannel internal constructor(
         rt.push(topic, "broadcast", JSONObject().put("type", "broadcast").put("event", event).put("payload", payload), joinRef)
     }
 
+    // presença com freio: o servidor corta quem manda presença demais e a lista da sala fica errada; no máximo 1 a cada 2 s
+    private var lastPush = 0L
+    private var pendingPush = false
+    private val tick = Handler(Looper.getMainLooper())
     fun track(state: JSONObject) {
         lastTrack = state
-        if (joined) rt.push(topic, "presence", JSONObject().put("type", "presence").put("event", "track").put("payload", state), joinRef)
+        if (!joined) return
+        val wait = 2000 - (System.currentTimeMillis() - lastPush)
+        if (wait <= 0 && !pendingPush) pushTrack()
+        else if (!pendingPush) { pendingPush = true; tick.postDelayed({ pendingPush = false; if (joined && lastTrack != null) pushTrack() }, maxOf(wait, 50)) }
+    }
+    private fun pushTrack() {
+        lastPush = System.currentTimeMillis()
+        rt.push(topic, "presence", JSONObject().put("type", "presence").put("event", "track").put("payload", lastTrack), joinRef)
     }
 
     fun untrack() {

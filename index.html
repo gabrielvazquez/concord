@@ -1835,12 +1835,21 @@ async function selectServer(s){
   const first = S.channels.find(c=>c.kind==='text');
   if(first) openText(first); else S.view=null;
 }
+/* presença com freio: o Supabase corta quem manda presença demais (ClientPresenceRateLimitReached),
+   e aí a lista fica errada (gente que saiu continua, gente que entrou não aparece). Junta as mudanças e manda no máximo 1 a cada 2 s por canal. */
+const TRK=new WeakMap();
+function ptrack(ch, meta){
+  if(!ch) return; let s=TRK.get(ch); if(!s){ s={ last:0, t:null, meta:null }; TRK.set(ch, s); }
+  s.meta=meta; const send=()=>{ s.last=Date.now(); try{ const r=ch.track(s.meta); r?.catch?.(()=>{}); }catch{} };
+  const wait=2000-(Date.now()-s.last);
+  if(wait<=0 && !s.t) send(); else if(!s.t) s.t=setTimeout(()=>{ s.t=null; send(); }, Math.max(wait, 50));
+}
 function trackServerPresence(){
   if(!S.me) return;
   const p=S.profiles.get(S.me.id)||{};
   const st=myStatus(); const meta={ uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, voice:V?.ch.id||null, muted:S.muted, deaf:S.deaf, cam:!!V?.cam, screen:!!V?.screen, since:S.since, inv:st==='invisible', st, act: st==='invisible' ? null : activityOf(S.me.id), ts:Date.now() };
-  try{ S.srvRt?.track(meta); }catch{}
-  try{ if(S.voiceSrvRt && S.voiceSrvRt!==S.srvRt) S.voiceSrvRt.track(meta); }catch{}
+  ptrack(S.srvRt, meta);
+  if(S.voiceSrvRt && S.voiceSrvRt!==S.srvRt) ptrack(S.voiceSrvRt, meta);
 }
 async function loadChannels(){
   const { data, error } = await sb.from('dc_channels').select('*').eq('server_id', S.server.id).order('position').order('created_at');
@@ -2237,7 +2246,7 @@ async function joinVoice(ch){
     .on('presence', {event:'sync'}, onVoicePresence)
     .subscribe(st=>{
       if(V!==me) return;
-      if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} V.rt.track(myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join');
+      if(st==='SUBSCRIBED'){ try{ AND?.callStart(andCallTitle(), !micLive()); }catch{} ptrack(V.rt, myVoiceMeta()); trackServerPresence(); renderMe(); renderMembers(); playJoinSound(S.profiles.get(S.me.id)?.join_sound, 'join');
         if(!ch.dm) tvLinkAnnounce();
         if(PENDING_TV && !ch.dm){ const p=PENDING_TV; PENDING_TV=null; if(Date.now()-p.at<15*60e3) setTimeout(()=>{ if(V===me) tvConnect(p.code); }, 800); } }
       if(st==='CHANNEL_ERROR' || st==='TIMED_OUT') toast('Falha na conexão com a sala de voz. Tente de novo.', true);
@@ -2408,7 +2417,7 @@ function setDeaf(d, silent){ if(!silent && d!==S.deaf) sfx(d?'deaf':'undeaf'); S
   if(V){ for(const p of V.peers.values()) p.audio.muted=d; document.querySelectorAll('#tiles .tile[data-kind=screen] video').forEach(v=>{ if(!v.dataset.local) v.muted=d; });
     updateMicEnabled(); }
   if(!silent) afterToggle(); }
-function afterToggle(){ try{ if(V) AND?.callUpdate(andCallTitle(), !micLive()); }catch{} renderMe(); renderControls(); if(V) V.rt?.track(myVoiceMeta()); trackServerPresence(); renderTiles(); }
+function afterToggle(){ try{ if(V) AND?.callUpdate(andCallTitle(), !micLive()); }catch{} renderMe(); renderControls(); if(V) ptrack(V.rt, myVoiceMeta()); trackServerPresence(); renderTiles(); }
 function camConstraints(){ const p=P(), C=CAM_Q[p.camRes]||CAM_Q['720'];
   return { width:{ideal:C.w}, height:{ideal:C.h}, frameRate:{ideal:p.camFps, max:p.camFps}, deviceId: p.camId?{ideal:p.camId}:undefined }; }
 async function toggleCam(){
@@ -3272,7 +3281,7 @@ ${true?`    <div class="sc"><h3>${ic('img','sm')} Avatares prontos</h3><p></p>
     busy(btn,false);
     S.profiles.set(S.me.id, data); fxCache.clear(); SET.draft=null;
     S.srvRt?.send({type:'broadcast', event:'profile', payload:data});
-    renderMe(); trackServerPresence(); if(V){ V.rt.track(myVoiceMeta()); renderTiles(); } renderMembers(); renderChannels();
+    renderMe(); trackServerPresence(); if(V){ ptrack(V.rt, myVoiceMeta()); renderTiles(); } renderMembers(); renderChannels();
     renderProfileEditor(body); toast('Perfil salvo!');
   };
 }
