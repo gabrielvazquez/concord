@@ -907,6 +907,19 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
 @media (min-width: 761px){ #scrim{display:none!important} }
 body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fixed;inset:0;z-index:29;background:#0008}
 .sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
+/* ===== amigos ===== */
+.frwrap{max-width:720px;margin:18px auto;padding:0 18px;display:flex;flex-direction:column;gap:12px}
+.frwrap .sc h3{margin-bottom:4px}
+.frwrap #frSearch{margin-top:10px}
+#frResults{margin-top:8px}
+.frrow{display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px}
+.frrow:hover{background:var(--card2)}
+.frrow .av,.frrow .frn{cursor:pointer}
+.frn{flex:1;min-width:0}.frn b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.frn small{color:var(--tx3);font-size:12px}
+.fra{display:flex;gap:6px;align-items:center}.fra .btn{padding:7px 12px;font-size:12.5px;border-radius:10px}
+.frtag{font-size:12px;color:var(--tx3)}
+.frbtn .fri{width:32px;height:32px;border-radius:50%;background:var(--card2);display:grid;place-items:center}
+.frbtn .cnt{margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:9px;padding:1px 7px}
 /* ===== modo claro ===== */
 body.light{color-scheme:light}
 body.light .msg .txt a,body.light .msg .txt b,body.light .mdh1,body.light .mdh2,body.light .mdh3,body.light .join-cta .big{color:var(--tx)}
@@ -1385,7 +1398,7 @@ function profileCardHtml(p, opts={}){
     <div class="pav">${avatarP(p, 84, {status:opts.status||'online', noDeco:false})}</div>
     ${badgesHtml(p, true) ? `<div class="pbadges">${badgesHtml(p, true)}</div>` : ''}
     <div class="pb"><h3>${nameP(p, shown)}${p.id?admBadge(p.id):""}</h3>
-      <div class="un">${esc(p.display_name||'')}${p.pronouns?' · '+esc(p.pronouns):''}</div>
+      <div class="un">${p.username?'@'+esc(p.username):esc(p.display_name||'')}${p.pronouns?' · '+esc(p.pronouns):''}</div>
       ${p.status_text?`<div class="stt">${esc(p.status_text)}</div>`:''}
       <div class="pin">${p.bio?`<div class="lbl">Sobre mim</div><div class="bio">${linkify(p.bio)}</div>`:''}
         <div class="lbl">Membro do CONCORD desde</div><div class="bio">${p.created_at?new Date(p.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):'hoje'}</div>${opts.extra||''}</div>
@@ -1663,7 +1676,7 @@ async function start(){
   const qtv = new URLSearchParams(location.search).get('tv');
   if(qtv){ history.replaceState(null, '', location.pathname+location.hash); if(/^\d{6}$/.test(qtv)) setTimeout(()=>tvFromQr(qtv), 1500); }
   await loadServers();
-  loadDms().then(startDmRealtime); syncActivity(); tvLinkCode().catch(()=>{});
+  loadDms().then(startDmRealtime); loadFriends(); syncActivity(); tvLinkCode().catch(()=>{});
   let joinedNew=null;
   if(/^[A-Z0-9-]{3,24}$/.test(hashCode) && !S.servers.find(s=>s.code===hashCode)){ joinedNew = await joinByCode(hashCode, true); if(joinedNew) toast('Você entrou em '+joinedNew.name+'!'); }
   if(hashCode) history.replaceState(null, '', location.pathname+location.search);
@@ -1701,7 +1714,8 @@ async function joinByCode(code, silent){
   renderRail(); return srv;
 }
 function renderRail(){
-  const r = $('#rail'); const un=DM.unread.size;
+  const r = $('#rail'); let un=DM.unread.size;
+  un += frPendingIn?.().length||0;
   r.innerHTML=`<button class="logo${S.home?' on':''}" title="Mensagens diretas"><svg><use href="#i-logo"/></svg>${un?`<span class="dot-badge">${un}</span>`:''}</button><div class="rail-sep"></div>`;
   r.querySelector('.logo').onclick=()=>{ openHome(); closeDrawer(); };
   S.servers.forEach(s=>{ const b=document.createElement('button'); const img=safeUrl(s.icon_url);
@@ -3078,7 +3092,8 @@ ${true?`      <div class="imgrow" style="margin-top:12px"><button class="btn sec
         <span class="hint" style="margin:0 4px 0 8px">ou cor sólida</span>${cp('banner_color', hex6(D.color,'#27272a'), 'Cor do banner')}</div>`:''}</div>
     <div class="sc"><h3>${ic('user','sm')} Sobre você</h3><p></p>
       <div class="grid2"><label class="field"><span>Nome de exibição</span><input class="inp" data-f="display_name" maxlength="24" value="${esc(D.display_name||'')}"></label>
-        <label class="field"><span>Pronomes</span><input class="inp" data-f="pronouns" maxlength="40" placeholder="ele/dele" value="${esc(D.pronouns||'')}"></label></div>
+        <label class="field"><span>Nome de usuário</span><input class="inp" data-f="username" maxlength="20" placeholder="seunome" value="${esc(D.username||'')}"><small class="hint">É como os amigos te acham. Letras, números, ponto e _.</small></label></div>
+      <div class="grid2"><label class="field"><span>Pronomes</span><input class="inp" data-f="pronouns" maxlength="40" placeholder="ele/dele" value="${esc(D.pronouns||'')}"></label></div>
       ${S.server?`<label class="field"><span>Apelido em ${esc(S.server.name)}</span><input class="inp" data-f="_nick" maxlength="32" placeholder="${esc(D.display_name||'')}" value="${esc(D._nick||'')}"><small class="hint">Só aparece neste servidor, igual ao Discord.</small></label>`:''}
       <div class="grid2"><label class="field"><span>Status</span><select class="inp" data-f="presence_status">${Object.entries(STATUS).map(([k,[l]])=>`<option value="${k}" ${(D.presence_status||'online')===k?'selected':''}>${l}</option>`).join('')}</select></label>
         <label class="field"><span>Status personalizado</span><input class="inp" data-f="status_text" maxlength="80" placeholder="Jogando Valorant" value="${esc(D.status_text||'')}"></label></div>
@@ -3156,12 +3171,14 @@ ${true?`    <div class="sc"><h3>${ic('img','sm')} Avatares prontos</h3><p></p>
   $('#pfReset').onclick=()=>{ SET.draft=null; renderProfileEditor(body); };
   $('#pfSave').onclick=async()=>{
     const name=(D.display_name||'').trim().slice(0,24); if(!name) return toast('Escolha um nome de exibição.', true);
-    const fields=['display_name','color','avatar_url','banner_url','banner_color','theme_primary','theme_accent','bio','pronouns','status_text','presence_status','decoration','effect','name_font','name_color','name_color2','name_effect','avatar_shape','nameplate','badges','join_sound','card_style','banner_anim'];
+    D.username=(D.username||'').trim().toLowerCase().replace(/^@/,'');
+    if(!/^[a-z0-9_.]{3,20}$/.test(D.username)) return toast('Nome de usuário: de 3 a 20 letras minúsculas, números, ponto ou _.', true);
+    const fields=['display_name','color','avatar_url','banner_url','banner_color','theme_primary','theme_accent','bio','pronouns','status_text','presence_status','decoration','effect','name_font','name_color','name_color2','name_effect','avatar_shape','nameplate','badges','join_sound','card_style','banner_anim','username'];
     const upd={}; fields.forEach(k=>{ let v=D[k]; if(typeof v==='string'){ v=v.trim(); if(v==='') v=null; } upd[k]=v??null; });
     upd.display_name=name; upd.color=upd.color||'#6366f1'; upd.presence_status=upd.presence_status||'online'; upd.updated_at=new Date().toISOString();
     const btn=$('#pfSave'); busy(btn,true);
     const { data, error } = await sb.from('dc_profiles').update(upd).eq('id', S.me.id).select().single();
-    if(error){ busy(btn,false); return toast('Erro ao salvar: '+error.message, true); }
+    if(error){ busy(btn,false); return toast(/username|duplicate|23505/i.test(error.message+error.code) ? 'Esse nome de usuário já tem dono. Escolha outro.' : 'Erro ao salvar: '+error.message, true); }
     if(S.server){ const nick=(D._nick||'').trim().slice(0,32)||null;
       if(nick !== (S.nicks.get(S.me.id)||null)){ const { error:e2 } = await sb.from('dc_members').update({nickname:nick}).eq('server_id', S.server.id).eq('user_id', S.me.id);
         if(e2) toast('Apelido não salvo: '+e2.message, true); else { if(nick) S.nicks.set(S.me.id, nick); else S.nicks.delete(S.me.id); } } }
@@ -3569,6 +3586,10 @@ function startDmRealtime(){
   DM.rt = sb.channel('dc-dmrt-'+S.me.id)
     .on('postgres_changes', {event:'INSERT', schema:'public', table:'dc_dm_messages'}, ({new:m})=>onDmMessage(m))
     .on('postgres_changes', {event:'*', schema:'public', table:'dc_dms'}, ()=>loadDms())
+    .on('postgres_changes', {event:'*', schema:'public', table:'dc_friends'}, ({eventType, new:n})=>{
+      if(eventType==='INSERT' && n?.requester!==S.me.id && (n?.user_a===S.me.id||n?.user_b===S.me.id)){ loadFriends().then(()=>{ toast(dname(n.requester)+' quer ser seu amigo. Veja em Mensagens diretas → Amigos.'); sfx('msg'); }); }
+      else if(eventType==='UPDATE' && n?.status==='accepted' && n?.requester===S.me.id){ loadFriends().then(()=>toast(dname(n.user_a===S.me.id?n.user_b:n.user_a)+' aceitou seu pedido de amizade.')); }
+      else loadFriends(); })
     .subscribe();
   DM.ring = sb.channel('dc-user-'+S.me.id, { config:{ broadcast:{ self:false } } })
     .on('broadcast', {event:'call'}, ({payload})=>onCallSignal(payload||{}))
@@ -3583,6 +3604,79 @@ async function sendToUser(uid, payload){
   try{ await ch.send({ type:'broadcast', event:'call', payload }); }catch{}
   if(temp) setTimeout(()=>{ try{ sb.removeChannel(ch); }catch{} }, 1500);
 }
+/* ---------- Amigos: nome de usuário único, busca e pedidos ---------- */
+const FR = { list:[] };
+const frOther = f => f.user_a===S.me.id ? f.user_b : f.user_a;
+async function loadFriends(){
+  const { data } = await sb.from('dc_friends').select('*');
+  FR.list = (data||[]).filter(f=>f.user_a===S.me.id||f.user_b===S.me.id);
+  const miss=[...new Set(FR.list.map(frOther))].filter(id=>!S.profiles.has(id));
+  if(miss.length){ const { data:ps } = await sb.from('dc_profiles').select('*').in('id', miss); (ps||[]).forEach(p=>S.profiles.set(p.id,p)); }
+  renderRail(); if(S.home) renderDmSide(); if(S.view?.type==='friends') renderFriends();
+}
+const frPendingIn = () => FR.list.filter(f=>f.status==='pending' && f.requester!==S.me.id);
+function frState(uid){ const f=FR.list.find(x=>frOther(x)===uid); return !f ? null : f.status==='accepted' ? 'friend' : f.requester===S.me.id ? 'sent' : 'received'; }
+async function frRequest(uid){ const { data, error } = await sb.rpc('dc_friend_request', { p_other:uid }); if(error) return toast('Não foi possível enviar: '+error.message, true);
+  toast(data==='accepted' ? 'Agora vocês são amigos!' : 'Pedido de amizade enviado.'); await loadFriends(); }
+async function frRespond(uid, ok){ const { error } = await sb.rpc('dc_friend_respond', { p_other:uid, p_accept:ok }); if(error) return toast('Erro: '+error.message, true); await loadFriends(); }
+function frRow(uid, actions){
+  const p=S.profiles.get(uid)||{}; const st=statusOf(uid);
+  return `<div class="frrow" data-fu="${esc(uid)}">${avatarU(uid, 38, null, {status: st && st!=='offline' ? st : undefined, noDeco:true})}<div class="frn"><b>${nameHtml(uid)}</b><small>${p.username?'@'+esc(p.username):''}</small></div><div class="fra">${actions}</div></div>`;
+}
+function frActions(uid){
+  const s=frState(uid);
+  if(s==='friend') return `<button class="ibtn" data-fa="dm" title="Mensagem">${ic('chat','sm')}</button><button class="ibtn" data-fa="call" title="Ligar">${ic('phone','sm')}</button><button class="ibtn" data-fa="rm" title="Desfazer amizade">${ic('x','sm')}</button>`;
+  if(s==='received') return `<button class="btn auto" data-fa="ok">Aceitar</button><button class="btn sec auto" data-fa="no">Recusar</button>`;
+  if(s==='sent') return `<span class="frtag">Pedido enviado</span><button class="ibtn" data-fa="no" title="Cancelar pedido">${ic('x','sm')}</button>`;
+  if(uid===S.me.id) return `<span class="frtag">Você</span>`;
+  return `<button class="btn auto" data-fa="add">${ic('plus','sm')} Adicionar</button>`;
+}
+function bindFrActions(root){
+  root.querySelectorAll('[data-fa]').forEach(b=>b.onclick=async e=>{ e.stopPropagation(); const uid=b.closest('[data-fu]').dataset.fu; const a=b.dataset.fa; busy(b,true);
+    if(a==='add') await frRequest(uid); else if(a==='ok') await frRespond(uid,true); else if(a==='no') await frRespond(uid,false);
+    else if(a==='rm'){ if(confirm('Desfazer a amizade com '+dname(uid)+'?')) await frRespond(uid,false); }
+    else if(a==='dm') return openDmWith(uid); else if(a==='call') return openDmWith(uid, true);
+    if(S.view?.type==='friends') renderFriends(); });
+  root.querySelectorAll('.frrow .av, .frrow .frn').forEach(el=>el.onclick=e=>{ const uid=el.closest('[data-fu]').dataset.fu; showProfile(uid, e); });
+}
+function openFriends(){
+  if(!S.home) openHome(true);
+  S.view={ type:'friends', ch:{ id:'friends', name:'Amigos' } }; renderDmSide(); $('#members').innerHTML='';
+  $('#mainTitle').innerHTML=`${ic('users')}Amigos`; $('#mainSub').textContent='';
+  $('#callBtn').classList.add('hidden'); $('#statsBtn').classList.add('hidden'); $('#inviteBtn').classList.add('hidden');
+  $('#stage').classList.add('hidden'); $('#chat').classList.remove('hidden'); $('.composer').classList.add('hidden'); $('#typing').textContent='';
+  FR.q=''; renderFriends(true);
+}
+function renderFriends(first){
+  const box=$('#msgs'); const me=S.profiles.get(S.me.id)||{};
+  if(first || !box.querySelector('#frSearch')){
+    box.innerHTML=`<div class="frwrap">
+      <div class="sc"><h3>Adicionar amigo</h3><p>Procure pelo nome de usuário ou pelo nome. O seu é <b>@${esc(me.username||'…')}</b>.</p>
+        <input class="inp" id="frSearch" placeholder="@nome ou nome" autocomplete="off" spellcheck="false"><div id="frResults"></div></div>
+      <div id="frLists"></div></div>`;
+    const inp=$('#frSearch'); let t=null;
+    inp.oninput=()=>{ clearTimeout(t); t=setTimeout(()=>frSearch(inp.value), 250); };
+    if(window.innerWidth>760) inp.focus();
+  }
+  const pin=frPendingIn(), pout=FR.list.filter(f=>f.status==='pending' && f.requester===S.me.id), fr=FR.list.filter(f=>f.status==='accepted');
+  const sec=(title, arr)=> arr.length ? `<div class="sc"><h3>${title} — ${arr.length}</h3>${arr.map(f=>frRow(frOther(f), frActions(frOther(f)))).join('')}</div>` : '';
+  $('#frLists').innerHTML = sec('Pedidos recebidos', pin) + sec('Amigos', fr) + sec('Pedidos enviados', pout)
+    + (!FR.list.length ? `<div class="dmempty">Você ainda não adicionou ninguém. Procure um amigo acima.</div>` : '');
+  bindFrActions($('#frLists'));
+  if(FR.q) frSearch(FR.q, true);
+}
+async function frSearch(q, quiet){
+  FR.q=q; const out=$('#frResults'); if(!out) return;
+  const t=q.trim().replace(/^@/,'').toLowerCase().replace(/[%_,()]/g,'');
+  if(t.length<2){ out.innerHTML=''; return; }
+  const { data, error } = await sb.from('dc_profiles').select('*').or(`username.ilike.${t}%,display_name.ilike.%${t}%`).limit(12);
+  if(FR.q!==q) return;
+  if(error){ if(!quiet) toast('Erro na busca: '+error.message, true); return; }
+  (data||[]).forEach(p=>S.profiles.set(p.id,p));
+  out.innerHTML = (data||[]).length ? (data||[]).map(p=>frRow(p.id, frActions(p.id))).join('') : `<div class="dmempty">Ninguém com esse nome.</div>`;
+  bindFrActions(out);
+}
+
 function renderHomeHead(){
   const head=$('.side-head'); head.classList.remove('has-bn'); head.style.backgroundImage='';
   $('#srvName').textContent='Mensagens diretas'; $('#srvCode').classList.add('hidden'); $('#srvDesc').classList.add('hidden'); $('#srvSub').textContent='';
@@ -3590,11 +3684,13 @@ function renderHomeHead(){
 }
 function renderDmSide(){
   const L=$('#chanlist'); const cur=S.view?.type==='dm'?S.view.dm.id:null;
-  L.innerHTML = `<div class="cat"><span>Conversas</span><button title="Nova conversa" id="dmNew">${ic('plus','sm')}</button></div>`
+  const pin=frPendingIn().length;
+  L.innerHTML = `<button class="dmrow frbtn${S.view?.type==='friends'?' on':''}" id="frOpen"><span class="fri">${ic('users','sm')}</span><span class="nm">Amigos</span>${pin?`<span class="cnt">${pin}</span>`:''}</button>`
+    + `<div class="cat"><span>Conversas</span><button title="Nova conversa" id="dmNew">${ic('plus','sm')}</button></div>`
     + (DM.list.length ? DM.list.map(d=>{ const o=dmOther(d); const call=V?.ch.dm===d.id; const st=statusOf(o);
       return `<button class="dmrow${cur===d.id?' on':''}" data-dm="${d.id}">${avatarU(o, 32, null, {status: st && st!=='offline' ? st : undefined, noDeco:true})}<span class="nm">${nameHtml(o)}</span>${call?`<span class="oncall">${ic('phone','sm')}</span>`:''}${DM.unread.has(d.id)?'<span class="ub"></span>':''}</button>`; }).join('')
       : `<div class="dmempty">Nenhuma conversa ainda.</div>`);
-  $('#dmNew').onclick=openNewDm;
+  $('#dmNew').onclick=openNewDm; $('#frOpen').onclick=()=>{ openFriends(); closeDrawer(); };
   L.querySelectorAll('[data-dm]').forEach(b=>b.onclick=()=>{ const d=DM.list.find(x=>x.id===b.dataset.dm); if(d){ openDm(d); closeDrawer(); } });
 }
 function renderDmMembers(){
@@ -3637,7 +3733,7 @@ async function openDm(d){
 async function openDmWith(uid, call){
   let d = DM.list.find(x=>dmOther(x)===uid);
   if(!d){ const { data, error } = await sb.rpc('dc_open_dm', { p_other:uid });
-    if(error) return toast('Não foi possível abrir a conversa: '+error.message, true);
+    if(error) return toast(/no_shared_server/.test(error.message) ? 'Vocês ainda não são amigos. Mande um pedido em Amigos.' : 'Não foi possível abrir a conversa: '+error.message, true);
     d = Array.isArray(data) ? data[0] : data; if(!d) return;
     if(!DM.list.find(x=>x.id===d.id)) DM.list.unshift(d); }
   await openDm(d); if(call) startCall(d);
