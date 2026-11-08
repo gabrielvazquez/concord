@@ -976,8 +976,8 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 .stabs button{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:10px;font-weight:600;font-size:13px;color:var(--tx2);flex:1;justify-content:center;white-space:nowrap}
 .stabs button:hover{color:var(--tx);background:var(--card2)}
 .stabs button.on{background:var(--ac);color:var(--act)}
-.schead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-.schead p{margin:2px 0 0}
+.schead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.schead h3{margin:0}
 .tcard{position:relative}
 .tby{display:block;font-size:11px;color:var(--tx3);margin-top:-2px}
 .ton{position:absolute;top:8px;right:8px;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;background:var(--ac);color:var(--act);border-radius:999px;padding:2px 7px}
@@ -3200,9 +3200,9 @@ async function renderSettings(){
     const ACS=['#ffffff','#a78bfa','#818cf8','#60a5fa','#22d3ee','#34d399','#a3e635','#fbbf24','#fb923c','#f87171','#f472b6','#e879f9'];
     const curT = P().appTheme||'oled';
     body.innerHTML = `<h2>Aparência</h2>
-      <div class="sc"><div class="schead"><div><h3>Loja · prontos</h3><p>Temas claros feitos pelo CONCORD. Um clique e pronto.</p></div></div>
+      <div class="sc"><div class="schead"><h3>Prontos</h3></div>
         <div class="themegrid" id="storeGrid">${STORE_THEMES.map(t=>themeCard(t, P().appTheme==='store:'+t.id)).join('')}</div></div>
-      <div class="sc"><div class="schead"><div><h3>Loja · da galera</h3><p>Temas publicados pelos amigos.</p></div><button class="btn auto" id="pubTheme">${ic('plus','sm')} Publicar o meu</button></div>
+      <div class="sc"><div class="schead"><h3>Da galera</h3><button class="btn sec auto" id="pubTheme">${ic('plus','sm')} Publicar o meu</button></div>
         ${(S.storeThemes||[]).length ? `<div class="themegrid">${S.storeThemes.map(t=>themeCard(t, P().appTheme==='store:'+t.id, t.author===S.me.id || S.isAdmin, dname(t.author))).join('')}</div>`
           : `<div class="dmempty" style="padding:18px 0 4px">${S.storeThemes?'Ninguém publicou ainda. Seja o primeiro!':'Carregando…'}</div>`}</div>
       <div class="sc"><h3>Modo</h3><p>Claro ou escuro. O logo acompanha.</p><div class="seg" id="modeSeg"><button data-mode="dark" class="${P().mode!=='light'?'on':''}">Escuro</button><button data-mode="light" class="${P().mode==='light'?'on':''}">Claro</button></div></div>
@@ -3232,7 +3232,7 @@ async function renderSettings(){
     if(!S.storeThemes) loadStoreThemes();
     sectionTabs(body, 'aparencia', [
       ['temas','Temas','palette',['modo','tema']],
-      ['loja','Loja','down',['loja']],
+      ['loja','Loja','down',['prontos','da galera']],
       ['cores','Cores','edit',['cor de destaque']],
       ['interface','Interface','gear',['layout','tamanho','chat e']],
     ]);
