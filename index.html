@@ -936,16 +936,16 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 .t-diretor{--tb:linear-gradient(135deg,#fef3c7,#fcd34d 35%,#f2a20c 70%,#fde68a);--tt:#3a2400;--ts:5s;--sa:.7;--gc:rgba(251,191,36,.55);animation:tbglow 3.2s ease-in-out infinite}
 /* 5 · President: metal que escorre + brilho + aura */
 .t-presidente{--tb:linear-gradient(135deg,#f8fafc,#cbd5e1 30%,#eef2ff 50%,#94a3b8 75%,#f1f5f9);--tt:#1e293b;--ts:3.4s;--sa:.85;--gc:rgba(199,210,254,.55);animation:tbflow 5s ease-in-out infinite,tbglow 2.6s ease-in-out infinite}
-/* 6 · CEO: diamante roxo — base escura, borda que gira, letra furta-cor, gema que pisca, faíscas e aura viva */
+/* 6 · CEO: esmeralda cristal — base escura, borda que gira, letra furta-cor, gema que pisca, faíscas e aura viva */
 .t-ceo{--tt:#f5f3ff;--ts:2.4s;--sa:.45;border:1px solid transparent;padding:0 8px 0 5px;
-  background:linear-gradient(135deg,#9333ea,#7e22ce 55%,#6b21a8) padding-box,linear-gradient(110deg,#2dd4bf,#5eead4,#14b8a6,#99f6e4,#2dd4bf) border-box;background-size:100% 100%,300% 100%;
+  background:radial-gradient(60% 80% at 80% 20%,#ffffff33,transparent) padding-box,linear-gradient(135deg,#10b981,#0d9488 50%,#065f46) padding-box,linear-gradient(110deg,#ffffff,#6ee7b7,#ccfbf1,#2dd4bf,#ffffff) border-box;background-size:100% 100%,100% 100%,300% 100%;
   animation:ceoflow 3.5s linear infinite,ceoglow 2.4s ease-in-out infinite}
-.t-ceo .tl{background:linear-gradient(90deg,#ffffff,#ccfbf1,#ffffff,#99f6e4,#ffffff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
+.t-ceo .tl{background:linear-gradient(90deg,#ffffff,#f0fdfa,#ffffff,#ccfbf1,#ffffff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
 .t-ceo svg{width:13px;height:13px;animation:ceogem 2.4s ease-in-out infinite}
 .t-ceo.lg svg{width:16px;height:16px}
-.t-ceo small{color:#5eead4;opacity:.9!important}
+.t-ceo small{color:#ccfbf1;opacity:.9!important}
 .t-ceo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#f0abfc,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
+  background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#ccfbf1,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
   animation:ceospark 1.8s steps(2,end) infinite}
 /* 7 · FOUNDER: aurora — base obsidiana, aurora que corre por dentro e na borda, letra que muda de cor, coroa flutuando, faíscas e aura colorida */
 .t-fundador{--tt:#fff;--ts:1.9s;--sa:.5;border:1px solid transparent;padding:0 9px 0 5px;isolation:isolate;
@@ -964,8 +964,8 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 @keyframes crownfloat{0%,100%{transform:translateY(0) rotate(0);filter:drop-shadow(0 0 2px rgba(110,231,183,.9))}50%{transform:translateY(-1.5px) rotate(4deg);filter:drop-shadow(0 0 6px rgba(192,132,252,1))}}
 @keyframes ceoflow{to{background-position:0 0,300% 0}}
 @keyframes ceotext{to{background-position:250% 0}}
-@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(147,51,234,.6),0 0 1px rgba(45,212,191,.75)}50%{box-shadow:0 0 18px rgba(45,212,191,.75),0 0 4px rgba(147,51,234,.6)}}
-@keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(232,121,249,1))}}
+@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(45,212,191,.6),0 0 1px rgba(255,255,255,.7)}50%{box-shadow:0 0 18px rgba(45,212,191,.6),0 0 4px rgba(255,255,255,.7)}}
+@keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(45,212,191,1))}}
 @keyframes ceospark{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tbadge,.tbadge::after,.tbadge::before,.tbadge svg,.tbadge .tl{animation:none!important}}
 .tminis{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
@@ -1079,11 +1079,11 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 /* servidores especiais */
 .srv.tier-gold{box-shadow:0 0 0 2px #f59e0b,0 0 12px #f59e0b66}
 .srv.tier-platinum{box-shadow:0 0 0 2px #cbd5e1,0 0 14px #e0e7ff77}
-.srv.tier-diamond{box-shadow:0 0 0 2px #a855f7,0 0 16px #9333ea88;animation:ceoglow 2.4s ease-in-out infinite}
+.srv.tier-diamond{box-shadow:0 0 0 2px #2dd4bf,0 0 16px #10b98188;animation:ceoglow 2.4s ease-in-out infinite}
 .srv.tier-aurora{box-shadow:0 0 0 2px #22d3ee,0 0 16px #22d3ee66;animation:auroraglow 3s ease-in-out infinite}
 body.stier-gold .side-head{background:linear-gradient(90deg,#f59e0b22,transparent)}
 body.stier-platinum .side-head{background:linear-gradient(90deg,#e0e7ff22,#94a3b822,transparent);background-size:200% 100%;animation:fxflow 6s linear infinite}
-body.stier-diamond .side-head{background:linear-gradient(90deg,#7c3aed33,#c026d322,transparent);background-size:200% 100%;animation:fxflow 5s linear infinite}
+body.stier-diamond .side-head{background:linear-gradient(90deg,#10b98133,#2dd4bf22,transparent);background-size:200% 100%;animation:fxflow 5s linear infinite}
 body.stier-aurora .side-head{background:linear-gradient(90deg,#34d39933,#22d3ee22,#a78bfa33,#f472b622);background-size:300% 100%;animation:fxflow 6s linear infinite}
 body.stier-diamond #stage,body.stier-aurora #stage{background-image:radial-gradient(1px 1px at 20% 30%,#ffffff55,transparent),radial-gradient(1px 1px at 70% 60%,#ffffff44,transparent),radial-gradient(1.2px 1.2px at 40% 80%,#ffffff33,transparent);background-size:200px 200px,260px 260px,300px 300px;animation:fxstars 40s linear infinite}
 body.stier-aurora #stage{background-image:radial-gradient(1px 1px at 20% 30%,#ffffff55,transparent),radial-gradient(1px 1px at 70% 60%,#ffffff44,transparent),radial-gradient(60% 40% at 50% 0%,#22d3ee14,transparent),radial-gradient(60% 40% at 80% 10%,#a78bfa12,transparent)}
@@ -1750,13 +1750,13 @@ const isOwner = () => !!S.server && S.server.owner_id===S.me?.id;
 /* ---------- Títulos (cargos do CONCORD inteiro), cada um com sua pedra ---------- */
 const TITLES = {
   fundador:   { label:'FOUNDER',   name:'Founder',   tier:'Aurora',   rank:7 },
-  ceo:        { label:'CEO',       name:'CEO',       tier:'Diamond',  rank:6 },
+  ceo:        { label:'CEO',       name:'CEO',       tier:'Emerald',  rank:6 },
   presidente: { label:'PRESIDENT', name:'President', tier:'Platinum', rank:5 },
   diretor:    { label:'DIRECTOR',  name:'Director',  tier:'Gold',     rank:4 },
   adm:        { label:'ADMIN',     name:'Admin',     tier:'Silver',   rank:3 },
   moderador:  { label:'MOD',       name:'Moderator', tier:'Bronze',   rank:2 },
 };
-const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#faf5ff"/><stop offset=".35" stop-color="#c084fc"/><stop offset=".7" stop-color="#7c3aed"/><stop offset="1" stop-color="#e879f9"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-linejoin="round"/></svg>';
+const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#a7f3d0"/><stop offset=".7" stop-color="#2dd4bf"/><stop offset="1" stop-color="#ecfdf5"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-linejoin="round"/></svg>';
 const TICON = {
   ceo: GEM,
   presidente: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5 1-5h4l-3 7.2A6 6 0 1 1 10 9.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="15" r="5.2" fill="currentColor"/><path d="m12 12 1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="#fff" opacity=".85"/></svg>',
@@ -4326,7 +4326,7 @@ $('#callBtn').onclick=()=>{ if(S.view?.type==='dm') startCall(S.view.dm); };
    ===================================================================== */
 const SRV_BGS = { '':['Padrão',''], aurora:['Aurora','radial-gradient(1200px 600px at 0% 0%,#10b98122,transparent 60%),radial-gradient(1000px 600px at 100% 100%,#6366f122,transparent 60%)'], nebula:['Nebulosa','radial-gradient(900px 500px at 80% 10%,#a855f72a,transparent 60%),radial-gradient(800px 500px at 10% 90%,#ec48991f,transparent 60%)'], sunset:['Pôr do sol','linear-gradient(180deg,#f9731614,transparent 40%),radial-gradient(900px 500px at 50% 110%,#ef444422,transparent 60%)'], ocean:['Oceano','linear-gradient(160deg,#0ea5e91c,transparent 50%,#0369a11c)'], forest:['Floresta','radial-gradient(1000px 600px at 0% 100%,#16a34a22,transparent 60%)'], ember:['Brasa','radial-gradient(900px 500px at 100% 0%,#f9731622,transparent 60%),radial-gradient(700px 400px at 0% 100%,#dc262618,transparent 60%)'], mono:['Grafite','linear-gradient(180deg,#ffffff08,transparent 50%)'], grid:['Grade','linear-gradient(#ffffff06 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,#ffffff06 1px,transparent 1px) 0 0/32px 32px'] };
 function srvBgCss(v){ if(!v) return ''; if(SRV_BGS[v]) return SRV_BGS[v][1]; const c=safeColor(v); return c ? `radial-gradient(1100px 600px at 100% 0%,${c}33,transparent 65%),radial-gradient(900px 500px at 0% 100%,${c}1f,transparent 60%)` : ''; }
-const SRV_TIERS = { gold:['Servidor Gold','diretor'], platinum:['Servidor Platinum','presidente'], diamond:['Servidor Diamond','ceo'], aurora:['Servidor Aurora','fundador'] };
+const SRV_TIERS = { gold:['Servidor Gold','diretor'], platinum:['Servidor Platinum','presidente'], diamond:['Servidor Emerald','ceo'], aurora:['Servidor Aurora','fundador'] };
 function applyServerTier(s){ document.body.classList.remove('stier-gold','stier-platinum','stier-diamond','stier-aurora'); if(s && !S.home && SRV_TIERS[s.tier]) document.body.classList.add('stier-'+s.tier); }
 const canMod = need => !!S.server && (canEditServer() || (S.server.title_powers && myRank()>=need));
 function applyServerTheme(s){
