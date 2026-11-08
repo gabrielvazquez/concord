@@ -86,8 +86,18 @@ private val TITLE_STYLE = mapOf(
     "moderador" to TitleStyle("MOD", "Bronze", androidx.compose.material.icons.Icons.Default.Gavel, 0xFFF9B47C, 0xFFC0571D, 0xFF2A1203),
     "fundador" to TitleStyle("FOUNDER", "Emerald", androidx.compose.material.icons.Icons.Default.Flag, 0xFF86EFC3, 0xFF0E9F6E, 0xFF022C22),
 )
+/** vários títulos: um só = selo completo; mais de um = selos mini (só o ícone); no perfil, todos completos */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-fun TitleBadge(key: String?, big: Boolean = false) {
+fun TitleBadges(keys: List<String>, big: Boolean = false) {
+    if (keys.isEmpty()) return
+    if (big) { androidx.compose.foundation.layout.FlowRow(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) { keys.forEach { TitleBadge(it, big = true) } }; return }
+    if (keys.size == 1) { TitleBadge(keys[0]); return }
+    Row(Modifier.padding(start = 6.dp)) { keys.forEachIndexed { i, k -> if (i > 0) Spacer(Modifier.width(3.dp)); TitleBadge(k, mini = true) } }
+}
+
+@Composable
+fun TitleBadge(key: String?, big: Boolean = false, mini: Boolean = false) {
     val st = TITLE_STYLE[key] ?: return
     val ceo = key == "ceo"
     val prism = listOf(Color(0xFFA855F7), Color(0xFF2DD4BF), Color(0xFF7C3AED), Color(0xFF34D399), Color(0xFFC084FC))
@@ -99,13 +109,14 @@ fun TitleBadge(key: String?, big: Boolean = false) {
     } else -9f
     val shineA = when (key) { "ceo" -> .45f; "presidente" -> .8f; "diretor" -> .7f; "adm" -> .55f; else -> .35f }
     val shape = RoundedCornerShape(if (big) 8.dp else 6.dp)
-    Row(Modifier.padding(start = if (big) 0.dp else 6.dp).height(if (big) 26.dp else 18.dp).clip(shape)
+    Row(Modifier.padding(start = if (big || mini) 0.dp else 6.dp).height(if (big) 26.dp else 18.dp).then(if (mini) Modifier.width(if (ceo) 20.dp else 18.dp) else Modifier).clip(shape)
         .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(st.top), Color(st.bottom))))
         .then(if (ceo) Modifier.border(1.dp, androidx.compose.ui.graphics.Brush.linearGradient(prism), shape) else Modifier)
         .drawWithContent { drawContent(); if (anim in -1f..1.2f) { val x = size.width * anim
             drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = shineA), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
-        .padding(horizontal = if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        .padding(horizontal = if (mini) 0.dp else if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
         androidx.compose.material3.Icon(st.icon, null, tint = if (ceo) Color(0xFFA78BFA) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
+        if (mini) return@Row
         Spacer(Modifier.width(5.dp))
         Text(st.label, color = Color(st.ink), fontSize = if (big) 11.5.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
         if (big) { Spacer(Modifier.width(7.dp)); Text(st.tier, color = if (ceo) Color(0xFF5EEAD4) else Color(st.ink).copy(alpha = .7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }

@@ -955,6 +955,13 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 @keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(45,212,191,1))}}
 @keyframes ceospark{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tbadge,.tbadge::after,.tbadge::before,.tbadge svg,.tbadge .tl{animation:none!important}}
+.tminis{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.tbadge.mini{width:18px;padding:0;gap:0;justify-content:center;margin-left:0;border-radius:5px}
+.tbadge.mini svg{width:11px;height:11px}
+.t-ceo.mini{padding:0;width:20px}
+.t-ceo.mini svg{width:12px;height:12px}
+.tbadges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tbadges .tbadge.lg{margin:0}
 .tpick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .tpick .tbadge{margin:0;height:24px;cursor:pointer;opacity:.5;border:none}
 .tpick .t-ceo{border:1px solid transparent}
@@ -1539,7 +1546,7 @@ function showProfile(uid, ev){
     extra: actCard(activityOf(uid)) + (!S.home && userRoles(uid).length ? `<div class="lbl" style="margin-top:12px">Cargos</div><div>${userRoles(uid).map(r=>`<span class="rchip on" style="--rc:${safeColor(r.color)||'#a1a1aa'}"><i></i>${r.icon?esc(r.icon)+' ':''}${esc(r.name)}</span>`).join('')}</div>` : '')
       + (uid===S.me.id ? `<button class="btn sec" style="margin-top:14px" data-edit>${ic('user','sm')} Editar perfil</button>`
         : `<div class="row" style="margin-top:14px;gap:8px"><button class="btn sec" data-dm>${ic('chat','sm')} Mensagem</button><button class="btn sec auto" data-call title="Ligar">${ic('phone','sm')}</button></div>`)
-      + (S.isAdmin ? `<div class="lbl" style="margin-top:14px">Título no CONCORD</div><div class="tpick">${Object.entries(TITLES).map(([k,t])=>`<button data-title="${k}" class="tbadge t-${k}${t.rank>=2?' sh':''}${S.titles.get(uid)===k?' sel':''}" title="${t.tier}">${TICON[k]}<b class="tl">${t.label}</b></button>`).join('')}<button data-title="" class="tnone">Nenhum</button></div>` : '') });
+      + (S.isAdmin ? `<div class="lbl" style="margin-top:14px">Título no CONCORD</div><div class="tpick">${Object.entries(TITLES).map(([k,t])=>`<button data-title="${k}" class="tbadge t-${k}${t.rank>=2?' sh':''}${(S.titles.get(uid)||[]).includes(k)?' sel':''}" title="${t.tier}">${TICON[k]}<b class="tl">${t.label}</b></button>`).join('')}<button data-title="" class="tnone">Tirar todos</button></div><div class="hint" style="margin-top:6px">Pode dar mais de um. Com vários, aparecem os selos mini.</div>` : '') });
   document.body.append(bg, pop); placePop(pop, ev);
   pop.querySelector('[data-dm]')?.addEventListener('click', ()=>{ closePop(); openDmWith(uid); });
   pop.querySelector('[data-call]')?.addEventListener('click', ()=>{ closePop(); openDmWith(uid, true); });
@@ -1567,18 +1574,33 @@ const TICON = {
   moderador: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 3.5l6.3 6.3-2.4 2.4-1.6-1.6-6.3 6.3 1.6 1.6-2.4 2.4-6.3-6.3 2.4-2.4 1.6 1.6 6.3-6.3-1.6-1.6z" fill="currentColor"/></svg>',
   fundador: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3.5M5 4h11l-2 4 2 4H5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>',
 };
+// vários títulos por pessoa: com um só, selo completo; com mais de um, a versão mini (só o ícone) de cada
+const userTitles = uid => { const a=S.titles?.get(uid)||[]; return a.length ? a : (S.admins?.has(uid) && !S.titles?.size ? ['adm'] : []); };
+function oneBadge(k, mode){
+  const t=TITLES[k]; if(!t) return '';
+  const cls=`tbadge t-${k}${t.rank>=2?' sh':''}${mode==='lg'?' lg':mode==='mini'?' mini':''}`;
+  return `<span class="${cls}" title="${t.name} · ${t.tier}">${TICON[k]}${mode==='mini'?'':`<b class="tl">${t.label}</b>`}${mode==='lg'?`<small>${t.tier}</small>`:''}</span>`;
+}
 function titleBadge(uid, big){
-  const k = S.titles?.get(uid) || (S.admins?.has(uid) && !S.titles?.size ? 'adm' : null);
-  const t = TITLES[k]; if(!t) return '';
-  return `<span class="tbadge t-${k}${t.rank>=2?' sh':''}${big?' lg':''}" title="${t.name} · ${t.tier}">${TICON[k]}<b class="tl">${t.label}</b>${big?`<small>${t.tier}</small>`:''}</span>`;
+  const ks=userTitles(uid); if(!ks.length) return '';
+  if(big) return `<div class="tbadges">${ks.map(k=>oneBadge(k,'lg')).join('')}</div>`;
+  return ks.length===1 ? oneBadge(ks[0]) : `<span class="tminis">${ks.map(k=>oneBadge(k,'mini')).join('')}</span>`;
 }
 const admBadge = uid => titleBadge(uid);
-async function loadTitles(){ const { data } = await sb.from('dc_titles').select('user_id,title'); S.titles=new Map((data||[]).map(r=>[r.user_id, r.title])); }
+async function loadTitles(){
+  const { data } = await sb.from('dc_titles').select('user_id,title');
+  const m=new Map(); (data||[]).forEach(r=>{ if(!TITLES[r.title]) return; if(!m.has(r.user_id)) m.set(r.user_id, []); m.get(r.user_id).push(r.title); });
+  for(const a of m.values()) a.sort((x,y)=>TITLES[y].rank-TITLES[x].rank);
+  S.titles=m;
+}
 async function setTitle(uid, k){
-  const { error } = k ? await sb.from('dc_titles').upsert({ user_id:uid, title:k }) : await sb.from('dc_titles').delete().eq('user_id', uid);
+  const has = (S.titles.get(uid)||[]).includes(k);
+  const { error } = !k ? await sb.from('dc_titles').delete().eq('user_id', uid)
+    : has ? await sb.from('dc_titles').delete().eq('user_id', uid).eq('title', k)
+    : await sb.from('dc_titles').insert({ user_id:uid, title:k });
   if(error) return toast('Erro: '+error.message, true);
-  if(k) S.titles.set(uid,k); else S.titles.delete(uid); refreshTitles();
-  toast(k ? dname(uid)+' agora é '+TITLES[k].name+' · '+TITLES[k].tier+'.' : 'Título removido.');
+  await loadTitles(); refreshTitles();
+  toast(!k ? 'Títulos removidos.' : has ? TITLES[k].name+' removido de '+dname(uid)+'.' : dname(uid)+' agora é '+TITLES[k].name+' · '+TITLES[k].tier+'.');
 }
 function refreshTitles(){ if(S.server && !S.home) renderMembers(); if(S.view?.type==='text') openText(S.view.ch); }
 async function loadAdmins(){ const { data } = await sb.from('dc_admins').select('user_id'); S.admins=new Set((data||[]).map(r=>r.user_id)); S.isAdmin=S.admins.has(S.me?.id); }

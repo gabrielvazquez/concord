@@ -479,11 +479,17 @@ class Concord(val app: Application) {
     }
 
     /* ===================== Títulos (CEO, Presidente, ...) ===================== */
-    val titles = mutableStateMapOf<String, String>()
+    val titles = mutableStateMapOf<String, List<String>>()
+    private val TITLE_RANK = listOf("ceo", "presidente", "diretor", "adm", "moderador", "fundador")
     suspend fun loadTitles() {
-        try { val r = supa.select("dc_titles", "select=user_id,title"); titles.clear(); (0 until r.length()).forEach { titles[r.getJSONObject(it).getString("user_id")] = r.getJSONObject(it).getString("title") } } catch (_: Exception) {}
+        try {
+            val r = supa.select("dc_titles", "select=user_id,title")
+            val m = HashMap<String, MutableList<String>>()
+            (0 until r.length()).forEach { val o = r.getJSONObject(it); m.getOrPut(o.getString("user_id")) { mutableListOf() }.add(o.getString("title")) }
+            titles.clear(); m.forEach { (k, v) -> titles[k] = v.filter { it in TITLE_RANK }.sortedBy { TITLE_RANK.indexOf(it) } }
+        } catch (_: Exception) {}
     }
-    fun titleOf(uid: String?): String? = uid?.let { titles[it] ?: if (titles.isEmpty() && admins.contains(it)) "adm" else null }
+    fun titlesOf(uid: String?): List<String> = uid?.let { titles[it] ?: if (titles.isEmpty() && admins.contains(it)) listOf("adm") else null } ?: emptyList()
 
     /* ===================== Amigos ===================== */
     val friends = mutableStateListOf<Friend>()
