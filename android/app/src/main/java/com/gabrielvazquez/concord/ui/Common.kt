@@ -70,32 +70,36 @@ fun QrCode(text: String, modifier: Modifier = Modifier) {
 fun tvLink(code: String) = "https://gabrielvazquez.github.io/concord/?tv=$code"
 fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").find(it)?.groupValues?.get(1) }
 
-/** selo de título com a pedra de cada nível (CEO = diamante, com brilho passando) */
+/** selo de título: metais lisos com ícone próprio; só o CEO é diamante (fundo escuro, borda furta-cor e brilho) */
+private class TitleStyle(val label: String, val tier: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val top: Long, val bottom: Long, val ink: Long)
 private val TITLE_STYLE = mapOf(
-    "ceo" to Triple("CEO", "Diamond", listOf(0xFFF0FDFF, 0xFFA5F3FC, 0xFFC4B5FD, 0xFFF5D0FE, 0xFFBAE6FD)),
-    "presidente" to Triple("PRESIDENT", "Platinum", listOf(0xFFF8FAFC, 0xFFCBD5E1, 0xFFE0E7FF, 0xFF94A3B8)),
-    "diretor" to Triple("DIRECTOR", "Gold", listOf(0xFFFEF9C3, 0xFFFCD34D, 0xFFF59E0B, 0xFFFDE68A)),
-    "adm" to Triple("ADMIN", "Silver", listOf(0xFFFAFAFA, 0xFFD4D4D8, 0xFFA1A1AA, 0xFFE4E4E7)),
-    "moderador" to Triple("MOD", "Bronze", listOf(0xFFFED7AA, 0xFFFB923C, 0xFFC2410C)),
-    "fundador" to Triple("FOUNDER", "Emerald", listOf(0xFFD1FAE5, 0xFF6EE7B7, 0xFF10B981, 0xFFA7F3D0)),
+    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF0C0C12, 0xFF0C0C12, 0xFFECFEFF),
+    "presidente" to TitleStyle("PRESIDENT", "Platinum", androidx.compose.material.icons.Icons.Default.WorkspacePremium, 0xFFF8FAFC, 0xFFCBD5E1, 0xFF1E293B),
+    "diretor" to TitleStyle("DIRECTOR", "Gold", androidx.compose.material.icons.Icons.Default.Star, 0xFFFDE68A, 0xFFF2A20C, 0xFF3A2400),
+    "adm" to TitleStyle("ADMIN", "Silver", androidx.compose.material.icons.Icons.Default.Shield, 0xFFF4F4F5, 0xFFB4B4BB, 0xFF18181B),
+    "moderador" to TitleStyle("MOD", "Bronze", androidx.compose.material.icons.Icons.Default.Gavel, 0xFFF9B47C, 0xFFC0571D, 0xFF2A1203),
+    "fundador" to TitleStyle("FOUNDER", "Emerald", androidx.compose.material.icons.Icons.Default.Flag, 0xFF86EFC3, 0xFF0E9F6E, 0xFF022C22),
 )
 @Composable
 fun TitleBadge(key: String?, big: Boolean = false) {
     val st = TITLE_STYLE[key] ?: return
-    val shine = if (key == "ceo" || key == "presidente") {
+    val ceo = key == "ceo"
+    val prism = listOf(Color(0xFF67E8F9), Color(0xFFC4B5FD), Color(0xFFF5D0FE), Color(0xFFA5F3FC), Color(0xFF67E8F9))
+    val anim = if (ceo) {
         val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "tb")
-        t.animateFloat(-1f, 2f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if (key == "ceo") 2600 else 4000), androidx.compose.animation.core.RepeatMode.Restart), label = "s").value
+        t.animateFloat(-1f, 2f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(3000), androidx.compose.animation.core.RepeatMode.Restart), label = "s").value
     } else -1f
-    val h = if (big) 26.dp else 18.dp
-    Row(Modifier.padding(start = if (big) 0.dp else 6.dp).height(h).clip(RoundedCornerShape(if (big) 8.dp else 6.dp))
-        .background(androidx.compose.ui.graphics.Brush.linearGradient(st.third.map { Color(it) }))
-        .drawWithContent { drawContent(); if (shine > -1f) { val x = size.width * shine
-            drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = .7f), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
+    val shape = RoundedCornerShape(if (big) 8.dp else 6.dp)
+    Row(Modifier.padding(start = if (big) 0.dp else 6.dp).height(if (big) 26.dp else 18.dp).clip(shape)
+        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(st.top), Color(st.bottom))))
+        .then(if (ceo) Modifier.border(1.dp, androidx.compose.ui.graphics.Brush.linearGradient(prism), shape) else Modifier)
+        .drawWithContent { drawContent(); if (ceo) { val x = size.width * anim
+            drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = .35f), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
         .padding(horizontal = if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("◆", color = Color.White, fontSize = if (big) 13.sp else 10.sp)
-        Spacer(Modifier.width(4.dp))
-        Text(st.first, color = Color(0xFF0B0B0E), fontSize = if (big) 12.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
-        if (big) { Spacer(Modifier.width(6.dp)); Text(st.second, color = Color(0xB30B0B0E), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+        androidx.compose.material3.Icon(st.icon, null, tint = if (ceo) Color(0xFF67E8F9) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
+        Spacer(Modifier.width(5.dp))
+        Text(st.label, color = Color(st.ink), fontSize = if (big) 11.5.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
+        if (big) { Spacer(Modifier.width(7.dp)); Text(st.tier, color = if (ceo) Color(0xFFA5F3FC) else Color(st.ink).copy(alpha = .7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
 
