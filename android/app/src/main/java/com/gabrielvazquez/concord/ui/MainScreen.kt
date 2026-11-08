@@ -402,7 +402,7 @@ private fun MemberRow(uid: String, status: String?, sub: String? = null, act: co
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(c.name(uid), fontWeight = FontWeight.SemiBold, color = if (dim) C.tx3 else (p?.nameColor?.let { parseColor(it) } ?: C.tx), maxLines = 1)
-                if (c.admins.contains(uid)) { Spacer(Modifier.width(6.dp)); Text("ADM", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color.White).padding(4.dp, 1.dp)) }
+                TitleBadge(c.titleOf(uid))
             }
             when {
                 sub != null -> Text(sub, color = C.tx3, fontSize = 12.sp, maxLines = 1)
@@ -432,7 +432,7 @@ private fun ProfileSheet(uid: String) {
             Column(Modifier.padding(horizontal = 20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(c.name(uid), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = p?.nameColor?.let { parseColor(it) } ?: C.tx)
-                    if (c.admins.contains(uid)) { Spacer(Modifier.width(8.dp)); Text("ADM", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color.White).padding(5.dp, 1.dp)) }
+                    Spacer(Modifier.width(8.dp)); TitleBadge(c.titleOf(uid), big = true)
                 }
                 Text(listOfNotNull(p?.username?.let { "@$it" } ?: p?.name, p?.pronouns).joinToString(" · "), color = C.tx2, fontSize = 14.sp)
                 p?.statusText?.let { Spacer(Modifier.height(8.dp)); Text(it, color = C.tx) }

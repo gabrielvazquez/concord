@@ -127,7 +127,7 @@ private fun MessageRow(m: Msg, grouped: Boolean) {
                 if (!grouped) Row(verticalAlignment = Alignment.CenterVertically) {
                     val p = m.userId?.let { c.profiles[it] }
                     Text(c.name(m.userId, m.author), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = p?.nameColor?.let { parseColor(it) } ?: C.tx, modifier = Modifier.clickable { m.userId?.let { Ui.profile = it } })
-                    if (m.userId != null && c.admins.contains(m.userId)) { Spacer(Modifier.width(6.dp)); Text("ADM", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color.White).padding(4.dp, 1.dp)) }
+                    TitleBadge(c.titleOf(m.userId))
                     Spacer(Modifier.width(8.dp)); Text(timeLabel(m.at), color = C.tx3, fontSize = 11.sp)
                 }
                 if (isImageUrl(m.content)) AsyncImage(m.content.trim(), null, contentScale = ContentScale.FillWidth,

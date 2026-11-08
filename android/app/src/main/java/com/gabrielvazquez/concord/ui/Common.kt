@@ -4,6 +4,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -61,6 +68,35 @@ fun QrCode(text: String, modifier: Modifier = Modifier) {
 /** link que o QR da TV abre: o celular conecta na TV com ele */
 fun tvLink(code: String) = "https://gabrielvazquez.github.io/concord/?tv=$code"
 fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").find(it)?.groupValues?.get(1) }
+
+/** selo de título com a pedra de cada nível (CEO = diamante, com brilho passando) */
+private val TITLE_STYLE = mapOf(
+    "ceo" to Triple("CEO", "Diamante", listOf(0xFFF0FDFF, 0xFFA5F3FC, 0xFFC4B5FD, 0xFFF5D0FE, 0xFFBAE6FD)),
+    "presidente" to Triple("PRESIDENTE", "Platina", listOf(0xFFF8FAFC, 0xFFCBD5E1, 0xFFE0E7FF, 0xFF94A3B8)),
+    "diretor" to Triple("DIRETOR", "Ouro", listOf(0xFFFEF9C3, 0xFFFCD34D, 0xFFF59E0B, 0xFFFDE68A)),
+    "adm" to Triple("ADM", "Prata", listOf(0xFFFAFAFA, 0xFFD4D4D8, 0xFFA1A1AA, 0xFFE4E4E7)),
+    "moderador" to Triple("MOD", "Bronze", listOf(0xFFFED7AA, 0xFFFB923C, 0xFFC2410C)),
+    "fundador" to Triple("FUNDADOR", "Esmeralda", listOf(0xFFD1FAE5, 0xFF6EE7B7, 0xFF10B981, 0xFFA7F3D0)),
+)
+@Composable
+fun TitleBadge(key: String?, big: Boolean = false) {
+    val st = TITLE_STYLE[key] ?: return
+    val shine = if (key == "ceo" || key == "presidente") {
+        val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "tb")
+        t.animateFloat(-1f, 2f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if (key == "ceo") 2600 else 4000), androidx.compose.animation.core.RepeatMode.Restart), label = "s").value
+    } else -1f
+    val h = if (big) 26.dp else 18.dp
+    Row(Modifier.padding(start = if (big) 0.dp else 6.dp).height(h).clip(RoundedCornerShape(if (big) 8.dp else 6.dp))
+        .background(androidx.compose.ui.graphics.Brush.linearGradient(st.third.map { Color(it) }))
+        .drawWithContent { drawContent(); if (shine > -1f) { val x = size.width * shine
+            drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = .7f), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
+        .padding(horizontal = if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("◆", color = Color.White, fontSize = if (big) 13.sp else 10.sp)
+        Spacer(Modifier.width(4.dp))
+        Text(st.first, color = Color(0xFF0B0B0E), fontSize = if (big) 12.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .6.sp)
+        if (big) { Spacer(Modifier.width(6.dp)); Text(st.second, color = Color(0xB30B0B0E), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+    }
+}
 
 @Composable
 fun Avatar(uid: String?, size: Dp, status: String? = null, fallbackName: String? = null, fallbackColor: String? = null, speaking: Boolean = false) {

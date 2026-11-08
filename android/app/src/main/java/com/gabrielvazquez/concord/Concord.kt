@@ -163,6 +163,7 @@ class Concord(val app: Application) {
             admins.clear(); (0 until a.length()).forEach { admins.add(a.getJSONObject(it).getString("user_id")) }
             isAdmin = admins.contains(p.id)
         } catch (_: Exception) {}
+        loadTitles()
         screen = Screen.Main
         rt.connect()
         startPersonalChannels()
@@ -459,10 +460,11 @@ class Concord(val app: Application) {
     /* ===================== Mensagens diretas e chamadas ===================== */
     private fun startPersonalChannels() {
         val me = meId ?: return
-        dmRt = rt.channel("dc-dmrt-$me-${System.currentTimeMillis()}", null, listOf(PgSub("dc_dm_messages", "INSERT"), PgSub("dc_dms"), PgSub("dc_friends")))
+        dmRt = rt.channel("dc-dmrt-$me-${System.currentTimeMillis()}", null, listOf(PgSub("dc_dm_messages", "INSERT"), PgSub("dc_dms"), PgSub("dc_friends"), PgSub("dc_titles")))
         dmRt!!.onChange = { table, type, rec, _ ->
             when (table) {
                 "dc_dm_messages" -> onDmMessage(Msg.from(rec), rec.optString("dm_id"))
+                "dc_titles" -> scope.launch { loadTitles() }
                 "dc_friends" -> scope.launch {
                     loadFriends()
                     val mine = rec.optString("user_a") == me || rec.optString("user_b") == me
@@ -475,6 +477,13 @@ class Concord(val app: Application) {
         userRt = rt.channel("dc-user-$me", null)
         userRt!!.on("call") { p -> onCallSignal(p) }
     }
+
+    /* ===================== Títulos (CEO, Presidente, ...) ===================== */
+    val titles = mutableStateMapOf<String, String>()
+    suspend fun loadTitles() {
+        try { val r = supa.select("dc_titles", "select=user_id,title"); titles.clear(); (0 until r.length()).forEach { titles[r.getJSONObject(it).getString("user_id")] = r.getJSONObject(it).getString("title") } } catch (_: Exception) {}
+    }
+    fun titleOf(uid: String?): String? = uid?.let { titles[it] ?: if (titles.isEmpty() && admins.contains(it)) "adm" else null }
 
     /* ===================== Amigos ===================== */
     val friends = mutableStateListOf<Friend>()
