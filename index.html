@@ -938,12 +938,12 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 .t-presidente{--tb:linear-gradient(135deg,#f8fafc,#cbd5e1 30%,#eef2ff 50%,#94a3b8 75%,#f1f5f9);--tt:#1e293b;--ts:3.4s;--sa:.85;--gc:rgba(199,210,254,.55);animation:tbflow 5s ease-in-out infinite,tbglow 2.6s ease-in-out infinite}
 /* 6 · CEO: diamante roxo — base escura, borda que gira, letra furta-cor, gema que pisca, faíscas e aura viva */
 .t-ceo{--tt:#f5f3ff;--ts:2.4s;--sa:.45;border:1px solid transparent;padding:0 8px 0 5px;
-  background:linear-gradient(135deg,#7e22ce,#5b21b6 45%,#3b0764) padding-box,linear-gradient(110deg,#e9d5ff,#e879f9,#a855f7,#f0abfc,#c084fc,#e9d5ff) border-box;background-size:100% 100%,300% 100%;
+  background:linear-gradient(135deg,#9333ea,#7e22ce 55%,#6b21a8) padding-box,linear-gradient(110deg,#2dd4bf,#5eead4,#14b8a6,#99f6e4,#2dd4bf) border-box;background-size:100% 100%,300% 100%;
   animation:ceoflow 3.5s linear infinite,ceoglow 2.4s ease-in-out infinite}
-.t-ceo .tl{background:linear-gradient(90deg,#ffffff,#f5d0fe,#ffffff,#e9d5ff,#ffffff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
+.t-ceo .tl{background:linear-gradient(90deg,#ffffff,#ccfbf1,#ffffff,#99f6e4,#ffffff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
 .t-ceo svg{width:13px;height:13px;animation:ceogem 2.4s ease-in-out infinite}
 .t-ceo.lg svg{width:16px;height:16px}
-.t-ceo small{color:#e9d5ff;opacity:.9!important}
+.t-ceo small{color:#5eead4;opacity:.9!important}
 .t-ceo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#f0abfc,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
   animation:ceospark 1.8s steps(2,end) infinite}
@@ -964,7 +964,7 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 @keyframes crownfloat{0%,100%{transform:translateY(0) rotate(0);filter:drop-shadow(0 0 2px rgba(110,231,183,.9))}50%{transform:translateY(-1.5px) rotate(4deg);filter:drop-shadow(0 0 6px rgba(192,132,252,1))}}
 @keyframes ceoflow{to{background-position:0 0,300% 0}}
 @keyframes ceotext{to{background-position:250% 0}}
-@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(168,85,247,.6),0 0 1px rgba(232,121,249,.8)}50%{box-shadow:0 0 18px rgba(147,51,234,.75),0 0 4px rgba(232,121,249,.95)}}
+@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(147,51,234,.6),0 0 1px rgba(45,212,191,.75)}50%{box-shadow:0 0 18px rgba(45,212,191,.75),0 0 4px rgba(147,51,234,.6)}}
 @keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(232,121,249,1))}}
 @keyframes ceospark{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tbadge,.tbadge::after,.tbadge::before,.tbadge svg,.tbadge .tl{animation:none!important}}
