@@ -936,16 +936,16 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 .t-diretor{--tb:linear-gradient(135deg,#fef3c7,#fcd34d 35%,#f2a20c 70%,#fde68a);--tt:#3a2400;--ts:5s;--sa:.7;--gc:rgba(251,191,36,.55);animation:tbglow 3.2s ease-in-out infinite}
 /* 5 · President: metal que escorre + brilho + aura */
 .t-presidente{--tb:linear-gradient(135deg,#f8fafc,#cbd5e1 30%,#eef2ff 50%,#94a3b8 75%,#f1f5f9);--tt:#1e293b;--ts:3.4s;--sa:.85;--gc:rgba(199,210,254,.55);animation:tbflow 5s ease-in-out infinite,tbglow 2.6s ease-in-out infinite}
-/* 6 · CEO: diamante roxo-esverdeado — base escura, borda que gira, letra furta-cor, gema que pisca, faíscas e aura viva */
+/* 6 · CEO: diamante roxo — base escura, borda que gira, letra furta-cor, gema que pisca, faíscas e aura viva */
 .t-ceo{--tt:#f5f3ff;--ts:2.4s;--sa:.45;border:1px solid transparent;padding:0 8px 0 5px;
-  background:linear-gradient(135deg,#120a24,#0b1a1c) padding-box,linear-gradient(110deg,#a855f7,#2dd4bf,#7c3aed,#34d399,#c084fc,#a855f7) border-box;background-size:100% 100%,300% 100%;
+  background:linear-gradient(135deg,#1a0b33,#0f0820) padding-box,linear-gradient(110deg,#a855f7,#e879f9,#7c3aed,#c084fc,#6d28d9,#a855f7) border-box;background-size:100% 100%,300% 100%;
   animation:ceoflow 3.5s linear infinite,ceoglow 2.4s ease-in-out infinite}
-.t-ceo .tl{background:linear-gradient(90deg,#e9d5ff,#5eead4,#c4b5fd,#6ee7b7,#e9d5ff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
+.t-ceo .tl{background:linear-gradient(90deg,#f3e8ff,#c084fc,#f0abfc,#a78bfa,#f3e8ff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
 .t-ceo svg{width:13px;height:13px;animation:ceogem 2.4s ease-in-out infinite}
 .t-ceo.lg svg{width:16px;height:16px}
-.t-ceo small{color:#99f6e4;opacity:.9!important}
+.t-ceo small{color:#e9d5ff;opacity:.9!important}
 .t-ceo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#99f6e4,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
+  background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#f0abfc,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
   animation:ceospark 1.8s steps(2,end) infinite}
 /* 7 · FOUNDER: aurora — base obsidiana, aurora que corre por dentro e na borda, letra que muda de cor, coroa flutuando, faíscas e aura colorida */
 .t-fundador{--tt:#fff;--ts:1.9s;--sa:.5;border:1px solid transparent;padding:0 9px 0 5px;isolation:isolate;
@@ -964,8 +964,8 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 @keyframes crownfloat{0%,100%{transform:translateY(0) rotate(0);filter:drop-shadow(0 0 2px rgba(110,231,183,.9))}50%{transform:translateY(-1.5px) rotate(4deg);filter:drop-shadow(0 0 6px rgba(192,132,252,1))}}
 @keyframes ceoflow{to{background-position:0 0,300% 0}}
 @keyframes ceotext{to{background-position:250% 0}}
-@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(168,85,247,.55),0 0 1px rgba(45,212,191,.8)}50%{box-shadow:0 0 16px rgba(45,212,191,.6),0 0 4px rgba(168,85,247,.9)}}
-@keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(45,212,191,1))}}
+@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(168,85,247,.6),0 0 1px rgba(232,121,249,.8)}50%{box-shadow:0 0 18px rgba(147,51,234,.75),0 0 4px rgba(232,121,249,.95)}}
+@keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(232,121,249,1))}}
 @keyframes ceospark{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tbadge,.tbadge::after,.tbadge::before,.tbadge svg,.tbadge .tl{animation:none!important}}
 .tminis{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
@@ -1591,7 +1591,7 @@ const TITLES = {
   adm:        { label:'ADMIN',     name:'Admin',     tier:'Silver',   rank:3 },
   moderador:  { label:'MOD',       name:'Moderator', tier:'Bronze',   rank:2 },
 };
-const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5f3ff"/><stop offset=".35" stop-color="#a78bfa"/><stop offset=".65" stop-color="#2dd4bf"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-linejoin="round"/></svg>';
+const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#faf5ff"/><stop offset=".35" stop-color="#c084fc"/><stop offset=".7" stop-color="#7c3aed"/><stop offset="1" stop-color="#e879f9"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-linejoin="round"/></svg>';
 const TICON = {
   ceo: GEM,
   presidente: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5 1-5h4l-3 7.2A6 6 0 1 1 10 9.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="15" r="5.2" fill="currentColor"/><path d="m12 12 1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="#fff" opacity=".85"/></svg>',

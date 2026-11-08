@@ -79,7 +79,7 @@ fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").
 /** selo de título: metais lisos com ícone próprio; só o CEO é diamante (fundo escuro, borda furta-cor e brilho) */
 private class TitleStyle(val label: String, val tier: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val top: Long, val bottom: Long, val ink: Long)
 private val TITLE_STYLE = mapOf(
-    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF120A24, 0xFF0B1A1C, 0xFFF5F3FF),
+    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF1A0B33, 0xFF0F0820, 0xFFF3E8FF),
     "fundador" to TitleStyle("FOUNDER", "Aurora", androidx.compose.material.icons.Icons.Default.WorkspacePremium, 0xFF06060B, 0xFF0A0F14, 0xFFFFFFFF),
     "presidente" to TitleStyle("PRESIDENT", "Platinum", androidx.compose.material.icons.Icons.Default.MilitaryTech, 0xFFF8FAFC, 0xFFCBD5E1, 0xFF1E293B),
     "diretor" to TitleStyle("DIRECTOR", "Gold", androidx.compose.material.icons.Icons.Default.Star, 0xFFFDE68A, 0xFFF2A20C, 0xFF3A2400),
@@ -101,7 +101,7 @@ fun TitleBadge(key: String?, big: Boolean = false, mini: Boolean = false) {
     val st = TITLE_STYLE[key] ?: return
     val ceo = key == "ceo" || key == "fundador"
     val prism = if (key == "fundador") listOf(Color(0xFF34D399), Color(0xFF22D3EE), Color(0xFF818CF8), Color(0xFFC084FC), Color(0xFFF472B6))
-        else listOf(Color(0xFFA855F7), Color(0xFF2DD4BF), Color(0xFF7C3AED), Color(0xFF34D399), Color(0xFFC084FC))
+        else listOf(Color(0xFFA855F7), Color(0xFFE879F9), Color(0xFF7C3AED), Color(0xFFC084FC), Color(0xFF6D28D9))
     // quanto mais alto o cargo, mais rápido o brilho passa (Founder fica parado)
     val speed = mapOf("fundador" to 1900, "ceo" to 2400, "presidente" to 3400, "diretor" to 5000, "adm" to 8000, "moderador" to 11000)[key]
     val anim = if (speed != null) {
@@ -116,11 +116,11 @@ fun TitleBadge(key: String?, big: Boolean = false, mini: Boolean = false) {
         .drawWithContent { drawContent(); if (anim in -1f..1.2f) { val x = size.width * anim
             drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = shineA), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
         .padding(horizontal = if (mini) 0.dp else if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-        androidx.compose.material3.Icon(st.icon, null, tint = if (key == "fundador") Color(0xFF67E8F9) else if (ceo) Color(0xFFA78BFA) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
+        androidx.compose.material3.Icon(st.icon, null, tint = if (key == "fundador") Color(0xFF67E8F9) else if (ceo) Color(0xFFC084FC) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
         if (mini) return@Row
         Spacer(Modifier.width(5.dp))
         Text(st.label, color = Color(st.ink), fontSize = if (big) 11.5.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
-        if (big) { Spacer(Modifier.width(7.dp)); Text(st.tier, color = if (key == "fundador") Color(0xFFA7F3D0) else if (ceo) Color(0xFF5EEAD4) else Color(st.ink).copy(alpha = .7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+        if (big) { Spacer(Modifier.width(7.dp)); Text(st.tier, color = if (key == "fundador") Color(0xFFA7F3D0) else if (ceo) Color(0xFFE9D5FF) else Color(st.ink).copy(alpha = .7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
 
