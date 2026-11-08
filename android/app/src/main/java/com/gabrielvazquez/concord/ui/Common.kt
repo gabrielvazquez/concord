@@ -79,7 +79,7 @@ fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").
 /** selo de título: metais lisos com ícone próprio; só o CEO é diamante (fundo escuro, borda furta-cor e brilho) */
 private class TitleStyle(val label: String, val tier: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val top: Long, val bottom: Long, val ink: Long)
 private val TITLE_STYLE = mapOf(
-    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF0C0C12, 0xFF0C0C12, 0xFFECFEFF),
+    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF120A24, 0xFF0B1A1C, 0xFFF5F3FF),
     "presidente" to TitleStyle("PRESIDENT", "Platinum", androidx.compose.material.icons.Icons.Default.WorkspacePremium, 0xFFF8FAFC, 0xFFCBD5E1, 0xFF1E293B),
     "diretor" to TitleStyle("DIRECTOR", "Gold", androidx.compose.material.icons.Icons.Default.Star, 0xFFFDE68A, 0xFFF2A20C, 0xFF3A2400),
     "adm" to TitleStyle("ADMIN", "Silver", androidx.compose.material.icons.Icons.Default.Shield, 0xFFF4F4F5, 0xFFB4B4BB, 0xFF18181B),
@@ -90,22 +90,25 @@ private val TITLE_STYLE = mapOf(
 fun TitleBadge(key: String?, big: Boolean = false) {
     val st = TITLE_STYLE[key] ?: return
     val ceo = key == "ceo"
-    val prism = listOf(Color(0xFF67E8F9), Color(0xFFC4B5FD), Color(0xFFF5D0FE), Color(0xFFA5F3FC), Color(0xFF67E8F9))
-    val anim = if (ceo) {
+    val prism = listOf(Color(0xFFA855F7), Color(0xFF2DD4BF), Color(0xFF7C3AED), Color(0xFF34D399), Color(0xFFC084FC))
+    // quanto mais alto o cargo, mais rápido o brilho passa (Founder fica parado)
+    val speed = mapOf("ceo" to 2400, "presidente" to 3400, "diretor" to 5000, "adm" to 8000, "moderador" to 11000)[key]
+    val anim = if (speed != null) {
         val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "tb")
-        t.animateFloat(-1f, 2f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(3000), androidx.compose.animation.core.RepeatMode.Restart), label = "s").value
-    } else -1f
+        t.animateFloat(-1f, 2.2f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(speed), androidx.compose.animation.core.RepeatMode.Restart), label = "s").value
+    } else -9f
+    val shineA = when (key) { "ceo" -> .45f; "presidente" -> .8f; "diretor" -> .7f; "adm" -> .55f; else -> .35f }
     val shape = RoundedCornerShape(if (big) 8.dp else 6.dp)
     Row(Modifier.padding(start = if (big) 0.dp else 6.dp).height(if (big) 26.dp else 18.dp).clip(shape)
         .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(st.top), Color(st.bottom))))
         .then(if (ceo) Modifier.border(1.dp, androidx.compose.ui.graphics.Brush.linearGradient(prism), shape) else Modifier)
-        .drawWithContent { drawContent(); if (ceo) { val x = size.width * anim
-            drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = .35f), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
+        .drawWithContent { drawContent(); if (anim in -1f..1.2f) { val x = size.width * anim
+            drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = shineA), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
         .padding(horizontal = if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        androidx.compose.material3.Icon(st.icon, null, tint = if (ceo) Color(0xFF67E8F9) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
+        androidx.compose.material3.Icon(st.icon, null, tint = if (ceo) Color(0xFFA78BFA) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
         Spacer(Modifier.width(5.dp))
         Text(st.label, color = Color(st.ink), fontSize = if (big) 11.5.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
-        if (big) { Spacer(Modifier.width(7.dp)); Text(st.tier, color = if (ceo) Color(0xFFA5F3FC) else Color(st.ink).copy(alpha = .7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
+        if (big) { Spacer(Modifier.width(7.dp)); Text(st.tier, color = if (ceo) Color(0xFF5EEAD4) else Color(st.ink).copy(alpha = .7f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
 

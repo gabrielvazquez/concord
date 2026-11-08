@@ -915,29 +915,46 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
 @media (min-width: 761px){ #scrim{display:none!important} }
 body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fixed;inset:0;z-index:29;background:#0008}
 .sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
-/* ===== títulos: metais lisos; só o CEO é diamante ===== */
-.tbadge{display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 8px 0 6px;border-radius:6px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:9.5px;font-weight:800;line-height:1;letter-spacing:.16em;vertical-align:middle;margin-left:6px;white-space:nowrap;flex:none;position:relative;
-  color:var(--tt);background:var(--tb);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.18)}
-.tbadge svg{width:11px;height:11px;flex:none}
+/* ===== títulos: quanto mais alto o cargo, mais vida no selo; o CEO é o diamante roxo-esverdeado ===== */
+.tbadge{display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 8px 0 6px;border-radius:6px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:9.5px;font-weight:800;line-height:1;letter-spacing:.16em;vertical-align:middle;margin-left:6px;white-space:nowrap;flex:none;position:relative;overflow:hidden;
+  color:var(--tt);background:var(--tb);background-size:200% 200%;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.18),0 0 var(--gr,0) var(--gc,transparent)}
+.tbadge .tl{font-weight:inherit;position:relative;z-index:1}
+.tbadge svg{width:11px;height:11px;flex:none;position:relative;z-index:1}
 .tbadge.lg{height:26px;padding:0 11px 0 9px;font-size:11.5px;gap:7px;border-radius:8px;margin:6px 0 0;letter-spacing:.18em}
 .tbadge.lg svg{width:14px;height:14px}
-.tbadge.lg small{font-weight:600;letter-spacing:.04em;opacity:.7;font-size:11px;margin-left:2px;padding-left:8px;border-left:1px solid currentColor;border-left-color:color-mix(in srgb,currentColor 25%,transparent)}
-.t-presidente{--tb:linear-gradient(180deg,#f8fafc,#cbd5e1);--tt:#1e293b}
-.t-diretor{--tb:linear-gradient(180deg,#fde68a,#f2a20c);--tt:#3a2400}
-.t-adm{--tb:linear-gradient(180deg,#f4f4f5,#b4b4bb);--tt:#18181b}
-.t-moderador{--tb:linear-gradient(180deg,#f9b47c,#c0571d);--tt:#2a1203}
+.tbadge.lg small{position:relative;z-index:1;font-weight:600;letter-spacing:.04em;opacity:.7;font-size:11px;margin-left:2px;padding-left:8px;border-left:1px solid color-mix(in srgb,currentColor 25%,transparent)}
+/* brilho que passa: a velocidade sobe com o cargo */
+.tbadge.sh::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,var(--sa,.55)) 50%,transparent 62%);transform:translateX(-140%);animation:tbshine var(--ts) ease-in-out infinite;pointer-events:none}
+@keyframes tbshine{0%,55%{transform:translateX(-140%)}100%{transform:translateX(140%)}}
+@keyframes tbflow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes tbglow{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.18),0 0 4px var(--gc)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.18),0 0 14px var(--gc)}}
+/* 1 · Founder: parado */
 .t-fundador{--tb:linear-gradient(180deg,#86efc3,#0e9f6e);--tt:#022c22}
-/* CEO: fundo escuro, borda furta-cor que corre, texto prismático e brilho passando */
-.t-ceo{--tt:#ecfeff;border:1px solid transparent;padding:0 8px 0 5px;
-  background:linear-gradient(#0c0c12,#0c0c12) padding-box,linear-gradient(110deg,#67e8f9,#c4b5fd,#f5d0fe,#a5f3fc,#67e8f9) border-box;background-size:100% 100%,300% 100%;
-  box-shadow:0 0 14px rgba(103,232,249,.35),0 0 2px rgba(196,181,253,.6);animation:ceoflow 4s linear infinite;overflow:hidden;text-shadow:0 0 8px rgba(165,243,252,.65)}
-.t-ceo svg{width:13px;height:13px;filter:drop-shadow(0 0 3px rgba(103,232,249,.9))}
+/* 2 · Mod: brilho bem devagar */
+.t-moderador{--tb:linear-gradient(180deg,#f9b47c,#c0571d);--tt:#2a1203;--ts:11s;--sa:.35}
+/* 3 · Admin: brilho devagar */
+.t-adm{--tb:linear-gradient(180deg,#f4f4f5,#b4b4bb);--tt:#18181b;--ts:8s;--sa:.6}
+/* 4 · Director: brilho + aura dourada pulsando */
+.t-diretor{--tb:linear-gradient(135deg,#fef3c7,#fcd34d 35%,#f2a20c 70%,#fde68a);--tt:#3a2400;--ts:5s;--sa:.7;--gc:rgba(251,191,36,.55);animation:tbglow 3.2s ease-in-out infinite}
+/* 5 · President: metal que escorre + brilho + aura */
+.t-presidente{--tb:linear-gradient(135deg,#f8fafc,#cbd5e1 30%,#eef2ff 50%,#94a3b8 75%,#f1f5f9);--tt:#1e293b;--ts:3.4s;--sa:.85;--gc:rgba(199,210,254,.55);animation:tbflow 5s ease-in-out infinite,tbglow 2.6s ease-in-out infinite}
+/* 6 · CEO: diamante roxo-esverdeado — base escura, borda que gira, letra furta-cor, gema que pisca, faíscas e aura viva */
+.t-ceo{--tt:#f5f3ff;--ts:2.4s;--sa:.45;border:1px solid transparent;padding:0 8px 0 5px;
+  background:linear-gradient(135deg,#120a24,#0b1a1c) padding-box,linear-gradient(110deg,#a855f7,#2dd4bf,#7c3aed,#34d399,#c084fc,#a855f7) border-box;background-size:100% 100%,300% 100%;
+  animation:ceoflow 3.5s linear infinite,ceoglow 2.4s ease-in-out infinite}
+.t-ceo .tl{background:linear-gradient(90deg,#e9d5ff,#5eead4,#c4b5fd,#6ee7b7,#e9d5ff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 3s linear infinite}
+.t-ceo svg{width:13px;height:13px;animation:ceogem 2.4s ease-in-out infinite}
 .t-ceo.lg svg{width:16px;height:16px}
-.t-ceo small{color:#a5f3fc;opacity:.85!important}
-.t-ceo::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.35) 50%,transparent 62%);transform:translateX(-130%);animation:tbshine 3s ease-in-out infinite;pointer-events:none}
+.t-ceo small{color:#99f6e4;opacity:.9!important}
+.t-ceo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#99f6e4,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
+  animation:ceospark 1.8s steps(2,end) infinite}
 @keyframes ceoflow{to{background-position:0 0,300% 0}}
-@keyframes tbshine{0%,60%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
-@media (prefers-reduced-motion:reduce){.t-ceo,.t-ceo::after{animation:none}}
+@keyframes ceotext{to{background-position:250% 0}}
+@keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(168,85,247,.55),0 0 1px rgba(45,212,191,.8)}50%{box-shadow:0 0 16px rgba(45,212,191,.6),0 0 4px rgba(168,85,247,.9)}}
+@keyframes ceogem{0%,100%{transform:scale(1) rotate(0);filter:drop-shadow(0 0 2px rgba(167,139,250,.9))}50%{transform:scale(1.12) rotate(-6deg);filter:drop-shadow(0 0 5px rgba(45,212,191,1))}}
+@keyframes ceospark{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tbadge,.tbadge::after,.tbadge::before,.tbadge svg,.tbadge .tl{animation:none!important}}
 .tpick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .tpick .tbadge{margin:0;height:24px;cursor:pointer;opacity:.5;border:none}
 .tpick .t-ceo{border:1px solid transparent}
@@ -1522,7 +1539,7 @@ function showProfile(uid, ev){
     extra: actCard(activityOf(uid)) + (!S.home && userRoles(uid).length ? `<div class="lbl" style="margin-top:12px">Cargos</div><div>${userRoles(uid).map(r=>`<span class="rchip on" style="--rc:${safeColor(r.color)||'#a1a1aa'}"><i></i>${r.icon?esc(r.icon)+' ':''}${esc(r.name)}</span>`).join('')}</div>` : '')
       + (uid===S.me.id ? `<button class="btn sec" style="margin-top:14px" data-edit>${ic('user','sm')} Editar perfil</button>`
         : `<div class="row" style="margin-top:14px;gap:8px"><button class="btn sec" data-dm>${ic('chat','sm')} Mensagem</button><button class="btn sec auto" data-call title="Ligar">${ic('phone','sm')}</button></div>`)
-      + (S.isAdmin ? `<div class="lbl" style="margin-top:14px">Título no CONCORD</div><div class="tpick">${Object.entries(TITLES).map(([k,t])=>`<button data-title="${k}" class="tbadge t-${k}${S.titles.get(uid)===k?' sel':''}" title="${t.tier}">${TICON[k]}${t.label}</button>`).join('')}<button data-title="" class="tnone">Nenhum</button></div>` : '') });
+      + (S.isAdmin ? `<div class="lbl" style="margin-top:14px">Título no CONCORD</div><div class="tpick">${Object.entries(TITLES).map(([k,t])=>`<button data-title="${k}" class="tbadge t-${k}${t.rank>=2?' sh':''}${S.titles.get(uid)===k?' sel':''}" title="${t.tier}">${TICON[k]}<b class="tl">${t.label}</b></button>`).join('')}<button data-title="" class="tnone">Nenhum</button></div>` : '') });
   document.body.append(bg, pop); placePop(pop, ev);
   pop.querySelector('[data-dm]')?.addEventListener('click', ()=>{ closePop(); openDmWith(uid); });
   pop.querySelector('[data-call]')?.addEventListener('click', ()=>{ closePop(); openDmWith(uid, true); });
@@ -1541,7 +1558,7 @@ const TITLES = {
   moderador:  { label:'MOD',       name:'Moderator', tier:'Bronze',   rank:2 },
   fundador:   { label:'FOUNDER',   name:'Founder',   tier:'Emerald',  rank:1 },
 };
-const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecfeff"/><stop offset=".45" stop-color="#67e8f9"/><stop offset=".75" stop-color="#c4b5fd"/><stop offset="1" stop-color="#f5d0fe"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1" stroke-linejoin="round"/></svg>';
+const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5f3ff"/><stop offset=".35" stop-color="#a78bfa"/><stop offset=".65" stop-color="#2dd4bf"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-linejoin="round"/></svg>';
 const TICON = {
   ceo: GEM,
   presidente: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="currentColor"/></svg>',
@@ -1553,7 +1570,7 @@ const TICON = {
 function titleBadge(uid, big){
   const k = S.titles?.get(uid) || (S.admins?.has(uid) && !S.titles?.size ? 'adm' : null);
   const t = TITLES[k]; if(!t) return '';
-  return `<span class="tbadge t-${k}${big?' lg':''}" title="${t.name} · ${t.tier}">${TICON[k]}${t.label}${big?`<small>${t.tier}</small>`:''}</span>`;
+  return `<span class="tbadge t-${k}${t.rank>=2?' sh':''}${big?' lg':''}" title="${t.name} · ${t.tier}">${TICON[k]}<b class="tl">${t.label}</b>${big?`<small>${t.tier}</small>`:''}</span>`;
 }
 const admBadge = uid => titleBadge(uid);
 async function loadTitles(){ const { data } = await sb.from('dc_titles').select('user_id,title'); S.titles=new Map((data||[]).map(r=>[r.user_id, r.title])); }
