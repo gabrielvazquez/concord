@@ -4,6 +4,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Diamond
+import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
