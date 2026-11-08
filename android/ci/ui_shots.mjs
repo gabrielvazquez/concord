@@ -9,6 +9,29 @@ await p.waitForSelector('#fLogin', { timeout: 30000 });
 await p.fill('#fLogin [name=email]', 'web.teste@concord.app'); await p.fill('#fLogin [name=pass]', 'TesteWeb2026'); await p.click('#fLogin button[type=submit]');
 await p.waitForSelector('#chanlist .ch', { timeout: 40000 });
 await p.click('#chanlist .ch:has-text("geral")'); await p.waitForTimeout(2500);
+// galeria dos 50 efeitos de título (desbloqueados só nesta tela, para a foto)
+await p.evaluate(() => {
+  S.titles.set(S.me.id, ['fundador']);
+  const keys = cat => Object.keys(LOCK).filter(k => k.startsWith(cat + ':')).map(k => k.split(':')[1]);
+  const tierTag = (cat, k) => { const t = LOCK[cat + ':' + k]; return t ? oneBadge(t) : '<span style="font-size:11px;color:#a1a1aa">todos</span>'; };
+  const me = S.profiles.get(S.me.id);
+  const g = document.createElement('div'); g.id = 'gal'; g.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#09090b;overflow:auto;padding:24px;color:#fff;font-family:inherit';
+  const sec = (t, html) => `<h2 style="margin:18px 0 12px;font-size:20px">${t}</h2><div style="display:flex;flex-wrap:wrap;gap:14px">${html}</div>`;
+  g.innerHTML =
+    sec('Cartões (15)', keys('card').map(k => `<div style="width:200px"><div class="pcard cs-${k}" style="width:200px;height:120px;--tp:#1e1b4b;--ta:#0b0b10"><div style="padding:14px;font-weight:800">${CARDS.find(c => c[0] === k)[1]}</div></div><div style="margin-top:6px">${tierTag('card', k)}</div></div>`).join('')) +
+    sec('Banners (10)', keys('ban').map(k => `<div style="width:220px"><div class="pcard" style="width:220px"><div class="bn ban-${k}" style="height:90px"></div></div><div style="margin-top:6px;display:flex;gap:6px;align-items:center"><b style="font-size:13px">${BANNERS.find(c => c[0] === k)[1]}</b>${tierTag('ban', k)}</div></div>`).join('')) +
+    sec('Molduras (10)', keys('deco').map(k => `<div style="width:120px;text-align:center;padding:16px 0">${avatarP({ ...me, decoration: k }, 64)}<div style="font-size:12px;margin:12px 0 4px">${DECOS.find(c => c[0] === k)[1]}</div>${tierTag('deco', k)}</div>`).join('')) +
+    sec('Nomes (10)', keys('nfx').map(k => `<div style="width:190px;padding:8px 0"><div style="font-size:22px;font-weight:800">${nameP({ display_name: 'Gabriel', name_effect: k, name_color: '#c4b5fd', name_color2: '#67e8f9' })}</div><div style="margin-top:4px">${tierTag('nfx', k)}</div></div>`).join('')) +
+    sec('Entradas (5)', ENTRANCES.filter(e => e[0]).map(([k, l]) => `<div style="width:160px"><div class="tile" style="position:relative;height:90px;border-radius:14px;background:#18181b;overflow:hidden"><div class="entfx ent-${k}" style="animation-play-state:paused;animation-delay:-.3s"></div></div><div style="margin-top:6px;display:flex;gap:6px"><b style="font-size:13px">${l}</b>${tierTag('ent', k)}</div></div>`).join(''));
+  document.body.appendChild(g);
+});
+await p.waitForTimeout(2500);
+await p.screenshot({ path: 'ui-efeitos-1.png', fullPage: false });
+await p.evaluate(() => document.getElementById('gal').scrollTo(0, 700)); await p.waitForTimeout(800);
+await p.screenshot({ path: 'ui-efeitos-2.png' });
+await p.evaluate(() => document.getElementById('gal').scrollTo(0, 1400)); await p.waitForTimeout(800);
+await p.screenshot({ path: 'ui-efeitos-3.png' });
+await p.evaluate(() => { document.getElementById('gal').remove(); S.titles.delete(S.me.id); });
 await p.screenshot({ path: 'ui-escuro-chat.png' });
 await p.click('#chanlist .ch:has-text("Sala de Jogo")'); await p.waitForTimeout(5000);
 await p.screenshot({ path: 'ui-escuro-chamada.png' });
