@@ -116,8 +116,30 @@ class Concord(val app: Application) {
         try { supa.signIn(email.trim(), pass); afterLogin() } catch (e: Exception) { onErr(authMessage(e)) }
     }
 
-    fun signUp(name: String, email: String, pass: String, color: String, onErr: (String) -> Unit, onConfirm: () -> Unit) = scope.launch {
-        try { val s = supa.signUp(email.trim(), pass, name.trim().take(24), color); if (s == null) onConfirm() else afterLogin() } catch (e: Exception) { onErr(authMessage(e)) }
+    /** código do link de convite (fica guardado quando o link abre o app antes de ter conta) */
+    var inviteHint by mutableStateOf("")
+    fun signUp(name: String, email: String, pass: String, color: String, invite: String, onErr: (String) -> Unit) = scope.launch {
+        val code = invite.trim().removePrefix("#").uppercase()
+        try { supa.signUpWithInvite(email.trim(), pass, name.trim().take(24), color, code); afterLogin(); joinByCode(code) }
+        catch (e: Exception) {
+            val m = e.message ?: ""
+            onErr(when {
+                m.contains("invite_invalid") -> "Código de convite inválido ou com convites fechados. Confira o link que te mandaram."
+                m.contains("user_already_exists") -> "Já existe uma conta com esse email."
+                m.contains("weak_password") -> "A senha precisa ter pelo menos 6 caracteres."
+                m.contains("email_invalid") -> "Esse email não parece certo."
+                else -> authMessage(e)
+            })
+        }
+    }
+    /** qualquer pessoa cria servidor (até 5) */
+    fun createServer(name: String, done: (Boolean) -> Unit) = scope.launch {
+        val me = meId ?: return@launch
+        try {
+            val r = supa.insert("dc_servers", JSONObject().put("name", name.trim().take(40)).put("owner_id", me))
+            val o: JSONObject? = r
+            loadServers(o?.optString("id")); say("Servidor criado! Código: ${o?.optString("code") ?: ""}"); done(true)
+        } catch (e: Exception) { val m = authMessage(e); say(if (m.contains("row-level", true) || m.contains("policy", true)) "Você já tem 5 servidores. Exclua um para criar outro." else "Erro: $m"); done(false) }
     }
 
     fun recover(email: String, done: (String) -> Unit) = scope.launch {

@@ -141,6 +141,7 @@ fun LoginScreen(s: Screen.Login) {
     var pass by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var color by remember { mutableStateOf(SWATCHES.random()) }
+    var invite by remember { mutableStateOf(Concord.I.inviteHint) }
     var msg by remember { mutableStateOf(s.msg) }
     var ok by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -158,6 +159,7 @@ fun LoginScreen(s: Screen.Login) {
             if (mode == "signup") { field(name, { name = it.take(24) }, "Como te chamam"); Spacer(Modifier.height(12.dp)) }
             field(email, { email = it }, "Email", kb = KeyboardType.Email)
             if (mode != "forgot") { Spacer(Modifier.height(12.dp)); field(pass, { pass = it }, "Senha", password = true) }
+            if (mode == "signup") { Spacer(Modifier.height(12.dp)); field(invite, { invite = it.substringAfterLast('#').uppercase().take(24) }, "Código de convite (vem no link)") }
             if (mode == "signup") {
                 Spacer(Modifier.height(14.dp)); Text("Cor do avatar", color = C.tx2, fontSize = 13.sp); Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -165,11 +167,11 @@ fun LoginScreen(s: Screen.Login) {
                 }
             }
             Spacer(Modifier.height(22.dp))
-            PrimaryButton(when (mode) { "signup" -> "Criar conta"; "forgot" -> "Enviar link"; else -> "Entrar" }, busy, email.isNotBlank() && (mode == "forgot" || pass.length >= 6) && (mode != "signup" || name.isNotBlank())) {
+            PrimaryButton(when (mode) { "signup" -> "Criar conta"; "forgot" -> "Enviar link"; else -> "Entrar" }, busy, email.isNotBlank() && (mode == "forgot" || pass.length >= 6) && (mode != "signup" || (name.isNotBlank() && invite.length >= 3))) {
                 busy = true; msg = null; ok = false
                 when (mode) {
                     "login" -> c.signIn(email, pass) { busy = false; msg = it }
-                    "signup" -> c.signUp(name, email, pass, color, { busy = false; msg = it }) { busy = false; ok = true; mode = "login"; msg = "Conta criada! Confirme pelo link que enviamos para $email e depois entre aqui." }
+                    "signup" -> c.signUp(name, email, pass, color, invite) { busy = false; msg = it }
                     else -> c.recover(email) { busy = false; ok = true; msg = it }
                 }
             }

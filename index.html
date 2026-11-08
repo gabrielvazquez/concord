@@ -1499,7 +1499,8 @@ function showProfile(uid, ev){
   pop.querySelector('[data-edit]')?.addEventListener('click', ()=>{ closePop(); openSettings('perfil'); });
 }
 document.addEventListener('click', e=>{ const t=e.target.closest('[data-pu]'); if(t && t.dataset.pu && !e.target.closest('.tools')){ e.stopPropagation(); showProfile(t.dataset.pu, e); } }, true);
-function canEditServer(){ return !!S.server && !!S.isAdmin; }
+function canEditServer(){ return !!S.server && (!!S.isAdmin || S.server.owner_id===S.me?.id); }
+const isOwner = () => !!S.server && S.server.owner_id===S.me?.id;
 const admBadge = uid => S.admins?.has(uid) ? '<span class="adm" title="Administrador do CONCORD">ADM</span>' : '';
 async function loadAdmins(){ const { data } = await sb.from('dc_admins').select('user_id'); S.admins=new Set((data||[]).map(r=>r.user_id)); S.isAdmin=S.admins.has(S.me?.id); }
 
@@ -1580,6 +1581,7 @@ function showAuth(view, msg, fromWho, prefill){
         <label class="field"><span>Como te chamam</span><input class="inp" name="name" maxlength="24" required placeholder="Gabriel" autocomplete="nickname"></label>
         <label class="field"><span>Email</span><input class="inp" name="email" type="email" required placeholder="voce@email.com" autocomplete="email"></label>
         <label class="field"><span>Senha</span><div class="pw"><input class="inp" name="pass" type="password" minlength="6" required placeholder="Mínimo 6 caracteres" autocomplete="new-password"><button type="button" data-eye>Mostrar</button></div></label>
+        <label class="field"><span>Código de convite</span><input class="inp" name="invite" required maxlength="24" placeholder="Vem no link que te mandaram" value="${esc((location.hash||'').replace('#','').trim().toUpperCase())}" style="text-transform:uppercase;letter-spacing:.08em"></label>
         <div class="field"><span>Cor do avatar</span><div class="swatches" id="swS"></div></div>
         <button class="btn" type="submit">Criar conta ${ic('send','sm')}</button>
       </form>
@@ -1587,13 +1589,21 @@ function showAuth(view, msg, fromWho, prefill){
     swatchPicker($('#swS'), color, c=>color=c);
     $('#fSignup').onsubmit = async e=>{ e.preventDefault(); const fd=new FormData(e.target); const btn=e.target.querySelector('button[type=submit]'); busy(btn,true);
       const name=fd.get('name').trim().slice(0,24);
-      const { data, error } = await sb.auth.signUp({ email:fd.get('email').trim(), password:fd.get('pass'),
-        options:{ data:{ app:'concord', display_name:name, color }, emailRedirectTo: location.origin+location.pathname } });
+      // cadastro pelo servidor do CONCORD: a conta já nasce confirmada, sem e-mail (o e-mail grátis só manda ~2 por hora)
+      const email=fd.get('email').trim(), pass=fd.get('pass'), invite=fd.get('invite').trim().replace('#','').toUpperCase();
+      const { data:r, error:fe } = await sb.functions.invoke('dc-signup', { body:{ email, password:pass, name, color, invite } });
+      let code = r?.error || null;
+      if(fe){ try{ code = (await fe.context.json()).error; }catch{ code = fe.message; } }
+      if(code){ busy(btn,false);
+        const msg = code==='invite_invalid' ? 'Código de convite inválido ou com convites fechados. Confira o link que te mandaram.'
+          : code==='user_already_exists' ? AUTH_ERR.user_already_exists : code==='weak_password' ? 'A senha precisa ter pelo menos 6 caracteres.'
+          : code==='email_invalid' ? 'Esse email não parece certo.' : 'Não deu para criar a conta agora: '+code;
+        return showAuth('signup', {text:msg}); }
+      if(!location.hash) history.replaceState(null, '', location.pathname+location.search+'#'+invite);
+      const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
       busy(btn,false);
-      if(error) return showAuth('signup', {text:authMsg(error)});
-      if(data.session){ await afterLogin(data.session); }
-      else if(data.user && Array.isArray(data.user.identities) && data.user.identities.length===0) showAuth('login', {text:AUTH_ERR.user_already_exists});
-      else showAuth('login', {ok:true, text:'Conta criada! Enviamos um link de confirmação para '+fd.get('email').trim()+'. Confirme e depois entre aqui.'});
+      if(error) return showAuth('login', {text:authMsg(error)});
+      await afterLogin(data.session);
     };
   } else if(view==='forgot'){
     f.innerHTML = `${mini}<h2>Esqueceu a senha?</h2><p>Mandamos um link para você criar uma nova.</p>${box}
@@ -1791,7 +1801,7 @@ function renderRail(){
     b.className='srv'+(S.server?.id===s.id&&!S.home?' on':'')+(img?' has-img':''); b.title=s.name;
     if(img) b.innerHTML=`<img src="${esc(img)}" alt="">`; else b.textContent = s.icon || initial(s.name);
     b.onclick=()=>{ selectServer(s); closeDrawer(); }; r.appendChild(b); });
-  const add=document.createElement('button'); add.className='srv add'; add.title=S.isAdmin?'Criar ou entrar em servidor':'Entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal(S.isAdmin?'create':'join'); r.appendChild(add);
+  const add=document.createElement('button'); add.className='srv add'; add.title='Criar ou entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal(S.isAdmin?'create':'join'); r.appendChild(add);
   const sp=document.createElement('div'); sp.style.flex='1'; r.appendChild(sp);
   const out=document.createElement('button'); out.className='srv logout'; out.title='Sair da conta'; out.innerHTML=ic('out'); out.onclick=async()=>{ if(await confirmBox('Trocar de conta?', '', 'Sair')) logout(); }; r.appendChild(out);
 }
@@ -2069,7 +2079,7 @@ function appendMsg(m, live){
     ? `<div class="gut">${fmtTime(d)}</div><div class="body"><div class="txt">${md(m.content)}</div></div>`
     : `<div${pu}>${avatarU(m.user_id, null, {name:m.author,color:m.author_color}, {noDeco:false})}</div><div class="body"><div class="hd"><b${pu}>${m.user_id&&S.profiles.has(m.user_id)?nameHtml(m.user_id):esc(m.author)}</b>${admBadge(m.user_id)}<time>${fmtDay(d)==='Hoje'?'Hoje às '+fmtTime(d):fmtDay(d)+' '+fmtTime(d)}</time></div><div class="txt">${md(m.content)}</div></div>`;
   if(el.querySelector('.mention.me') && m.user_id!==S.me.id) el.classList.add('mentioned');
-  if(S.isAdmin && !m.dm_id){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem (ADM)'; del.innerHTML=ic('trash','sm');
+  if(!m.dm_id && (S.isAdmin || isOwner() || m.user_id===S.me.id)){ const del=document.createElement('button'); del.className='del'; del.title='Excluir mensagem'; del.innerHTML=ic('trash','sm');
     del.onclick=async e=>{ e.stopPropagation(); const { error } = await sb.from('dc_messages').delete().eq('id', m.id); if(error) return toast('Erro: '+error.message, true); el.remove(); }; el.appendChild(del); }
   box.appendChild(el); S.lastAuthor=who; S.lastTime=+d;
   const all=box.querySelectorAll('.msg'); const cap=document.body.classList.contains('eco')?200:400; if(all.length>cap) for(let i=0;i<all.length-cap+50;i++) all[i].remove();
@@ -3371,11 +3381,12 @@ function renderServerSettings(){
   const s=S.server, edit=canEditServer(); const nav=$('#setNav'), body=$('#setBody'); body.parentElement.scrollTop=0;
   const items=[['geral','gear','Visão geral'],['visual','palette','Aparência'],['canais','hash','Canais'],['cargos','shield','Cargos'],['membros','users','Membros'],['convite','copy','Convites']];
   nav.innerHTML = `<h4>${esc(s.name)}</h4>`+items.map(([k,i,l])=>`<button data-s="${k}" class="${SET.sec===k?'on':''}">${ic(i,'sm')}${l}</button>`).join('')
-    + `<h4>Você</h4><button data-me>${ic('palette','sm')}Meu perfil no servidor</button><div class="sp"></div>${!S.isAdmin?`<button data-leave style="color:var(--red)">${ic('out','sm')}Sair do servidor</button>`:''}`;
+    + `<h4>Você</h4><button data-me>${ic('palette','sm')}Meu perfil no servidor</button><div class="sp"></div>${isOwner()?`<button data-delsrv style="color:var(--red)">${ic('trash','sm')}Excluir servidor</button>`:!S.isAdmin?`<button data-leave style="color:var(--red)">${ic('out','sm')}Sair do servidor</button>`:''}`;
   nav.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ SET.sec=b.dataset.s; SET.draft=null; renderServerSettings(); });
   nav.querySelector('[data-me]').onclick=()=>openSettings('perfil');
   nav.querySelector('[data-leave]')?.addEventListener('click', leaveServer);
-  const ro = edit ? '' : `<div class="ok-box" style="background:var(--card);border-color:var(--line2);color:var(--tx2)">Só o administrador do CONCORD pode mudar estas configurações.</div>`;
+  nav.querySelector('[data-delsrv]')?.addEventListener('click', deleteServer);
+  const ro = edit ? '' : `<div class="ok-box" style="background:var(--card);border-color:var(--line2);color:var(--tx2)">Só o dono do servidor pode mudar estas configurações.</div>`;
 
   if(SET.sec==='geral'){
     const D = SET.draft || (SET.draft = {...s});
@@ -3548,11 +3559,11 @@ function openServerMenu(ev){
     <button data-a="settings">Configurações do servidor ${ic('gear','sm')}</button>
     ${edit?`<button data-a="channel">Criar canal ${ic('plus','sm')}</button>`:''}
     <button data-a="profile">Editar perfil no servidor ${ic('palette','sm')}</button>
-    ${!S.isAdmin?`<hr><button class="danger" data-a="leave">Sair do servidor ${ic('out','sm')}</button>`:''}`;
+    ${isOwner()?`<hr><button class="danger" data-a="delete">Excluir servidor ${ic('trash','sm')}</button>`:!S.isAdmin?`<hr><button class="danger" data-a="leave">Sair do servidor ${ic('out','sm')}</button>`:''}`;
   const bg=document.createElement('div'); bg.className='pop-bg'; bg.onclick=closePop; document.body.append(bg, m);
   const r=$('.side-head').getBoundingClientRect(); m.style.left=(r.left+10)+'px'; m.style.top=(r.bottom-4)+'px'; m.style.width=(r.width-20)+'px';
   m.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ closePop(); const a=b.dataset.a;
-    if(a==='invite') openInvite(); else if(a==='settings') openServerSettings('geral'); else if(a==='channel') openChannelModal('text'); else if(a==='profile') openSettings('perfil'); else if(a==='leave') leaveServer(); });
+    if(a==='invite') openInvite(); else if(a==='settings') openServerSettings('geral'); else if(a==='channel') openChannelModal('text'); else if(a==='profile') openSettings('perfil'); else if(a==='leave') leaveServer(); else if(a==='delete') deleteServer(); });
 }
 
 function livePipes(fn){ if(V?.pipe) fn(V.pipe); if(SET.test) fn(SET.test); }
@@ -4029,9 +4040,18 @@ function modal(html, onClose){
   return bg.querySelector('.modal');
 }
 function closeModal(){ $('#modalRoot').innerHTML=''; }
+async function deleteServer(){
+  const s=S.server; if(!s) return;
+  const typed=prompt('Excluir "'+s.name+'" apaga canais e mensagens para todo mundo. Digite o nome do servidor para confirmar:');
+  if(typed===null) return; if(typed.trim()!==s.name.trim()) return toast('O nome não confere. Nada foi apagado.', true);
+  if(V && V.srv===s.id) await leaveVoice();
+  const { error } = await sb.from('dc_servers').delete().eq('id', s.id);
+  if(error) return toast('Erro ao excluir: '+error.message, true);
+  S.servers=S.servers.filter(x=>x.id!==s.id); toast('Servidor excluído.'); dropServer?.(s.id);
+  if(S.servers.length) selectServer(S.servers[0]); else openHome(true); renderRail();
+}
 function openServerModal(tab){
-  if(!S.isAdmin) tab='join';
-  const m=modal(`${S.isAdmin?'<div class="tabs"><button data-t="create">Criar servidor</button><button data-t="join">Entrar com código</button></div>':''}<div id="tabBody"></div>`);
+  const m=modal(`<div class="tabs"><button data-t="create">Criar servidor</button><button data-t="join">Entrar com código</button></div><div id="tabBody"></div>`);
   const body=m.querySelector('#tabBody');
   const show=t=>{
     m.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
@@ -4044,7 +4064,7 @@ function openServerModal(tab){
         const name=body.querySelector('#nsName').value.trim(); if(!name) return;
         const icon=body.querySelector('#nsIcon').value.trim()||null;
         const { data, error } = await sb.from('dc_servers').insert({name, icon, owner_id:S.me.id}).select().single();
-        if(error) return toast('Erro: '+error.message, true);
+        if(error) return toast(/row-level|policy/i.test(error.message) ? 'Você já tem 5 servidores. Exclua um para criar outro.' : 'Erro: '+error.message, true);
         closeModal(); S.servers.push(data); renderRail(); selectServer(data);
         toast('Servidor criado! Código: '+data.code);
       };

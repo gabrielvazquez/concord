@@ -101,6 +101,12 @@ class Supa(private val ctx: Context) {
         return parseSession(o).also { setSession(it) }
     }
 
+    /** cadastro sem e-mail: a função do CONCORD cria a conta já confirmada (precisa de um código de convite válido) */
+    suspend fun signUpWithInvite(email: String, password: String, name: String, color: String, invite: String): Session {
+        call("POST", "/functions/v1/dc-signup", JSONObject().put("email", email).put("password", password).put("name", name).put("color", color).put("invite", invite), auth = false)
+        return signIn(email, password)
+    }
+
     suspend fun signUp(email: String, password: String, name: String, color: String): Session? {
         val body = JSONObject().put("email", email).put("password", password)
             .put("data", JSONObject().put("app", "concord").put("display_name", name).put("color", color))

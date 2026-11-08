@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
     private fun handle(i: Intent?) {
         i ?: return
         i.data?.getQueryParameter("tv")?.let { tvCodeFrom(it) }?.let { code -> if (c.screen == Screen.Main) c.tvFromQr(code) else pendingTv = code }
-        i.data?.fragment?.takeIf { it.isNotBlank() }?.let { code -> if (c.screen == Screen.Main) c.joinByCode(code) else pendingInvite = code }
+        i.data?.fragment?.takeIf { it.isNotBlank() }?.let { code -> if (c.screen == Screen.Main) c.joinByCode(code) else { pendingInvite = code; c.inviteHint = code.uppercase() } }
         val act = i.getStringExtra("concord_action") ?: return
         i.removeExtra("concord_action")
         val kind = act.substringBefore(":"); val id = act.substringAfter(":", "")

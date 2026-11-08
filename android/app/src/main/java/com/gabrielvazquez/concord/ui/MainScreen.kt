@@ -83,6 +83,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -498,10 +499,19 @@ private fun JoinDialog() {
     val c = Concord.I
     var code by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    var create by remember { mutableStateOf(false) }
     AlertDialog(onDismissRequest = { Ui.joinOpen = false }, containerColor = C.panel,
-        title = { Text("Entrar em servidor") },
-        text = { Column { Text("Cole o código ou o link de convite.", color = C.tx2); Spacer(Modifier.height(12.dp)); field(code, { code = it.substringAfterLast('#').uppercase().take(24) }, "Código") } },
-        confirmButton = { TextButton(enabled = code.length >= 3 && !busy, onClick = { busy = true; c.joinByCode(code) { busy = false; if (it) Ui.joinOpen = false } }) { Text(if (busy) "Entrando…" else "Entrar", color = Color.White) } },
+        title = { Text(if (create) "Criar servidor" else "Entrar em servidor") },
+        text = { Column {
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(C.card)) {
+                listOf(false to "Entrar com código", true to "Criar").forEach { (v, l) -> Text(l, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, textAlign = TextAlign.Center, color = if (create == v) Color.Black else C.tx2,
+                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (create == v) Color.White else Color.Transparent).clickable { create = v; code = "" }.padding(vertical = 9.dp)) }
+            }
+            Spacer(Modifier.height(12.dp))
+            if (create) { Text("Dê um nome. Depois é só mandar o código para a galera.", color = C.tx2); Spacer(Modifier.height(12.dp)); field(code, { code = it.take(40) }, "Nome do servidor") }
+            else { Text("Cole o código ou o link de convite.", color = C.tx2); Spacer(Modifier.height(12.dp)); field(code, { code = it.substringAfterLast('#').uppercase().take(24) }, "Código") }
+        } },
+        confirmButton = { TextButton(enabled = (if (create) code.isNotBlank() else code.length >= 3) && !busy, onClick = { busy = true; if (create) c.createServer(code) { busy = false; if (it) Ui.joinOpen = false } else c.joinByCode(code) { busy = false; if (it) Ui.joinOpen = false } }) { Text(if (busy) "Aguarde…" else if (create) "Criar" else "Entrar", color = Color.White) } },
         dismissButton = { TextButton(onClick = { Ui.joinOpen = false }) { Text("Cancelar", color = C.tx2) } })
 }
 
