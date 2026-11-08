@@ -2,6 +2,10 @@ name: Capturas da interface
 
 on:
   workflow_dispatch:
+    inputs:
+      only:
+        description: 'ui = só capturas'
+        default: ''
 
 permissions:
   contents: write

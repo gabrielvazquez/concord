@@ -53,7 +53,15 @@ await d.evaluate(() => { openSettings ? openSettings('aparencia') : null; }).cat
 await d.evaluate(() => { SET.sec = 'aparencia'; $('#settings').classList.remove('hidden'); renderSettings(); });
 await d.waitForTimeout(2500);
 console.log('loja:', await d.evaluate(() => [...document.querySelectorAll('#storeGrid .tcard span')].map(x => x.textContent)));
-await d.screenshot({ path: 'ui-loja.png' });
+await d.screenshot({ path: 'ui-aparencia-temas.png' });
+await d.click('.stabs [data-st="loja"]'); await d.waitForTimeout(800); await d.screenshot({ path: 'ui-loja.png' });
+await d.click('.stabs [data-st="interface"]'); await d.waitForTimeout(500); await d.screenshot({ path: 'ui-aparencia-interface.png' });
+await d.click('.stabs [data-st="loja"]'); await d.waitForTimeout(300);
+await d.evaluate(() => { SET.sec = 'perfil'; SET.draft = null; renderSettings(); }); await d.waitForTimeout(1200);
+await d.screenshot({ path: 'ui-perfil-basico.png' });
+await d.click('.stabs [data-st="nome"]'); await d.waitForTimeout(600); await d.screenshot({ path: 'ui-perfil-nome.png' });
+await d.click('.stabs [data-st="cartao"]'); await d.waitForTimeout(600); await d.screenshot({ path: 'ui-perfil-cartao.png' });
+await d.evaluate(() => { SET.sec = 'aparencia'; renderSettings(); }); await d.waitForTimeout(600);
 await d.click('[data-store="lavanda"]'); await d.waitForTimeout(800);
 await d.evaluate(() => { $('#settings').classList.add('hidden'); }); await d.click('#chanlist .ch:has-text("geral")'); await d.waitForTimeout(1500);
 await d.screenshot({ path: 'ui-tema-lavanda.png' });

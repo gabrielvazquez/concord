@@ -956,9 +956,12 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 @keyframes ceospark{0%{opacity:.25}50%{opacity:1}100%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tbadge,.tbadge::after,.tbadge::before,.tbadge svg,.tbadge .tl{animation:none!important}}
 .tminis{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
-.tbadge.mini{width:18px;padding:0;gap:0;justify-content:center;margin-left:0;border-radius:5px}
+.tbadge.mini{padding:0 4px;gap:0;margin-left:0;border-radius:5px;transition:padding .22s ease,gap .22s ease}
 .tbadge.mini svg{width:11px;height:11px}
-.t-ceo.mini{padding:0;width:20px}
+.tbadge.mini .tl{max-width:0;opacity:0;overflow:hidden;transition:max-width .25s ease,opacity .2s ease}
+.tbadge.mini:hover{padding:0 8px 0 6px;gap:5px}
+.tbadge.mini:hover .tl{max-width:110px;opacity:1}
+.t-ceo.mini{padding:0 4px}
 .t-ceo.mini svg{width:12px;height:12px}
 .tbadges{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .tbadges .tbadge.lg{margin:0}
@@ -968,6 +971,16 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 .tpick .tbadge.sel,.tpick .tbadge:hover{opacity:1}
 .tpick .tbadge.sel{outline:2px solid var(--tx);outline-offset:2px}
 .tnone{font-size:12px;color:var(--tx3);padding:0 8px;border-radius:6px;border:1px solid var(--line2);height:24px}
+/* ===== abas das configurações ===== */
+.stabs{display:flex;gap:4px;padding:4px;margin:4px 0 16px;background:var(--card);border:1px solid var(--line);border-radius:14px;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.stabs button{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:10px;font-weight:600;font-size:13px;color:var(--tx2);flex:1;justify-content:center;white-space:nowrap}
+.stabs button:hover{color:var(--tx);background:var(--card2)}
+.stabs button.on{background:var(--ac);color:var(--act)}
+.schead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.schead p{margin:2px 0 0}
+.tcard{position:relative}
+.tby{display:block;font-size:11px;color:var(--tx3);margin-top:-2px}
+.ton{position:absolute;top:8px;right:8px;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;background:var(--ac);color:var(--act);border-radius:999px;padding:2px 7px}
 /* ===== amigos ===== */
 .frwrap{max-width:720px;margin:18px auto;padding:0 18px;display:flex;flex-direction:column;gap:12px}
 .frwrap .sc h3{margin-bottom:4px}
@@ -1243,9 +1256,9 @@ function installTheme(t){
   setPref('appTheme', 'store:'+t.id); setPref('storeTheme', { id:t.id, name:t.name, mode:t.mode, base:t.base, accent:t.accent });
   setPref('mode', t.mode); setPref('accent', t.accent); applyAppearance();
 }
-function themeCard(t, on, del){
+function themeCard(t, on, del, by){
   const pl=themePalette(t);
-  return `<div class="tcard ${on?'on':''}" data-store="${esc(t.id)}"><div class="tprev" style="background:${pl.bg}"><i style="background:${pl.side}"></i><i style="background:${pl.main}"><b style="background:${pl.card}"></b><b style="background:${t.accent}"></b></i></div><span>${esc(t.name)}${del?`<button class="tdel" data-tdel="${esc(t.id)}" title="Tirar da loja">${ic('x','sm')}</button>`:''}</span></div>`;
+  return `<div class="tcard ${on?'on':''}" data-store="${esc(t.id)}"><div class="tprev" style="background:${pl.bg}"><i style="background:${pl.side}"></i><i style="background:${pl.main}"><b style="background:${pl.card}"></b><b style="background:${t.accent}"></b></i></div><span>${esc(t.name)}${del?`<button class="tdel" data-tdel="${esc(t.id)}" title="Tirar da loja">${ic('x','sm')}</button>`:''}</span>${by?`<small class="tby">por ${esc(by)}</small>`:''}${on?`<em class="ton">Em uso</em>`:''}</div>`;
 }
 function openPublishTheme(){
   const cur=P(); const st=cur.storeTheme;
@@ -1579,7 +1592,7 @@ const userTitles = uid => { const a=S.titles?.get(uid)||[]; return a.length ? a 
 function oneBadge(k, mode){
   const t=TITLES[k]; if(!t) return '';
   const cls=`tbadge t-${k}${t.rank>=2?' sh':''}${mode==='lg'?' lg':mode==='mini'?' mini':''}`;
-  return `<span class="${cls}" title="${t.name} · ${t.tier}">${TICON[k]}${mode==='mini'?'':`<b class="tl">${t.label}</b>`}${mode==='lg'?`<small>${t.tier}</small>`:''}</span>`;
+  return `<span class="${cls}" title="${t.name} · ${t.tier}">${TICON[k]}<b class="tl">${t.label}</b>${mode==='lg'?`<small>${t.tier}</small>`:''}</span>`;
 }
 function titleBadge(uid, big){
   const ks=userTitles(uid); if(!ks.length) return '';
@@ -3187,9 +3200,11 @@ async function renderSettings(){
     const ACS=['#ffffff','#a78bfa','#818cf8','#60a5fa','#22d3ee','#34d399','#a3e635','#fbbf24','#fb923c','#f87171','#f472b6','#e879f9'];
     const curT = P().appTheme||'oled';
     body.innerHTML = `<h2>Aparência</h2>
-      <div class="sc"><h3>Loja de temas</h3><p>Instale com um clique. Criou um tema bonito? Publique para os amigos.</p>
-        <div class="themegrid" id="storeGrid">${[...STORE_THEMES, ...(S.storeThemes||[])].map(t=>themeCard(t, P().appTheme==='store:'+t.id, t.author && (t.author===S.me.id || S.isAdmin))).join('')}</div>
-        <div class="row" style="margin:12px 0 0;justify-content:flex-start"><button class="btn sec auto" id="pubTheme">${ic('plus','sm')} Publicar um tema</button></div></div>
+      <div class="sc"><div class="schead"><div><h3>Loja · prontos</h3><p>Temas claros feitos pelo CONCORD. Um clique e pronto.</p></div></div>
+        <div class="themegrid" id="storeGrid">${STORE_THEMES.map(t=>themeCard(t, P().appTheme==='store:'+t.id)).join('')}</div></div>
+      <div class="sc"><div class="schead"><div><h3>Loja · da galera</h3><p>Temas publicados pelos amigos.</p></div><button class="btn auto" id="pubTheme">${ic('plus','sm')} Publicar o meu</button></div>
+        ${(S.storeThemes||[]).length ? `<div class="themegrid">${S.storeThemes.map(t=>themeCard(t, P().appTheme==='store:'+t.id, t.author===S.me.id || S.isAdmin, dname(t.author))).join('')}</div>`
+          : `<div class="dmempty" style="padding:18px 0 4px">${S.storeThemes?'Ninguém publicou ainda. Seja o primeiro!':'Carregando…'}</div>`}</div>
       <div class="sc"><h3>Modo</h3><p>Claro ou escuro. O logo acompanha.</p><div class="seg" id="modeSeg"><button data-mode="dark" class="${P().mode!=='light'?'on':''}">Escuro</button><button data-mode="light" class="${P().mode==='light'?'on':''}">Claro</button></div></div>
       <div class="sc"><h3>Tema</h3><p>${P().mode==='light'?'Os temas valem para o modo escuro.':''}</p>
         <div class="themegrid">${Object.entries(APP_THEMES).map(([k,t])=>`<button class="tcard ${curT===k?'on':''}" data-theme-app="${k}"><div class="tprev" style="background:${t.bg}"><i style="background:${t.side}"></i><i style="background:${t.main}"><b style="background:${t.card}"></b><b style="background:var(--ac)"></b></i></div><span>${t.label}</span></button>`).join('')}
@@ -3215,6 +3230,12 @@ async function renderSettings(){
     body.querySelectorAll('[data-tdel]').forEach(b=>b.onclick=async e=>{ e.stopPropagation(); if(!confirm('Tirar este tema da loja?')) return;
       const { error } = await sb.from('dc_themes').delete().eq('id', b.dataset.tdel); if(error) return toast('Erro: '+error.message, true); S.storeThemes=null; loadStoreThemes(); });
     if(!S.storeThemes) loadStoreThemes();
+    sectionTabs(body, 'aparencia', [
+      ['temas','Temas','palette',['modo','tema']],
+      ['loja','Loja','down',['loja']],
+      ['cores','Cores','edit',['cor de destaque']],
+      ['interface','Interface','gear',['layout','tamanho','chat e']],
+    ]);
     $('#acPick').oninput=e=>{ setPref('accent', e.target.value); applyAppearance(); };
     { const cur = P().layout || (DESK?'flat':'cards'); const g=body.querySelector('[data-seg=layout]'); g.querySelectorAll('button').forEach(b=>{ b.classList.toggle('on', b.dataset.v===cur); b.onclick=()=>{ setPref('layout', b.dataset.v); applyAppearance(); g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); }; }); }
     body.querySelector('[data-seg=fontScale]').querySelectorAll('button').forEach(b=>b.onclick=()=>{ setPref('fontScale', +b.dataset.v); applyAppearance(); b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
@@ -3347,6 +3368,20 @@ function lockCardHtml(){
     <div class="chips">${['Temas do app','Cor de destaque','Layout','Tamanho do texto','Modo compacto'].map(x=>`<span class="chip2">${x}</span>`).join('')}</div>
     <a class="btn auto" href="${APP_DOWNLOAD}" target="_blank" rel="noopener">${ic('down','sm')} Baixar para Windows</a></div>`;
 }
+/* abas dentro de uma página de configurações: agrupa as seções (.sc) pelo título h3 */
+function sectionTabs(body, key, groups, host){
+  const scs=[...(host||body).querySelectorAll(':scope > .sc, :scope .pgrid > div:first-child > .sc')];
+  const pick = h => { const t=(h?.textContent||'').trim().toLowerCase(); const g=groups.find(g=>g[3].some(w=>t.startsWith(w))); return g?g[0]:groups[0][0]; };
+  scs.forEach(sc=>sc.dataset.tab=pick(sc.querySelector('h3')));
+  SET.tabs = SET.tabs || {}; const cur = groups.some(g=>g[0]===SET.tabs[key]) ? SET.tabs[key] : groups[0][0];
+  const bar=document.createElement('div'); bar.className='stabs';
+  bar.innerHTML=groups.map(([k,l,i])=>`<button data-st="${k}" class="${k===cur?'on':''}">${ic(i,'sm')}${l}</button>`).join('');
+  const h2=body.querySelector('h2'); (body.querySelector(':scope > .sub')||h2).after(bar);
+  const show=k=>{ SET.tabs[key]=k; scs.forEach(sc=>sc.style.display = sc.dataset.tab===k ? '' : 'none'); bar.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.st===k)); body.closest('.set-body,.set-main,#setBody')?.scrollTo?.(0,0); };
+  bar.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b.dataset.st));
+  show(cur);
+}
+
 function renderProfileEditor(body){
   const base = S.profiles.get(S.me.id)||{};
   const D = SET.draft || (SET.draft = {...base, _nick: S.server ? (S.nicks.get(S.me.id)||'') : ''});
@@ -3400,6 +3435,13 @@ ${true?`    <div class="sc"><h3>${ic('img','sm')} Avatares prontos</h3><p></p>
     <div class="prevlbl" style="margin-top:18px">Na call</div><div class="tile" id="pvTile" style="cursor:default"></div></div>
   </div>
   <div class="savebar"><button class="btn sec auto" id="pfReset">Desfazer</button><button class="btn auto" id="pfSave">Salvar alterações</button></div>`;
+  sectionTabs(body, 'perfil', [
+    ['basico','Básico','user',['foto','sobre','avatares']],
+    ['nome','Nome','edit',['estilo do nome','placa','insígnias']],
+    ['avatar','Avatar','img',['decoração','formato','efeito']],
+    ['cartao','Cartão','crown',['tema do perfil','banner','estilo do cartão']],
+    ['som','Som','vol',['som de entrada']],
+  ]);
 
   const preview = ()=>{
     $('#pvCard').innerHTML = profileCardHtml(D, { nick:D._nick||null, status:D.presence_status==='invisible'?'invisible':(D.presence_status||'online'), fxKey:'pv-'+(D.effect||'') });
