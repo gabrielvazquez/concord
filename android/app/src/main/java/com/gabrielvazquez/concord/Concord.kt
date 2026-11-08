@@ -480,7 +480,7 @@ class Concord(val app: Application) {
 
     /* ===================== Títulos (CEO, Presidente, ...) ===================== */
     val titles = mutableStateMapOf<String, List<String>>()
-    private val TITLE_RANK = listOf("ceo", "presidente", "diretor", "adm", "moderador", "fundador")
+    private val TITLE_RANK = listOf("fundador", "ceo", "presidente", "diretor", "adm", "moderador")
     suspend fun loadTitles() {
         try {
             val r = supa.select("dc_titles", "select=user_id,title")

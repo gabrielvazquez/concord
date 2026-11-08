@@ -928,8 +928,6 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 @keyframes tbshine{0%,55%{transform:translateX(-140%)}100%{transform:translateX(140%)}}
 @keyframes tbflow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes tbglow{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.18),0 0 4px var(--gc)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.18),0 0 14px var(--gc)}}
-/* 1 · Founder: parado */
-.t-fundador{--tb:linear-gradient(180deg,#86efc3,#0e9f6e);--tt:#022c22}
 /* 2 · Mod: brilho bem devagar */
 .t-moderador{--tb:linear-gradient(180deg,#f9b47c,#c0571d);--tt:#2a1203;--ts:11s;--sa:.35}
 /* 3 · Admin: brilho devagar */
@@ -949,6 +947,21 @@ body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fi
 .t-ceo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(1.2px 1.2px at 18% 30%,#fff,transparent),radial-gradient(1px 1px at 62% 72%,#d8b4fe,transparent),radial-gradient(1.2px 1.2px at 84% 26%,#99f6e4,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent);
   animation:ceospark 1.8s steps(2,end) infinite}
+/* 7 · FOUNDER: aurora — base obsidiana, aurora que corre por dentro e na borda, letra que muda de cor, coroa flutuando, faíscas e aura colorida */
+.t-fundador{--tt:#fff;--ts:1.9s;--sa:.5;border:1px solid transparent;padding:0 9px 0 5px;isolation:isolate;
+  background:linear-gradient(135deg,#06060b,#0a0f14) padding-box,linear-gradient(100deg,#34d399,#22d3ee,#818cf8,#c084fc,#f472b6,#34d399) border-box;background-size:100% 100%,300% 100%;
+  animation:ceoflow 3s linear infinite,auroraglow 3s ease-in-out infinite}
+.t-fundador::before{content:'';position:absolute;inset:-40%;z-index:-1;opacity:.42;pointer-events:none;filter:blur(6px);
+  background:radial-gradient(40% 60% at 20% 50%,#10b981,transparent 70%),radial-gradient(40% 60% at 55% 40%,#06b6d4,transparent 70%),radial-gradient(40% 60% at 85% 60%,#a855f7,transparent 70%);animation:aurorasway 4.5s ease-in-out infinite alternate}
+.t-fundador .tl{background:linear-gradient(90deg,#a7f3d0,#67e8f9,#c4b5fd,#f9a8d4,#a7f3d0);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ceotext 2.6s linear infinite;filter:drop-shadow(0 0 4px rgba(103,232,249,.5))}
+.t-fundador svg{width:13px;height:13px;animation:crownfloat 2.2s ease-in-out infinite}
+.t-fundador.lg svg{width:17px;height:17px}
+.t-fundador small{color:#a7f3d0;opacity:.95!important}
+.t-fundador.sh::after{background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.5) 48%,rgba(167,243,208,.35) 52%,transparent 65%)}
+.t-fundador.mini{padding:0 4px}
+@keyframes aurorasway{0%{transform:translateX(-12%) rotate(-4deg)}100%{transform:translateX(12%) rotate(4deg)}}
+@keyframes auroraglow{0%{box-shadow:0 0 8px rgba(52,211,153,.6),0 0 2px rgba(34,211,238,.9)}33%{box-shadow:0 0 16px rgba(129,140,248,.65),0 0 3px rgba(192,132,252,.9)}66%{box-shadow:0 0 16px rgba(244,114,182,.55),0 0 3px rgba(34,211,238,.9)}100%{box-shadow:0 0 8px rgba(52,211,153,.6),0 0 2px rgba(34,211,238,.9)}}
+@keyframes crownfloat{0%,100%{transform:translateY(0) rotate(0);filter:drop-shadow(0 0 2px rgba(110,231,183,.9))}50%{transform:translateY(-1.5px) rotate(4deg);filter:drop-shadow(0 0 6px rgba(192,132,252,1))}}
 @keyframes ceoflow{to{background-position:0 0,300% 0}}
 @keyframes ceotext{to{background-position:250% 0}}
 @keyframes ceoglow{0%,100%{box-shadow:0 0 6px rgba(168,85,247,.55),0 0 1px rgba(45,212,191,.8)}50%{box-shadow:0 0 16px rgba(45,212,191,.6),0 0 4px rgba(168,85,247,.9)}}
@@ -1571,21 +1584,21 @@ function canEditServer(){ return !!S.server && (!!S.isAdmin || S.server.owner_id
 const isOwner = () => !!S.server && S.server.owner_id===S.me?.id;
 /* ---------- Títulos (cargos do CONCORD inteiro), cada um com sua pedra ---------- */
 const TITLES = {
+  fundador:   { label:'FOUNDER',   name:'Founder',   tier:'Aurora',   rank:7 },
   ceo:        { label:'CEO',       name:'CEO',       tier:'Diamond',  rank:6 },
   presidente: { label:'PRESIDENT', name:'President', tier:'Platinum', rank:5 },
   diretor:    { label:'DIRECTOR',  name:'Director',  tier:'Gold',     rank:4 },
   adm:        { label:'ADMIN',     name:'Admin',     tier:'Silver',   rank:3 },
   moderador:  { label:'MOD',       name:'Moderator', tier:'Bronze',   rank:2 },
-  fundador:   { label:'FOUNDER',   name:'Founder',   tier:'Emerald',  rank:1 },
 };
 const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5f3ff"/><stop offset=".35" stop-color="#a78bfa"/><stop offset=".65" stop-color="#2dd4bf"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="url(#gemg)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1" stroke-linejoin="round"/></svg>';
 const TICON = {
   ceo: GEM,
-  presidente: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="currentColor"/></svg>',
+  presidente: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l1 5 1-5h4l-3 7.2A6 6 0 1 1 10 9.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="15" r="5.2" fill="currentColor"/><path d="m12 12 1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="#fff" opacity=".85"/></svg>',
   diretor: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.6l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z" fill="currentColor"/></svg>',
   adm: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8 3v6.2c0 4.6-3.3 8.3-8 9.8-4.7-1.5-8-5.2-8-9.8V5.5z" fill="currentColor"/></svg>',
   moderador: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.2 3.5l6.3 6.3-2.4 2.4-1.6-1.6-6.3 6.3 1.6 1.6-2.4 2.4-6.3-6.3 2.4-2.4 1.6 1.6 6.3-6.3-1.6-1.6z" fill="currentColor"/></svg>',
-  fundador: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3.5M5 4h11l-2 4 2 4H5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  fundador: '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="aurg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ee7b7"/><stop offset=".35" stop-color="#22d3ee"/><stop offset=".7" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/></linearGradient></defs><path d="M3 8.5l4.6 3.8L12 4l4.4 8.3L21 8.5 19 19H5z" fill="url(#aurg)"/><path d="M5 19h14" stroke="#fff" stroke-width="1.4" opacity=".8"/><circle cx="12" cy="13.5" r="1.6" fill="#fff"/></svg>',
 };
 // vários títulos por pessoa: com um só, selo completo; com mais de um, a versão mini (só o ícone) de cada
 const userTitles = uid => { const a=S.titles?.get(uid)||[]; return a.length ? a : (S.admins?.has(uid) && !S.titles?.size ? ['adm'] : []); };
