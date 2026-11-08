@@ -916,14 +916,15 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
 body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fixed;inset:0;z-index:29;background:#0008}
 .sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
 /* ===== títulos (pedras) ===== */
-.tbadge{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px 0 5px;border-radius:6px;font-size:10px;font-weight:800;line-height:1;letter-spacing:.07em;color:#0b0b0e;vertical-align:middle;margin-left:6px;position:relative;overflow:hidden;white-space:nowrap;background:var(--tb);background-size:220% 220%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 12px var(--tg,transparent);flex:none}
+.tbadge{display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 8px 0 6px;border-radius:6px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:9.5px;font-weight:800;line-height:1;letter-spacing:.16em;color:#0b0b0e;vertical-align:middle;margin-left:6px;position:relative;overflow:hidden;white-space:nowrap;background:var(--tb);background-size:220% 220%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 12px var(--tg,transparent);flex:none}
 .tbadge svg{width:12px;height:12px;flex:none;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9))}
 .tbadge::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 48%,transparent 60%);transform:translateX(-130%);animation:tbshine var(--ts,6s) ease-in-out infinite;pointer-events:none}
 @keyframes tbshine{0%,70%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
 @keyframes tbflow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .tbadge.lg{height:26px;padding:0 11px 0 8px;font-size:12px;line-height:1;gap:6px;border-radius:8px;margin:6px 0 0}
 .tbadge.lg svg{width:16px;height:16px}
-.tbadge.lg small{font-weight:700;letter-spacing:.02em;opacity:.7;font-size:11px;margin-left:2px}
+.tbadge.lg{letter-spacing:.18em}
+.tbadge.lg small{font-weight:600;letter-spacing:.04em;opacity:.72;font-size:11px;margin-left:4px;text-transform:none;padding-left:8px;border-left:1px solid rgba(11,11,14,.22)}
 .t-ceo{--tb:linear-gradient(135deg,#f0fdff,#a5f3fc 22%,#c4b5fd 45%,#f5d0fe 62%,#bae6fd 80%,#f0fdff);--tg:rgba(165,243,252,.55);--ts:2.6s;animation:tbflow 5s ease infinite}
 .t-presidente{--tb:linear-gradient(135deg,#f8fafc,#cbd5e1 35%,#e0e7ff 55%,#94a3b8 80%,#f1f5f9);--tg:rgba(203,213,225,.35);--ts:4s;animation:tbflow 7s ease infinite}
 .t-diretor{--tb:linear-gradient(135deg,#fef9c3,#fcd34d 35%,#f59e0b 65%,#fde68a);--tg:rgba(251,191,36,.3)}
@@ -1527,18 +1528,18 @@ function canEditServer(){ return !!S.server && (!!S.isAdmin || S.server.owner_id
 const isOwner = () => !!S.server && S.server.owner_id===S.me?.id;
 /* ---------- Títulos (cargos do CONCORD inteiro), cada um com sua pedra ---------- */
 const TITLES = {
-  ceo:        { label:'CEO',        tier:'Diamante',  rank:6 },
-  presidente: { label:'PRESIDENTE', tier:'Platina',   rank:5 },
-  diretor:    { label:'DIRETOR',    tier:'Ouro',      rank:4 },
-  adm:        { label:'ADM',        tier:'Prata',     rank:3 },
-  moderador:  { label:'MOD',        tier:'Bronze',    rank:2 },
-  fundador:   { label:'FUNDADOR',   tier:'Esmeralda', rank:1 },
+  ceo:        { label:'CEO',       name:'CEO',       tier:'Diamond',  rank:6 },
+  presidente: { label:'PRESIDENT', name:'President', tier:'Platinum', rank:5 },
+  diretor:    { label:'DIRECTOR',  name:'Director',  tier:'Gold',     rank:4 },
+  adm:        { label:'ADMIN',     name:'Admin',     tier:'Silver',   rank:3 },
+  moderador:  { label:'MOD',       name:'Moderator', tier:'Bronze',   rank:2 },
+  fundador:   { label:'FOUNDER',   name:'Founder',   tier:'Emerald',  rank:1 },
 };
 const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="rgba(255,255,255,.95)" stroke="rgba(11,11,14,.55)" stroke-width="1.2" stroke-linejoin="round"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(11,11,14,.55)" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 function titleBadge(uid, big){
   const k = S.titles?.get(uid) || (S.admins?.has(uid) && !S.titles?.size ? 'adm' : null);
   const t = TITLES[k]; if(!t) return '';
-  return `<span class="tbadge t-${k}${big?' lg':''}" title="${t.label==='MOD'?'Moderador':t.label.charAt(0)+t.label.slice(1).toLowerCase()} · ${t.tier}">${GEM}${t.label}${big?`<small>${t.tier}</small>`:''}</span>`;
+  return `<span class="tbadge t-${k}${big?' lg':''}" title="${t.name} · ${t.tier}">${GEM}${t.label}${big?`<small>${t.tier}</small>`:''}</span>`;
 }
 const admBadge = uid => titleBadge(uid);
 async function loadTitles(){ const { data } = await sb.from('dc_titles').select('user_id,title'); S.titles=new Map((data||[]).map(r=>[r.user_id, r.title])); }
@@ -1546,7 +1547,7 @@ async function setTitle(uid, k){
   const { error } = k ? await sb.from('dc_titles').upsert({ user_id:uid, title:k }) : await sb.from('dc_titles').delete().eq('user_id', uid);
   if(error) return toast('Erro: '+error.message, true);
   if(k) S.titles.set(uid,k); else S.titles.delete(uid); refreshTitles();
-  toast(k ? dname(uid)+' agora é '+(TITLES[k].label==='MOD'?'Moderador':TITLES[k].label)+' · '+TITLES[k].tier+'.' : 'Título removido.');
+  toast(k ? dname(uid)+' agora é '+TITLES[k].name+' · '+TITLES[k].tier+'.' : 'Título removido.');
 }
 function refreshTitles(){ if(S.server && !S.home) renderMembers(); if(S.view?.type==='text') openText(S.view.ch); }
 async function loadAdmins(){ const { data } = await sb.from('dc_admins').select('user_id'); S.admins=new Set((data||[]).map(r=>r.user_id)); S.isAdmin=S.admins.has(S.me?.id); }

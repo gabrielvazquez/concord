@@ -16,7 +16,7 @@ jobs:
         with: { node-version: '20' }
       - name: Capturar
         working-directory: android/ci
-        run: npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null && npx playwright install --with-deps chromium >/dev/null && node signup_test.mjs && node presence_test.mjs && node presence_test.mjs && node ui_shots.mjs
+        run: npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null && npx playwright install --with-deps chromium >/dev/null && node badges_shot.mjs && node signup_test.mjs && node presence_test.mjs && node presence_test.mjs && node ui_shots.mjs
       - name: Publicar
         if: always()
         uses: softprops/action-gh-release@v2

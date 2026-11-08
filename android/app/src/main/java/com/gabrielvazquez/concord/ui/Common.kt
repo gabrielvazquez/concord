@@ -72,12 +72,12 @@ fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").
 
 /** selo de título com a pedra de cada nível (CEO = diamante, com brilho passando) */
 private val TITLE_STYLE = mapOf(
-    "ceo" to Triple("CEO", "Diamante", listOf(0xFFF0FDFF, 0xFFA5F3FC, 0xFFC4B5FD, 0xFFF5D0FE, 0xFFBAE6FD)),
-    "presidente" to Triple("PRESIDENTE", "Platina", listOf(0xFFF8FAFC, 0xFFCBD5E1, 0xFFE0E7FF, 0xFF94A3B8)),
-    "diretor" to Triple("DIRETOR", "Ouro", listOf(0xFFFEF9C3, 0xFFFCD34D, 0xFFF59E0B, 0xFFFDE68A)),
-    "adm" to Triple("ADM", "Prata", listOf(0xFFFAFAFA, 0xFFD4D4D8, 0xFFA1A1AA, 0xFFE4E4E7)),
+    "ceo" to Triple("CEO", "Diamond", listOf(0xFFF0FDFF, 0xFFA5F3FC, 0xFFC4B5FD, 0xFFF5D0FE, 0xFFBAE6FD)),
+    "presidente" to Triple("PRESIDENT", "Platinum", listOf(0xFFF8FAFC, 0xFFCBD5E1, 0xFFE0E7FF, 0xFF94A3B8)),
+    "diretor" to Triple("DIRECTOR", "Gold", listOf(0xFFFEF9C3, 0xFFFCD34D, 0xFFF59E0B, 0xFFFDE68A)),
+    "adm" to Triple("ADMIN", "Silver", listOf(0xFFFAFAFA, 0xFFD4D4D8, 0xFFA1A1AA, 0xFFE4E4E7)),
     "moderador" to Triple("MOD", "Bronze", listOf(0xFFFED7AA, 0xFFFB923C, 0xFFC2410C)),
-    "fundador" to Triple("FUNDADOR", "Esmeralda", listOf(0xFFD1FAE5, 0xFF6EE7B7, 0xFF10B981, 0xFFA7F3D0)),
+    "fundador" to Triple("FOUNDER", "Emerald", listOf(0xFFD1FAE5, 0xFF6EE7B7, 0xFF10B981, 0xFFA7F3D0)),
 )
 @Composable
 fun TitleBadge(key: String?, big: Boolean = false) {
@@ -94,8 +94,8 @@ fun TitleBadge(key: String?, big: Boolean = false) {
         .padding(horizontal = if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("◆", color = Color.White, fontSize = if (big) 13.sp else 10.sp)
         Spacer(Modifier.width(4.dp))
-        Text(st.first, color = Color(0xFF0B0B0E), fontSize = if (big) 12.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = .6.sp)
-        if (big) { Spacer(Modifier.width(6.dp)); Text(st.second, color = Color(0xB30B0B0E), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+        Text(st.first, color = Color(0xFF0B0B0E), fontSize = if (big) 12.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
+        if (big) { Spacer(Modifier.width(6.dp)); Text(st.second, color = Color(0xB30B0B0E), fontSize = 11.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
 
