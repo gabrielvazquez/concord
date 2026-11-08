@@ -916,12 +916,12 @@ body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!importan
 body.show-members-drawer #scrim:not(.hidden){display:block!important;position:fixed;inset:0;z-index:29;background:#0008}
 .sw.on,.sw.sel{outline:none!important;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
 /* ===== títulos (pedras) ===== */
-.tbadge{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px 0 5px;border-radius:6px;font:800 10px/1 inherit;letter-spacing:.07em;color:#0b0b0e;vertical-align:middle;margin-left:6px;position:relative;overflow:hidden;white-space:nowrap;background:var(--tb);background-size:220% 220%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 12px var(--tg,transparent);flex:none}
-.tbadge svg{width:12px;height:12px;flex:none;filter:drop-shadow(0 0 2px rgba(255,255,255,.7))}
+.tbadge{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px 0 5px;border-radius:6px;font-size:10px;font-weight:800;line-height:1;letter-spacing:.07em;color:#0b0b0e;vertical-align:middle;margin-left:6px;position:relative;overflow:hidden;white-space:nowrap;background:var(--tb);background-size:220% 220%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 0 12px var(--tg,transparent);flex:none}
+.tbadge svg{width:12px;height:12px;flex:none;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9))}
 .tbadge::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 48%,transparent 60%);transform:translateX(-130%);animation:tbshine var(--ts,6s) ease-in-out infinite;pointer-events:none}
 @keyframes tbshine{0%,70%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
 @keyframes tbflow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.tbadge.lg{height:26px;padding:0 11px 0 8px;font-size:12px;gap:6px;border-radius:8px;margin:6px 0 0}
+.tbadge.lg{height:26px;padding:0 11px 0 8px;font-size:12px;line-height:1;gap:6px;border-radius:8px;margin:6px 0 0}
 .tbadge.lg svg{width:16px;height:16px}
 .tbadge.lg small{font-weight:700;letter-spacing:.02em;opacity:.7;font-size:11px;margin-left:2px}
 .t-ceo{--tb:linear-gradient(135deg,#f0fdff,#a5f3fc 22%,#c4b5fd 45%,#f5d0fe 62%,#bae6fd 80%,#f0fdff);--tg:rgba(165,243,252,.55);--ts:2.6s;animation:tbflow 5s ease infinite}
@@ -1534,7 +1534,7 @@ const TITLES = {
   moderador:  { label:'MOD',        tier:'Bronze',    rank:2 },
   fundador:   { label:'FUNDADOR',   tier:'Esmeralda', rank:1 },
 };
-const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="rgba(255,255,255,.9)"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.1" stroke-linejoin="round"/></svg>';
+const GEM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11L22 9.2 12 21 2 9.2z" fill="rgba(255,255,255,.95)" stroke="rgba(11,11,14,.55)" stroke-width="1.2" stroke-linejoin="round"/><path d="M2 9.2h20M9 3 7 9.2 12 21l5-11.8L15 3M7 9.2 12 3l5 6.2" fill="none" stroke="rgba(11,11,14,.55)" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 function titleBadge(uid, big){
   const k = S.titles?.get(uid) || (S.admins?.has(uid) && !S.titles?.size ? 'adm' : null);
   const t = TITLES[k]; if(!t) return '';
