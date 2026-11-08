@@ -79,7 +79,7 @@ fun tvCodeFrom(raw: String?): String? = raw?.let { Regex("""(?:tv=)?(\d{6})""").
 /** selo de título: metais lisos com ícone próprio; só o CEO é diamante (fundo escuro, borda furta-cor e brilho) */
 private class TitleStyle(val label: String, val tier: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val top: Long, val bottom: Long, val ink: Long)
 private val TITLE_STYLE = mapOf(
-    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF1A0B33, 0xFF0F0820, 0xFFF3E8FF),
+    "ceo" to TitleStyle("CEO", "Diamond", androidx.compose.material.icons.Icons.Default.Diamond, 0xFF7E22CE, 0xFF3B0764, 0xFFFFFFFF),
     "fundador" to TitleStyle("FOUNDER", "Aurora", androidx.compose.material.icons.Icons.Default.WorkspacePremium, 0xFF06060B, 0xFF0A0F14, 0xFFFFFFFF),
     "presidente" to TitleStyle("PRESIDENT", "Platinum", androidx.compose.material.icons.Icons.Default.MilitaryTech, 0xFFF8FAFC, 0xFFCBD5E1, 0xFF1E293B),
     "diretor" to TitleStyle("DIRECTOR", "Gold", androidx.compose.material.icons.Icons.Default.Star, 0xFFFDE68A, 0xFFF2A20C, 0xFF3A2400),
@@ -116,7 +116,7 @@ fun TitleBadge(key: String?, big: Boolean = false, mini: Boolean = false) {
         .drawWithContent { drawContent(); if (anim in -1f..1.2f) { val x = size.width * anim
             drawRect(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = shineA), Color.Transparent), start = Offset(x - 30f, 0f), end = Offset(x + 30f, size.height))) } }
         .padding(horizontal = if (mini) 0.dp else if (big) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-        androidx.compose.material3.Icon(st.icon, null, tint = if (key == "fundador") Color(0xFF67E8F9) else if (ceo) Color(0xFFC084FC) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
+        androidx.compose.material3.Icon(st.icon, null, tint = if (key == "fundador") Color(0xFF67E8F9) else if (ceo) Color(0xFFF5D0FE) else Color(st.ink), modifier = Modifier.size(if (big) 15.dp else 11.dp))
         if (mini) return@Row
         Spacer(Modifier.width(5.dp))
         Text(st.label, color = Color(st.ink), fontSize = if (big) 11.5.sp else 9.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = if (big) 2.sp else 1.5.sp)
