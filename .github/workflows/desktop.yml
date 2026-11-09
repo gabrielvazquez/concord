@@ -28,6 +28,13 @@ jobs:
       - name: Ajudante do Jogar junto (teclado, mouse e controle)
         run: dotnet publish input/ConcordInput.csproj -c Release -o inputbin
 
+      - name: Testar o ajudante
+        shell: pwsh
+        run: |
+          $out = "ping`nreset`n" | ./inputbin/ConcordInput.exe
+          $out
+          if (-not ($out -match 'ready')) { throw 'ajudante não respondeu' }
+
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
 
