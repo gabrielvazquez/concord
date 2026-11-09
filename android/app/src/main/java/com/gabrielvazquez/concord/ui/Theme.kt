@@ -36,7 +36,7 @@ fun ConcordTheme(content: @Composable () -> Unit) {
     }
 }
 
-fun statusColor(st: String): Color = when (st) { "online" -> C.green; "idle" -> C.amber; "dnd" -> C.red; else -> C.gray }
+fun statusColor(st: String): Color = when (st) { "online" -> C.green; "idle" -> C.amber; "dnd" -> C.red; "game" -> Color(0xFFA78BFA); "live" -> Color(0xFFEC4899); else -> C.gray }
 
 fun parseColor(s: String?, fb: Color = Color(0xFF6366F1)): Color = try {
     if (s == null || !s.startsWith("#")) fb else {

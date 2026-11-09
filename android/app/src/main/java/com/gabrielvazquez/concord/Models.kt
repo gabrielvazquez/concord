@@ -18,12 +18,18 @@ fun parseTime(s: String?): Long {
 data class Profile(
     val id: String, val name: String, val color: String, val avatar: String?, val banner: String?, val bannerColor: String?,
     val bio: String?, val pronouns: String?, val statusText: String?, val presence: String, val nameColor: String?, val createdAt: String?,
-    val username: String? = null,
+    val username: String? = null, val statusEmoji: String? = null, val statusUntil: String? = null,
 ) {
+    /** status personalizado com emoji, sumindo quando passa da validade */
+    val shownStatus: String? get() {
+        val until = statusUntil?.let { runCatching { java.time.OffsetDateTime.parse(it).toInstant().toEpochMilli() }.getOrNull() }
+        if (until != null && until < System.currentTimeMillis()) return null
+        return listOfNotNull(statusEmoji?.takeIf { it.isNotBlank() }, statusText?.takeIf { it.isNotBlank() }).joinToString(" ").ifEmpty { null }
+    }
     companion object {
         fun from(o: JSONObject) = Profile(
             o.getString("id"), o.s("display_name") ?: "…", o.s("color") ?: "#6366f1", o.s("avatar_url"), o.s("banner_url"), o.s("banner_color"),
-            o.s("bio"), o.s("pronouns"), o.s("status_text"), o.s("presence_status") ?: "online", o.s("name_color"), o.s("created_at"), o.s("username"),
+            o.s("bio"), o.s("pronouns"), o.s("status_text"), o.s("presence_status") ?: "online", o.s("name_color"), o.s("created_at"), o.s("username"), o.s("status_emoji"), o.s("status_until"),
         )
     }
 }
@@ -89,4 +95,4 @@ data class Online(
     }
 }
 
-val STATUS_LABEL = linkedMapOf("online" to "Online", "dnd" to "Ocupado", "idle" to "Ausente", "invisible" to "Offline")
+val STATUS_LABEL = linkedMapOf("online" to "Online", "game" to "Em jogo", "live" to "Transmitindo", "idle" to "Ausente", "dnd" to "Não perturbe", "invisible" to "Invisível")

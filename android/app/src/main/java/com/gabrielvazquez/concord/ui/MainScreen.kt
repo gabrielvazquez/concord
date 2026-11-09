@@ -365,7 +365,7 @@ private fun UserBar() {
     Row(Modifier.padding(8.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable { Ui.statusOpen = true }, verticalAlignment = Alignment.CenterVertically) {
             Avatar(me.id, 36.dp, c.myStatus()); Spacer(Modifier.width(10.dp))
-            Column { Text(c.name(me.id), fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1); Text(me.statusText ?: STATUS_LABEL[c.myStatus()] ?: "", color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            Column { Text(c.name(me.id), fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1); Text(me.shownStatus ?: STATUS_LABEL[c.myStatus()] ?: "", color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (c.voice.channel != null) {
             IconButton(onClick = { c.voice.toggleMute() }) { Icon(if (c.voice.muted || c.voice.deaf) Icons.Default.MicOff else Icons.Default.Mic, "Microfone", tint = if (c.voice.muted || c.voice.deaf) C.red else C.tx2) }
@@ -408,7 +408,7 @@ private fun MemberRow(uid: String, status: String?, sub: String? = null, act: co
                 sub != null -> Text(sub, color = C.tx3, fontSize = 12.sp, maxLines = 1)
                 act?.game != null -> Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.SportsEsports, null, tint = C.tx3, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("Jogando ${act.game}", color = C.tx3, fontSize = 12.sp, maxLines = 1) }
                 act?.musicTitle != null -> Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.MusicNote, null, tint = C.spotify, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("Ouvindo ${act.musicTitle}", color = C.tx3, fontSize = 12.sp, maxLines = 1) }
-                p?.statusText != null -> Text(p.statusText, color = C.tx3, fontSize = 12.sp, maxLines = 1)
+                p?.shownStatus != null -> Text(p.shownStatus!!, color = C.tx3, fontSize = 12.sp, maxLines = 1)
             }
         }
     }
@@ -435,7 +435,7 @@ private fun ProfileSheet(uid: String) {
                     Spacer(Modifier.width(8.dp)); TitleBadges(c.titlesOf(uid), big = true)
                 }
                 Text(listOfNotNull(p?.username?.let { "@$it" } ?: p?.name, p?.pronouns).joinToString(" · "), color = C.tx2, fontSize = 14.sp)
-                p?.statusText?.let { Spacer(Modifier.height(8.dp)); Text(it, color = C.tx) }
+                p?.shownStatus?.let { Spacer(Modifier.height(8.dp)); Text(it, color = C.tx) }
                 val act = c.online.find { it.uid == uid }?.act
                 Column(Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     act?.game?.let { g -> ActivityRow(Icons.Default.SportsEsports, "JOGANDO AGORA", g, if (act.gameSince > 0) sinceLabel(act.gameSince) else null, C.tx) }
