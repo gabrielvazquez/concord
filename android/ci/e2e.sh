@@ -47,6 +47,7 @@ sleep 15; shot e2-gaveta
 tap "geral"; sleep 6; shot e3-chat
 tap "Conversar em #geral" part; adb shell input text "ola%sdo%sapp%sandroid"; sleep 1; tap "Enviar" desc
 sleep 4; adb shell input keyevent 111; shot e4-enviado
+tap "Membros" desc; sleep 4; shot e4b-membros; adb shell input keyevent 4; sleep 2
 tap "Menu" desc; sleep 3
 tap "Sala de Jogo"; sleep 30; shot e5-voz
 sleep 30; shot e6-voz2
@@ -55,5 +56,7 @@ tap "Mensagem"; sleep 4; shot e8-dm
 adb shell input keyevent 4; sleep 2
 tap "Menu" desc; sleep 3; tap "Mensagens diretas" desc; sleep 3; tap "Amigos"; sleep 4; shot e9-amigos
 tap "@nome ou nome"; adb shell input text "teste"; sleep 5; adb shell input keyevent 111; sleep 1; shot e10-busca
+adb shell input keyevent 4; sleep 2; tap "Menu" desc; sleep 3; tap "Configurações" desc; sleep 4; tap "Aparência" part; sleep 5; shot e11-aparencia
+tap "Avatar"; sleep 3; shot e12-molduras; tap "Premium"; sleep 2; shot e13-premium
 adb logcat -d | grep -iE "AndroidRuntime|FATAL|webrtc|concord" | grep -v "SplashScreen" | tail -60
 adb shell pidof com.gabrielvazquez.concord && echo "APP VIVO" || echo "APP MORREU"
