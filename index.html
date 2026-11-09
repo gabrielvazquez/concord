@@ -1350,6 +1350,24 @@ body.sth-toxic{--ac:#a3e635;--act:#0b1503;--sth-tint:linear-gradient(160deg,#84c
 .thsw .tl.a{background:var(--a);width:46%}
 .thsw .tl.s{width:70%}
 .pick .sw.hsw{display:block;padding:0}
+/* ===== Jogar junto ===== */
+.cbtn.pending{animation:stlive 1.4s ease-in-out infinite}
+.playask{position:fixed;right:20px;bottom:24px;z-index:60;width:320px;background:#0f0f11;border:1px solid var(--line2);border-radius:18px;padding:16px;box-shadow:0 24px 60px #000c;animation:tin .18s;display:flex;flex-direction:column;gap:12px}
+.playask .pa-h{display:flex;gap:10px;align-items:center}.playask .pa-h small{display:block;color:var(--tx2);font-size:12.5px}
+.playask .pa-o{display:flex;gap:6px;flex-wrap:wrap}.playask .pa-o input{display:none}.playask .pa-o .chip2{cursor:pointer}
+#playHost{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:5;display:flex;flex-direction:column;gap:6px;align-items:center}
+.phc{display:flex;align-items:center;gap:8px;background:#0b0b0dd9;backdrop-filter:blur(10px);border:1px solid #a78bfa55;border-radius:999px;padding:4px 6px 4px 4px;font-size:12.5px;box-shadow:0 0 18px #a78bfa22}
+.phc .pht{display:flex;gap:4px;align-items:center;color:var(--tx2)}.phc .pht i{font-style:normal;font-weight:800;font-size:11px}
+.phc button{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:var(--tx2)}.phc button:hover{background:#ffffff14;color:#fff}.phc button.x:hover{background:var(--red)}
+.playbar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:6px;background:#0b0b0de6;backdrop-filter:blur(10px);border:1px solid #ffffff1f;border-radius:999px;padding:5px 6px 5px 12px;font-size:12px;white-space:nowrap;cursor:default;opacity:.95;transition:opacity .2s}
+.tile.playing.cap .playbar{opacity:.35}.tile.playing.cap .playbar:hover{opacity:1}
+.playbar .pdot{width:8px;height:8px;border-radius:50%;background:#a78bfa;box-shadow:0 0 8px #a78bfa;animation:stlive 1.6s infinite}
+.playbar .ptag{display:flex;gap:5px;align-items:center;color:var(--tx3);padding:3px 8px;border-radius:999px;border:1px solid var(--line2)}.playbar .ptag.on{color:#d1fae5;border-color:#10b98166;background:#10b9811a}
+.playbar button{display:flex;align-items:center;gap:5px;height:26px;min-width:26px;justify-content:center;border-radius:999px;padding:0 8px;color:var(--tx2)}.playbar button:hover,.playbar button.on{background:#ffffff1a;color:#fff}.playbar button.x{background:var(--red);color:#fff}
+.tile.playing{box-shadow:0 0 0 2px #a78bfa88}.tile.playing.cap{box-shadow:0 0 0 3px #a78bfa,0 0 30px #a78bfa44;cursor:none}
+.tile.playing.cap .tools{display:none}
+.tools .playreq{background:linear-gradient(90deg,#7c3aed,#10b981)!important;color:#fff;font-weight:700}
+.playlist{display:flex;flex-direction:column;gap:6px;margin:10px 0}
 </style>
 </head>
 <body>
@@ -1497,6 +1515,7 @@ body.sth-toxic{--ac:#a3e635;--act:#0b1503;--sth-tint:linear-gradient(160deg,#84c
         <button class="cbtn" id="cCam" title="Câmera"></button>
         <button class="cbtn" id="cScreen" title="Transmitir tela"></button>
         <button class="cbtn" id="cDeaf" title="Áudio"></button>
+        <button class="cbtn" id="cPlay" title="Jogar junto"><svg class="i"><use href="#i-game"/></svg></button>
         <button class="cbtn" id="cTv" title="Enviar para a TV"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
         <button class="cbtn leave" id="cLeave" title="Sair da sala"><svg class="i"><use href="#i-leave"/></svg></button>
       </div></div>
@@ -3015,6 +3034,7 @@ async function joinVoice(ch){
     .on('broadcast', {event:'meta'}, ({payload})=>onVoiceMeta(payload))
     .on('broadcast', {event:'meta-req'}, ()=>setTimeout(pushVoiceMeta, Math.random()*700))
     .on('broadcast', {event:'mod'}, ({payload:p})=>onModAction(p))
+    .on('broadcast', {event:'play'}, ({payload:p})=>onPlay(p))
     .on('presence', {event:'sync'}, onVoicePresence)
     .subscribe(st=>{
       if(V!==me) return;
@@ -3025,7 +3045,7 @@ async function joinVoice(ch){
     });
   renderControls(); renderTiles();
 }
-function myVoiceMeta(){ return { jt:V?.jt||0, uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, screenMode:V?.screen && SHARE_Q[V.screenQ]?.cinema ? 'cinema' : null, muted:S.muted, deaf:S.deaf }; }
+function myVoiceMeta(){ return { jt:V?.jt||0, uid:S.me.id, name:dname(S.me.id, S.me.name), color:S.me.color, micId:V?.mic?.id||null, camId:V?.cam?.id||null, screenId:V?.screen?.id||null, screenMode:V?.screen && SHARE_Q[V.screenQ]?.cinema ? 'cinema' : null, muted:S.muted, deaf:S.deaf, play:playCapable() }; }
 function pushVoiceMeta(){ if(!V?.rt) return; try{ V.rt.send({ type:'broadcast', event:'meta', payload:{ k:S.sid, ...myVoiceMeta(), mts:Date.now() } }); }catch{} }
 function onVoiceMeta(p){
   if(!V || !p?.k || p.k===S.sid) return;
@@ -3090,6 +3110,7 @@ function createPeer(id){
     }catch(e){ if(e.name!=='InvalidStateError') console.warn('offer', e); } finally{ peer.makingOffer=false; }
   };
   pc.onicecandidate = ({candidate}) => { if(candidate) sendSig(id, {cand:candidate.toJSON()}); };
+  pc.ondatachannel = e => onPlayChannel(peer, e.channel);
   pc.ontrack = ({track, streams, receiver}) => {
     const st = streams[0] || new MediaStream([track]);
     peer.streams.set(st.id, st);
@@ -3166,6 +3187,7 @@ function removeStream(stream){
 }
 async function leaveVoice(){
   if(!V) return;
+  try{ hostStopAll(); if(PLAY.guest) guestStop(true); }catch{}
   const v=V; V=null;
   if(!v.ch.dm && TVLINK_RT){ try{ TVLINK_RT.send({ type:'broadcast', event:'unpair', payload:{ room:v.ch.id } }); }catch{} }
   const safe=f=>{ try{ f(); }catch(e){ console.warn(e); } };
@@ -3280,7 +3302,7 @@ async function swapScreenTracks(ns){
   const tile=V.tiles.get('screen:'+S.sid); if(tile){ const v=tile.querySelector('video'); if(v){ v.srcObject=null; v.srcObject=st; } }
   renderTiles(); V.peers.forEach(p=>tuneSenders(p.pc));
 }
-function stopScreen(){ if(!V?.screen) return; removeStream(V.screen); V.screen=null; if(V.focus==='screen:'+S.sid) V.focus=null; afterToggle(); renderMembers(); V.peers.forEach(p=>tuneSenders(p.pc)); }
+function stopScreen(){ if(!V?.screen) return; hostStopAll(); removeStream(V.screen); V.screen=null; if(V.focus==='screen:'+S.sid) V.focus=null; afterToggle(); renderMembers(); V.peers.forEach(p=>tuneSenders(p.pc)); }
 function renderControls(){
   const m=S.muted||S.deaf;
   setIcon($('#cMute'), m?'mic-off':'mic'); $('#cMute').classList.toggle('off', m);
@@ -3531,13 +3553,235 @@ function renderTiles(){
   if(V.focus){ const f=V.tiles.get(V.focus); if(f) box.prepend(f); }
   if(document.body.classList.contains('theater')){ const f=want.find(w=>w.key===V.focus); if(!f || f.kind!=='screen') setTheater(false); else $('#cineTitle').innerHTML=esc(f.name)+(f.cinema?' <small>· qualidade máxima</small>':''); }
   if(S.view?.type==='voice') renderSub();
-  renderVoiceState(); renderStats();
+  renderVoiceState(); renderStats(); renderPlayUi();
 }
 
 /* =====================================================================
    App para PC (Electron) + push-to-talk + notificações
    ===================================================================== */
 const DESK = window.concordDesktop || null;
+
+/* =====================================================================
+   Jogar junto (estilo Parsec): quem transmite pelo app do PC libera
+   teclado, mouse e controle para os amigos jogarem coop à distância.
+   Entrada vai por canal de dados direto entre os dois (WebRTC), sem servidor no meio.
+   ===================================================================== */
+const PLAY = { host:new Map(), guest:null, reqs:new Map(), info:null };
+const playCapable = () => !!(DESK?.play && V?.screen);
+function playSend(to, kind, extra={}){ try{ V.rt.send({ type:'broadcast', event:'play', payload:{ to, from:S.sid, uid:S.me.id, kind, ...extra } }); }catch{} }
+function playName(sid){ const m=V?.meta?.[sid]; return dname(m?.uid, m?.name||'Alguém'); }
+function onPlay(p){
+  if(!V || !p || p.to!==S.sid) return;
+  const k=p.kind;
+  if(k==='req') return playAsk(p);
+  if(k==='cancel'){ const r=PLAY.reqs.get(p.from); if(r){ r.close?.(); PLAY.reqs.delete(p.from); } return; }
+  if(k==='leave') return hostDrop(p.from, false);
+  if(k==='grant'){ PLAY.guest={ host:p.from, kb:!!p.kb, pad:!!p.pad, slot:p.slot|0, ch:null, mv:null, on:false, cap:false, lock:false };
+    const peer=V.peers.get(p.from); if(peer) [peer.playCh, peer.playMv].forEach(c=>c && onPlayChannel(peer, c));
+    toast(playName(p.from)+' liberou o jogo para você.'); renderPlayUi(); return; }
+  if(k==='perm' && PLAY.guest?.host===p.from){ PLAY.guest.kb=!!p.kb; PLAY.guest.pad=!!p.pad; if(!PLAY.guest.kb) guestCapture(false); renderPlayUi(); return; }
+  if(k==='deny'){ PLAY.pending=null; toast(playName(p.from)+' recusou o pedido.'); renderPlayUi(); return; }
+  if(k==='revoke' && PLAY.guest?.host===p.from){ guestStop(false); toast('O jogo foi encerrado por '+playName(p.from)+'.'); }
+}
+/* ---------- quem transmite (anfitrião) ---------- */
+function nextSlot(){ const used=new Set([...PLAY.host.values()].map(g=>g.slot)); for(let i=0;i<4;i++) if(!used.has(i)) return i; return 3; }
+function playAsk(p){
+  if(!playCapable()){ playSend(p.from, 'deny'); return; }
+  if(PLAY.host.has(p.from) || PLAY.reqs.has(p.from)) return;
+  sfxPlay('ring');
+  const box=document.createElement('div'); box.className='playask';
+  box.innerHTML=`<div class="pa-h">${avatarU(p.uid, 36, null, {noDeco:true})}<div><b>${esc(playName(p.from))}</b><small>quer jogar junto no seu PC</small></div></div>
+    <div class="pa-o"><label class="chip2 on"><input type="checkbox" data-kb checked>${ic('keyb','sm')}Teclado e mouse</label><label class="chip2 on"><input type="checkbox" data-pad checked>${ic('game','sm')}Controle</label></div>
+    <div class="row" style="margin:0"><button class="btn sec" data-no>Recusar</button><button class="btn" data-ok>Permitir</button></div>`;
+  box.querySelectorAll('label input').forEach(i=>i.onchange=()=>i.parentElement.classList.toggle('on', i.checked));
+  const close=()=>{ box.remove(); PLAY.reqs.delete(p.from); };
+  box.close=close;
+  box.querySelector('[data-no]').onclick=()=>{ close(); playSend(p.from, 'deny'); };
+  box.querySelector('[data-ok]').onclick=()=>{ const kb=box.querySelector('[data-kb]').checked, pad=box.querySelector('[data-pad]').checked; close(); if(kb||pad) hostGrant(p.from, p.uid, kb, pad); else playSend(p.from, 'deny'); };
+  document.body.appendChild(box); PLAY.reqs.set(p.from, box);
+  setTimeout(()=>{ if(PLAY.reqs.get(p.from)===box){ close(); playSend(p.from, 'deny'); } }, 45000);
+}
+async function hostGrant(sid, uid, kb, pad){
+  const peer=V?.peers.get(sid); if(!peer) return toast('Essa pessoa saiu da sala.', true);
+  const info = await DESK.play.start().catch(()=>null); PLAY.info=info;
+  if(!info?.ok) return toast('O ajudante do Jogar junto não está nesta versão do app. Atualize o CONCORD para PC.', true);
+  if(pad && !info.vigem) playDriverTip();
+  const g={ sid, uid:uid||V.meta[sid]?.uid, kb, pad, slot:nextSlot(), ch:null, mv:null };
+  try{
+    g.ch=peer.pc.createDataChannel('cplay', { ordered:true });
+    g.mv=peer.pc.createDataChannel('cplay-mv', { ordered:false, maxRetransmits:0 });
+  }catch(e){ return toast('Não deu para abrir o canal do jogo: '+e.message, true); }
+  const onMsg=e=>hostInput(g, e.data);
+  g.ch.onmessage=onMsg; g.mv.onmessage=onMsg; g.ch.onclose=()=>{ if(PLAY.host.get(sid)===g) hostDrop(sid, false); };
+  PLAY.host.set(sid, g); playSend(sid, 'grant', { kb, pad, slot:g.slot });
+  toast(playName(sid)+' agora joga no seu PC'+(pad?' (controle '+(g.slot+1)+')':'')+'.');
+  renderPlayUi(); pushVoiceMeta();
+}
+function hostInput(g, data){
+  let m; try{ m=JSON.parse(data); }catch{ return; } if(!m || typeof m.t!=='string') return;
+  if(m.t==='p' || m.t==='poff'){ if(!g.pad) return; m.i=g.slot; }
+  else if(m.t!=='reset' && !g.kb) return;
+  g.last=Date.now(); DESK.play.send(m);
+}
+function hostSetPerm(sid, kb, pad){ const g=PLAY.host.get(sid); if(!g) return; g.kb=kb; g.pad=pad; if(!pad) DESK.play.send({t:'poff', i:g.slot}); DESK.play.send({t:'reset'}); playSend(sid, 'perm', { kb, pad }); renderPlayUi(); }
+function hostDrop(sid, tell=true){
+  const g=PLAY.host.get(sid); if(!g) return; PLAY.host.delete(sid);
+  try{ DESK?.play?.send({t:'reset'}); DESK?.play?.send({t:'poff', i:g.slot}); }catch{}
+  try{ g.ch?.close(); g.mv?.close(); }catch{}
+  if(tell) playSend(sid, 'revoke');
+  renderPlayUi();
+}
+function hostStopAll(){ [...PLAY.host.keys()].forEach(s=>hostDrop(s, true)); PLAY.reqs.forEach(b=>b.close?.()); }
+function playDriverTip(){
+  const m=modal(`<h3>${ic('game')} Falta o driver do controle</h3><p class="sub">Para os amigos usarem controle no seu PC, instale o <b>ViGEmBus</b> uma vez (é gratuito). Teclado e mouse já funcionam.</p>
+    <div class="row"><button class="btn sec" data-x>Depois</button><button class="btn" data-dl>${ic('down','sm')} Baixar ViGEmBus</button></div>`);
+  m.querySelector('[data-x]').onclick=closeModal; m.querySelector('[data-dl]').onclick=()=>{ closeModal(); DESK.play.driver(); };
+}
+/* ---------- quem joga de longe (convidado) ---------- */
+function playRequest(sid){
+  if(PLAY.guest) return guestStop(true);
+  if(!V?.meta?.[sid]?.play) return toast('Quem transmite precisa usar o CONCORD para PC para liberar o jogo.', true);
+  PLAY.pending=sid; playSend(sid, 'req'); toast('Pedido enviado para '+playName(sid)+'.'); renderPlayUi();
+  setTimeout(()=>{ if(PLAY.pending===sid && !PLAY.guest){ PLAY.pending=null; renderPlayUi(); } }, 46000);
+}
+function onPlayChannel(peer, ch){
+  if(ch.label==='cplay') peer.playCh=ch; else if(ch.label==='cplay-mv') peer.playMv=ch; else return;
+  const g=PLAY.guest; if(!g || g.host!==peer.id) return;
+  if(ch.label==='cplay'){ g.ch=ch; ch.onclose=()=>{ if(PLAY.guest===g) guestStop(false); }; } else g.mv=ch;
+  const go=()=>{ if(PLAY.guest===g && g.ch?.readyState==='open' && !g.on){ g.on=true; PLAY.pending=null; guestStart(); } };
+  if(ch.readyState==='open') go(); else ch.addEventListener('open', go);
+}
+function gsend(m, fast){ const g=PLAY.guest; if(!g?.on) return; const c = fast && g.mv?.readyState==='open' ? g.mv : g.ch; if(c?.readyState==='open') try{ c.send(JSON.stringify(m)); }catch{} }
+function guestTile(){ return PLAY.guest && V?.tiles.get('screen:'+PLAY.guest.host); }
+function guestStart(){
+  const g=PLAY.guest; V.focus='screen:'+g.host; renderTiles();
+  if(g.pad) startPadLoop();
+  renderPlayUi();
+  toast(g.kb ? 'Clique na tela do jogo para usar teclado e mouse. Ctrl+Alt+X solta.' : 'Pode usar seu controle.');
+}
+function guestStop(tell){
+  const g=PLAY.guest; if(!g) return; guestCapture(false); stopPadLoop();
+  if(tell){ gsend({t:'reset'}); playSend(g.host, 'leave'); }
+  PLAY.guest=null; PLAY.pending=null; renderPlayUi();
+}
+function videoPoint(e){
+  const t=guestTile(); const v=t?.querySelector('video'); if(!v) return null;
+  const r=v.getBoundingClientRect(); const vw=v.videoWidth||16, vh=v.videoHeight||9;
+  const s=Math.min(r.width/vw, r.height/vh); const w=vw*s, h=vh*s; const x0=r.left+(r.width-w)/2, y0=r.top+(r.height-h)/2;
+  return { x:(e.clientX-x0)/w, y:(e.clientY-y0)/h };
+}
+const PLAYK = { mv:null, raf:0, dx:0, dy:0 };
+function guestCapture(on){
+  const g=PLAY.guest; const t=guestTile();
+  if(!g || !g.kb || !t) on=false;
+  if(!!g?.cap===on){ renderPlayUi(); return; }
+  if(g) g.cap=on;
+  if(!on){ if(document.pointerLockElement) document.exitPointerLock(); gsend({t:'reset'}); }
+  else t.focus?.();
+  renderPlayUi();
+}
+function flushMouse(){ PLAYK.raf=0; if(PLAYK.mv){ gsend(PLAYK.mv, true); PLAYK.mv=null; } if(PLAYK.dx||PLAYK.dy){ gsend({t:'r', dx:PLAYK.dx, dy:PLAYK.dy}, true); PLAYK.dx=0; PLAYK.dy=0; } }
+const capOn = () => !!PLAY.guest?.cap;
+document.addEventListener('keydown', e=>{ if(!capOn()) return;
+  if(e.ctrlKey && e.altKey && e.code==='KeyX'){ e.preventDefault(); return guestCapture(false); }
+  e.preventDefault(); e.stopPropagation(); if(!e.repeat) gsend({t:'k', c:e.code, d:1}); }, true);
+document.addEventListener('keyup', e=>{ if(!capOn()) return; e.preventDefault(); e.stopPropagation(); gsend({t:'k', c:e.code, d:0}); }, true);
+document.addEventListener('mousemove', e=>{ if(!capOn()) return;
+  if(document.pointerLockElement){ PLAYK.dx+=e.movementX; PLAYK.dy+=e.movementY; }
+  else { const p=videoPoint(e); if(!p || p.x<0 || p.y<0 || p.x>1 || p.y>1) return; PLAYK.mv={t:'m', x:+p.x.toFixed(4), y:+p.y.toFixed(4)}; }
+  if(!PLAYK.raf) PLAYK.raf=requestAnimationFrame(flushMouse); }, true);
+const BTNMAP = {0:0, 1:1, 2:2, 3:3, 4:4};
+document.addEventListener('mousedown', e=>{
+  const t=guestTile(); if(!PLAY.guest?.on || !t) return;
+  if(!capOn()){ if(PLAY.guest.kb && t.contains(e.target) && !e.target.closest('.tools,.playbar')){ e.preventDefault(); e.stopPropagation(); PLAYK.skipUp=true; guestCapture(true); } return; }
+  if(e.target.closest('.playbar')) return;
+  e.preventDefault(); e.stopPropagation(); flushMouse(); gsend({t:'b', b:BTNMAP[e.button]??0, d:1}); }, true);
+document.addEventListener('mouseup', e=>{ if(!capOn() || e.target.closest?.('.playbar')) return; e.preventDefault(); e.stopPropagation(); if(PLAYK.skipUp){ PLAYK.skipUp=false; return; } flushMouse(); gsend({t:'b', b:BTNMAP[e.button]??0, d:0}); }, true);
+document.addEventListener('click', e=>{ if(capOn() && !e.target.closest('.playbar')){ e.preventDefault(); e.stopPropagation(); } }, true);
+document.addEventListener('dblclick', e=>{ if(capOn()){ e.preventDefault(); e.stopPropagation(); } }, true);
+document.addEventListener('contextmenu', e=>{ if(capOn()) e.preventDefault(); }, true);
+document.addEventListener('wheel', e=>{ if(!capOn()) return; e.preventDefault(); const n=v=>v?Math.sign(v)*Math.max(1, Math.round(Math.abs(v)/(e.deltaMode?1:100)))*120:0; gsend({t:'w', dy:n(e.deltaY), dx:n(e.deltaX)}); }, {capture:true, passive:false});
+window.addEventListener('blur', ()=>{ if(capOn()) gsend({t:'reset'}); });
+document.addEventListener('pointerlockchange', ()=>{ if(PLAY.guest){ PLAY.guest.lock=!!document.pointerLockElement; renderPlayUi(); } });
+/* controle: lê o gamepad 60x por segundo e manda o estado completo (perdeu um pacote? o próximo corrige) */
+let padTimer=null, padLast='', padSent=0;
+function startPadLoop(){ stopPadLoop(); padTimer=setInterval(()=>{
+  const g=PLAY.guest; if(!g?.on || !g.pad) return;
+  const gp=[...(navigator.getGamepads?.()||[])].find(x=>x && x.connected); if(!gp) return;
+  const dz=v=>Math.abs(v)<0.08?0:v; const ax=i=>Math.round(dz(gp.axes[i]||0)*32767);
+  let b=0; gp.buttons.forEach((x,i)=>{ if(i!==6 && i!==7 && i<17 && x.pressed) b|=1<<i; });
+  const lt=Math.round((gp.buttons[6]?.value||0)*255), rt=Math.round((gp.buttons[7]?.value||0)*255);
+  const m={t:'p', b, a:[ax(0), -ax(1), ax(2), -ax(3)], lt, rt}; const key=JSON.stringify(m);
+  if(key!==padLast || Date.now()-padSent>250){ padLast=key; padSent=Date.now(); gsend(m, true); }
+  if(!g.padSeen){ g.padSeen=gp.id; renderPlayUi(); }
+}, 16); }
+function stopPadLoop(){ clearInterval(padTimer); padTimer=null; padLast=''; }
+/* ---------- telas ---------- */
+function renderPlayUi(){
+  const btn=$('#cPlay'); if(btn){ btn.classList.toggle('active', PLAY.host.size>0 || !!PLAY.guest?.on); btn.classList.toggle('pending', !!PLAY.pending); }
+  // anfitrião: chips de quem está jogando
+  let hb=$('#playHost'); const st=$('#stage');
+  if(PLAY.host.size && st){ if(!hb){ hb=document.createElement('div'); hb.id='playHost'; st.appendChild(hb); }
+    hb.innerHTML=[...PLAY.host.values()].map(g=>`<div class="phc">${avatarU(g.uid, 24, null, {noDeco:true})}<b>${esc(playName(g.sid))}</b><span class="pht">${g.kb?ic('keyb','sm'):''}${g.pad?ic('game','sm')+'<i>'+(g.slot+1)+'</i>':''}</span><button data-pset="${esc(g.sid)}" title="Permissões">${ic('gear','sm')}</button><button data-pstop="${esc(g.sid)}" class="x" title="Parar">${ic('x','sm')}</button></div>`).join('');
+    hb.querySelectorAll('[data-pstop]').forEach(b=>b.onclick=()=>hostDrop(b.dataset.pstop, true));
+    hb.querySelectorAll('[data-pset]').forEach(b=>b.onclick=()=>openPlayPerm(b.dataset.pset));
+  } else hb?.remove();
+  // convidado: barra em cima da tela do jogo
+  document.querySelectorAll('.playbar').forEach(x=>{ if(!PLAY.guest?.on || x.parentElement!==guestTile()) x.remove(); });
+  document.querySelectorAll('.tile.playing').forEach(x=>{ if(x!==guestTile() || !PLAY.guest?.on) x.classList.remove('playing','cap'); });
+  const g=PLAY.guest, t=guestTile();
+  if(g?.on && t){
+    t.classList.add('playing'); t.classList.toggle('cap', !!g.cap); t.tabIndex=0;
+    let pb=t.querySelector('.playbar'); if(!pb){ pb=document.createElement('div'); pb.className='playbar'; t.appendChild(pb); }
+    pb.innerHTML=`<span class="pdot"></span><b>${esc(playName(g.host))}</b>
+      ${g.kb?`<span class="ptag ${g.cap?'on':''}">${ic('keyb','sm')}${g.cap?'Ctrl+Alt+X solta':'Clique para jogar'}</span>`:''}
+      ${g.pad?`<span class="ptag ${g.padSeen?'on':''}">${ic('game','sm')}${g.padSeen?'Controle '+(g.slot+1):'Aperte um botão do controle'}</span>`:''}
+      ${g.kb?`<button data-plock class="${g.lock?'on':''}" title="Mouse travado (jogos de tiro)">${ic('lock','sm')}</button>`:''}
+      <button data-pfs title="Tela cheia">${ic('max','sm')}</button><button data-pleave class="x">${ic('x','sm')}Sair</button>`;
+    pb.querySelector('[data-pleave]').onclick=e=>{ e.stopPropagation(); guestStop(true); };
+    pb.querySelector('[data-pfs]').onclick=e=>{ e.stopPropagation(); (document.fullscreenElement? document.exitFullscreen() : t.requestFullscreen()).catch(()=>{}); };
+    pb.querySelector('[data-plock]')?.addEventListener('click', e=>{ e.stopPropagation(); if(document.pointerLockElement) document.exitPointerLock(); else { guestCapture(true); t.requestPointerLock?.({unadjustedMovement:true})?.catch?.(()=>t.requestPointerLock()); } });
+  }
+  // botão "Jogar junto" nas telas de quem pode liberar
+  V?.tiles?.forEach((el,k)=>{ if(!k.startsWith('screen:')) return; const sid=k.slice(7); const tools=el.querySelector('.tools'); if(!tools) return;
+    let b=tools.querySelector('.playreq'); const can = sid!==S.sid && V.meta[sid]?.play;
+    if(!can){ b?.remove(); return; }
+    if(!b){ b=document.createElement('button'); b.className='playreq'; tools.prepend(b); b.onclick=e=>{ e.stopPropagation(); playRequest(sid); }; }
+    const mine=PLAY.guest?.host===sid; b.innerHTML=ic('game','sm')+(mine?'Parar de jogar':PLAY.pending===sid?'Pedido enviado…':'Jogar junto'); });
+}
+function openPlayPerm(sid){
+  const g=PLAY.host.get(sid); if(!g) return;
+  const m=modal(`<h3>${esc(playName(sid))} no seu PC</h3>
+    <div class="srow"><div><b>${ic('keyb','sm')} Teclado e mouse</b></div><label class="switch"><input type="checkbox" data-kb ${g.kb?'checked':''}><span></span></label></div>
+    <div class="srow"><div><b>${ic('game','sm')} Controle ${g.slot+1}</b></div><label class="switch"><input type="checkbox" data-pad ${g.pad?'checked':''}><span></span></label></div>
+    <div class="row"><button class="btn danger" data-stop>Parar</button><button class="btn" data-ok>Pronto</button></div>`);
+  m.querySelector('[data-stop]').onclick=()=>{ closeModal(); hostDrop(sid, true); };
+  m.querySelector('[data-ok]').onclick=()=>{ const kb=m.querySelector('[data-kb]').checked, pad=m.querySelector('[data-pad]').checked; closeModal(); if(!kb && !pad) hostDrop(sid, true); else hostSetPerm(sid, kb, pad); };
+}
+function openPlayPanel(){
+  if(!V) return;
+  if(PLAY.guest?.on) return guestStop(true);
+  const hosts=Object.entries(V.meta).filter(([sid,m])=>sid!==S.sid && m?.play);
+  if(playCapable()){
+    const others=[...V.peers.keys()].filter(s=>!V.meta[s]?.tv);
+    const m=modal(`<h3>${ic('game')} Jogar junto</h3><p class="sub">Escolha quem pode jogar no seu PC pela sua transmissão.</p>
+      <div class="playlist">${others.length?others.map(s=>{ const g=PLAY.host.get(s); return `<div class="memrow">${avatarU(V.meta[s]?.uid, 32, null, {noDeco:true})}<div style="flex:1;min-width:0"><b>${esc(playName(s))}</b></div>${g?`<button class="btn sec auto" data-perm="${esc(s)}">${ic('gear','sm')}</button><button class="btn danger auto" data-stop="${esc(s)}">Parar</button>`:`<button class="btn auto" data-inv="${esc(s)}">${ic('game','sm')} Liberar</button>`}</div>`; }).join(''):'<p class="hint keep">Ninguém mais na sala.</p>'}</div>
+      <div class="row"><button class="btn sec" data-x>Fechar</button></div>`);
+    m.querySelector('[data-x]').onclick=closeModal;
+    m.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>{ closeModal(); hostGrant(b.dataset.inv, V.meta[b.dataset.inv]?.uid, true, true); });
+    m.querySelectorAll('[data-stop]').forEach(b=>b.onclick=()=>{ closeModal(); hostDrop(b.dataset.stop, true); });
+    m.querySelectorAll('[data-perm]').forEach(b=>b.onclick=()=>{ closeModal(); openPlayPerm(b.dataset.perm); });
+    return;
+  }
+  if(hosts.length===1) return playRequest(hosts[0][0]);
+  if(hosts.length>1){
+    const m=modal(`<h3>${ic('game')} Jogar no PC de quem?</h3><div class="playlist">${hosts.map(([s,mm])=>`<div class="memrow">${avatarU(mm.uid, 32, null, {noDeco:true})}<div style="flex:1;min-width:0"><b>${esc(playName(s))}</b></div><button class="btn auto" data-req="${esc(s)}">Pedir</button></div>`).join('')}</div><div class="row"><button class="btn sec" data-x>Fechar</button></div>`);
+    m.querySelector('[data-x]').onclick=closeModal; m.querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>{ closeModal(); playRequest(b.dataset.req); }); return;
+  }
+  const m=modal(`<h3>${ic('game')} Jogar junto</h3><p class="sub">${DESK?.play ? 'Transmita a tela do jogo e libere os amigos aqui. Eles jogam com teclado, mouse ou controle, cada um com seu controle.' : 'Quem tem o jogo transmite a tela pelo <b>CONCORD para PC</b>. Aí é só pedir para jogar junto aqui, com teclado, mouse ou controle.'}</p>
+    <div class="row"><button class="btn sec" data-x>Fechar</button>${DESK?.play?`<button class="btn" data-share>${ic('cast','sm')} Transmitir tela</button>`:''}</div>`);
+  m.querySelector('[data-x]').onclick=closeModal; m.querySelector('[data-share]')?.addEventListener('click', ()=>{ closeModal(); toggleScreen(); });
+}
 const APP_DOWNLOAD = 'https://github.com/gabrielvazquez/concord/releases/latest/download/CONCORD-Setup.exe';
 const AND = window.concordAndroid || null;
 const IS_ANDROID_WEB = !AND && /Android/i.test(navigator.userAgent);
@@ -4399,6 +4643,7 @@ function openTvModal(){
   m.querySelector('[data-ok]').onclick=go; inp.onkeydown=e=>{ if(e.key==='Enter') go(); };
 }
 $('#cTv').onclick=openTvModal;
+$('#cPlay').onclick=openPlayPanel;
 
 /* =====================================================================
    App para Android: ponte com o app nativo

@@ -21,6 +21,13 @@ jobs:
         with:
           node-version: 22
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Ajudante do Jogar junto (teclado, mouse e controle)
+        run: dotnet publish input/ConcordInput.csproj -c Release -o inputbin
+
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
 

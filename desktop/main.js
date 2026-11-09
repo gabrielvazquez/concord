@@ -267,6 +267,71 @@ ipcMain.handle('update:check', async () => {
 });
 ipcMain.handle('update:install', () => { if (pendingUpdate?.status === 'ready') { quitting = true; autoUpdater.quitAndInstall(false, true); } });
 
+
+/* ---------------- Jogar junto (estilo Parsec): teclado, mouse e controle remotos ----------------
+   O site manda os comandos já liberados pelo dono da tela; aqui viram entrada de verdade no Windows
+   por um ajudante (ConcordInput.exe: SendInput + controles de Xbox virtuais pelo ViGEmBus). */
+const { spawn } = require('child_process');
+let inp = null, inpReady = null, inpInfo = { ok: false, vigem: false };
+const SC = { Escape:[1],Digit1:[2],Digit2:[3],Digit3:[4],Digit4:[5],Digit5:[6],Digit6:[7],Digit7:[8],Digit8:[9],Digit9:[10],Digit0:[11],Minus:[12],Equal:[13],Backspace:[14],Tab:[15],
+  KeyQ:[16],KeyW:[17],KeyE:[18],KeyR:[19],KeyT:[20],KeyY:[21],KeyU:[22],KeyI:[23],KeyO:[24],KeyP:[25],BracketLeft:[26],BracketRight:[27],Enter:[28],ControlLeft:[29],
+  KeyA:[30],KeyS:[31],KeyD:[32],KeyF:[33],KeyG:[34],KeyH:[35],KeyJ:[36],KeyK:[37],KeyL:[38],Semicolon:[39],Quote:[40],Backquote:[41],ShiftLeft:[42],Backslash:[43],
+  KeyZ:[44],KeyX:[45],KeyC:[46],KeyV:[47],KeyB:[48],KeyN:[49],KeyM:[50],Comma:[51],Period:[52],Slash:[53],ShiftRight:[54],NumpadMultiply:[55],AltLeft:[56],Space:[57],CapsLock:[58],
+  F1:[59],F2:[60],F3:[61],F4:[62],F5:[63],F6:[64],F7:[65],F8:[66],F9:[67],F10:[68],NumLock:[69],ScrollLock:[70],Numpad7:[71],Numpad8:[72],Numpad9:[73],NumpadSubtract:[74],
+  Numpad4:[75],Numpad5:[76],Numpad6:[77],NumpadAdd:[78],Numpad1:[79],Numpad2:[80],Numpad3:[81],Numpad0:[82],NumpadDecimal:[83],IntlBackslash:[86],F11:[87],F12:[88],IntlRo:[115],
+  NumpadEnter:[28,1],ControlRight:[29,1],NumpadDivide:[53,1],PrintScreen:[55,1],AltRight:[56,1],Home:[71,1],ArrowUp:[72,1],PageUp:[73,1],ArrowLeft:[75,1],ArrowRight:[77,1],
+  End:[79,1],ArrowDown:[80,1],PageDown:[81,1],Insert:[82,1],Delete:[83,1],MetaLeft:[91,1],MetaRight:[92,1],ContextMenu:[93,1],NumpadComma:[126] };
+function inputExe() {
+  const dirs = [path.join(process.resourcesPath || '', 'input'), path.join(__dirname, 'build', 'input'), path.join(__dirname, "inputbin")];
+  for (const d of dirs) { const f = path.join(d, 'ConcordInput.exe'); if (fs.existsSync(f)) return f; }
+  return null;
+}
+function startInput() {
+  if (inp) return inpReady;
+  const exe = process.platform === 'win32' && inputExe();
+  if (!exe) { inpInfo = { ok: false, vigem: false, reason: 'missing' }; return Promise.resolve(inpInfo); }
+  inp = spawn(exe, [], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+  inpReady = new Promise(res => {
+    let buf = ''; const t = setTimeout(() => res(inpInfo = { ok: true, vigem: false }), 4000);
+    inp.stdout.on('data', d => { buf += d; const m = buf.match(/ready vigem=(\d)/); if (m) { clearTimeout(t); res(inpInfo = { ok: true, vigem: m[1] === '1' }); } });
+  });
+  inp.on('exit', () => { inp = null; inpInfo = { ok: false, vigem: false }; });
+  inp.on('error', () => { inp = null; });
+  return inpReady;
+}
+const inW = line => { try { inp?.stdin.write(line + '\n'); } catch {} };
+let lastSrc = null;
+function targetRect() {
+  if (!lastChoice) return null;
+  if (lastChoice.screen) {
+    const src = lastSources.get(lastChoice.id); const ds = screen.getAllDisplays();
+    const d = ds.find(x => String(x.id) === String(src?.display_id)) || screen.getPrimaryDisplay();
+    try { return screen.dipToScreenRect(null, d.bounds); } catch { return { x: d.bounds.x * d.scaleFactor, y: d.bounds.y * d.scaleFactor, width: d.bounds.width * d.scaleFactor, height: d.bounds.height * d.scaleFactor }; }
+  }
+  return null;
+}
+function hwnd() { const m = /^window:(\d+):/.exec(lastChoice?.id || ''); return m ? m[1] : null; }
+const clampN = v => Math.max(0, Math.min(1, +v || 0));
+ipcMain.handle('play:start', async () => { const r = await startInput(); const h = hwnd(); if (h) inW('fg ' + h); return { ...r, window: !!h }; });
+ipcMain.handle('play:info', () => ({ ...inpInfo, available: process.platform === 'win32' && !!inputExe() }));
+ipcMain.on('play:stop', () => inW('reset'));
+ipcMain.on('play:in', (_e, m) => {
+  if (!inp || !m) return;
+  switch (m.t) {
+    case 'm': { const h = hwnd(); if (h) { inW(`win ${h} ${Math.round(clampN(m.x) * 10000)} ${Math.round(clampN(m.y) * 10000)}`); break; }
+      const r = targetRect(); if (r) inW(`pos ${Math.round(r.x + clampN(m.x) * (r.width - 1))} ${Math.round(r.y + clampN(m.y) * (r.height - 1))}`); break; }
+    case 'r': inW(`rel ${Math.round(+m.dx || 0)} ${Math.round(+m.dy || 0)}`); break;
+    case 'b': inW(`btn ${(+m.b || 0) | 0} ${m.d ? 1 : 0}`); break;
+    case 'w': inW(`whl ${Math.round(-(+m.dy || 0))}`); if (m.dx) inW(`hwl ${Math.round(+m.dx)}`); break;
+    case 'k': { const k = SC[m.c]; if (k) inW(`key ${k[0]} ${k[1] ? 1 : 0} ${m.d ? 1 : 0}`); break; }
+    case 'p': { const a = (m.a || []).map(v => Math.max(-32767, Math.min(32767, v | 0))); inW(`pad ${(m.i | 0) & 3} ${(m.b | 0) & 0x1ffff} ${a[0] || 0} ${a[1] || 0} ${a[2] || 0} ${a[3] || 0} ${Math.max(0, Math.min(255, m.lt | 0))} ${Math.max(0, Math.min(255, m.rt | 0))}`); break; }
+    case 'poff': inW(`padoff ${(m.i | 0) & 3}`); break;
+    case 'reset': inW('reset'); break;
+  }
+});
+ipcMain.handle('play:driver', () => { shell.openExternal('https://github.com/nefarius/ViGEmBus/releases/latest'); return true; });
+app.on('will-quit', () => { try { inp?.stdin.end(); inp?.kill(); } catch {} });
+
 app.whenReady().then(() => {
   const ses = session.defaultSession;
   const okOrigin = u => { try { return new URL(u).origin === ORIGIN; } catch { return false; } };

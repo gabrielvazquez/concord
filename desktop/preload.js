@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('concordDesktop', {
   idle: () => ipcRenderer.invoke('concord:idle'),
   trim: () => { try { webFrame.clearCache(); } catch {} return ipcRenderer.invoke('concord:trim'); },
   reshare: () => ipcRenderer.invoke('concord:reshare'),
+  play: { start: () => ipcRenderer.invoke('play:start'), info: () => ipcRenderer.invoke('play:info'), send: (m) => ipcRenderer.send('play:in', m), stop: () => ipcRenderer.send('play:stop'), driver: () => ipcRenderer.invoke('play:driver') },
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
   onEvent: (cb) => { const h = (_e, msg) => cb(msg.ev, msg.data); ipcRenderer.on('concord:event', h); return () => ipcRenderer.removeListener('concord:event', h); },

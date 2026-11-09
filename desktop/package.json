@@ -63,6 +63,15 @@
         "provider": "generic",
         "url": "https://github.com/gabrielvazquez/concord/releases/latest/download"
       }
+    ],
+    "extraResources": [
+      {
+        "from": "inputbin",
+        "to": "input",
+        "filter": [
+          "**/*"
+        ]
+      }
     ]
   }
 }
