@@ -422,8 +422,8 @@ html.is-desktop #toasts{top:50px}
 /* Servidor: cabeçalho e menu */
 .side-head{position:relative;cursor:pointer;border-radius:var(--r) var(--r) 0 0;background-size:cover;background-position:center}
 .side-head.has-bn{min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;padding-top:60px}
-.side-head.has-bn::before{content:"";position:absolute;inset:0;background:linear-gradient(transparent,#0a0a0bee 85%);border-radius:inherit}
-.side-head > *{position:relative}
+.side-head.has-bn::before{content:"";position:absolute;inset:0;background:linear-gradient(transparent,#0a0a0bee 85%);border-radius:inherit;z-index:1}
+.side-head > *{position:relative;z-index:2}
 .side-head h2 .i{vertical-align:middle;color:var(--tx2);margin-left:4px}
 .menu{position:fixed;z-index:53;background:#0f0f11;border:1px solid var(--line2);border-radius:14px;padding:6px;min-width:220px;box-shadow:0 20px 50px #000c;animation:tin .12s}
 .menu button{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:9px;font-weight:600;font-size:13px;color:var(--tx2)}
@@ -1350,6 +1350,49 @@ body.sth-toxic{--ac:#a3e635;--act:#0b1503;--sth-tint:linear-gradient(160deg,#84c
 .thsw .tl.a{background:var(--a);width:46%}
 .thsw .tl.s{width:70%}
 .pick .sw.hsw{display:block;padding:0}
+/* ===== moldura do ícone do servidor + GIF parado/animado + ajuste da imagem ===== */
+.srv .sic{position:absolute;inset:0;border-radius:inherit;overflow:hidden;display:block}
+.srv .sic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:0}
+.g-an{opacity:0;transition:opacity .15s}
+.gif-host:hover .g-an,.srv.on .g-an{opacity:1}
+.srv.has-ring{overflow:visible;box-shadow:none!important;animation:none}
+.srv .sring{position:absolute;inset:-5px;border-radius:18px;pointer-events:none;padding:2.5px;background:var(--rbg,var(--rc));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.sr-double{background:none!important;-webkit-mask:none!important;mask:none!important;border:4px double var(--rc);padding:0!important;inset:-7px!important;border-radius:20px!important}
+.sr-dashed{background:none!important;-webkit-mask:none!important;mask:none!important;border:2px dashed var(--rc);padding:0!important}
+.srv.rg-glow{box-shadow:0 0 14px var(--rc),0 0 4px var(--rc)!important}
+.sr-duo{--rbg:linear-gradient(135deg,var(--rc),var(--rc2))}
+.srv.rg-pulse{animation:srpulse 1.8s ease-out infinite!important}
+@keyframes srpulse{0%{box-shadow:0 0 0 0 var(--rc)}100%{box-shadow:0 0 0 9px transparent}}
+.sr-gold{--rbg:conic-gradient(from var(--fxa),#78350f,#fde68a,#b45309,#fff7d6,#78350f);animation:fxspin 4s linear infinite}
+.sr-fire{--rbg:conic-gradient(from var(--fxa),#facc15,#f97316,#ef4444,#f97316,#facc15);animation:fxspin 1.6s linear infinite}
+.srv.rg-fire{box-shadow:0 0 14px #f9731677!important}
+.sr-platinum{--rbg:conic-gradient(from var(--fxa),#94a3b8,#fff,#c7d2fe,#e2e8f0,#94a3b8);animation:fxspin 4s linear infinite}
+.sr-prism{--rbg:conic-gradient(from var(--fxa),#f43f5e,#f59e0b,#22c55e,#06b6d4,#8b5cf6,#f43f5e);animation:fxspin 3s linear infinite}
+.sr-ice{--rbg:conic-gradient(from var(--fxa),#fff,#bae6fd,#38bdf8,#bae6fd,#fff);animation:fxspin 5s linear infinite}
+.srv.rg-ice{box-shadow:0 0 12px #7dd3fc66!important}
+.sr-emerald{--rbg:conic-gradient(from var(--fxa),#065f46,#6ee7b7,#ccfbf1,#10b981,#065f46);animation:fxspin 3s linear infinite}
+.srv.rg-emerald{box-shadow:0 0 16px #10b98166!important}
+.sr-neon{--rbg:linear-gradient(135deg,#22d3ee,#e879f9)}
+.srv.rg-neon{box-shadow:0 0 14px #22d3ee88,0 0 22px #e879f955!important}
+.sr-rainbow{--rbg:conic-gradient(from var(--fxa),#f43f5e,#f59e0b,#22c55e,#06b6d4,#8b5cf6,#f43f5e);animation:fxspin 2s linear infinite}
+.sr-aurora{--rbg:conic-gradient(from var(--fxa),#34d399,#22d3ee,#a78bfa,#f472b6,#34d399);animation:fxspin 2.6s linear infinite}
+.srv.rg-aurora{box-shadow:0 0 18px #a78bfa55!important}
+.sr-cosmic{--rbg:conic-gradient(from var(--fxa),#1e1b4b,#a78bfa,#fff,#22d3ee,#1e1b4b);animation:fxspin 2.2s linear infinite}
+.srv.rg-cosmic{box-shadow:0 0 20px #6366f166!important}
+.side-head > .hbimg{position:absolute!important;inset:0;border-radius:inherit;overflow:hidden;z-index:0;pointer-events:none}
+.side-head > .hbfx{z-index:1}
+.hbimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ringrow{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.ringpv{width:84px;height:84px;display:grid;place-items:center;border-radius:20px;background:var(--bg);border:1px solid var(--line)}
+.ringpv .srv{width:52px;height:52px;margin:0;font-size:18px}
+.fitbox{position:relative;overflow:hidden;background:#000;border:1px solid var(--line2);cursor:grab;touch-action:none;user-select:none}
+.fitbox.sq{width:150px;height:150px;border-radius:30px}
+.fitbox.wide{width:100%;max-width:420px;aspect-ratio:2.1;border-radius:14px}
+.fitbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.fitbox:active{cursor:grabbing}
+.fitrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.fitctl{display:flex;flex-direction:column;gap:10px;min-width:200px;flex:1}
+.fitctl input[type=range]{width:100%;accent-color:#fff}
 /* ===== Jogar junto ===== */
 .cbtn.pending{animation:stlive 1.4s ease-in-out infinite}
 .playask{position:fixed;right:20px;bottom:24px;z-index:60;width:320px;background:#0f0f11;border:1px solid var(--line2);border-radius:18px;padding:16px;box-shadow:0 24px 60px #000c;animation:tin .18s;display:flex;flex-direction:column;gap:12px}
@@ -2522,8 +2565,9 @@ function renderRail(){
   r.innerHTML=`<button class="logo${S.home?' on':''}" title="Mensagens diretas"><svg><use href="#i-logo"/></svg>${un?`<span class="dot-badge">${un}</span>`:''}</button><div class="rail-sep"></div>`;
   r.querySelector('.logo').onclick=()=>{ openHome(); closeDrawer(); };
   S.servers.forEach(s=>{ const b=document.createElement('button'); const img=safeUrl(s.icon_url);
-    b.className='srv'+(S.server?.id===s.id&&!S.home?' on':'')+(img?' has-img':'')+(SRV_TIERS[s.tier]?' tier-'+s.tier:''); b.title=s.name+(SRV_TIERS[s.tier]?' · '+SRV_TIERS[s.tier][0]:'');
-    if(img) b.innerHTML=`<img src="${esc(img)}" alt="">`; else b.textContent = s.icon || initial(s.name);
+    const ip=srvIconParts(s);
+    b.className='srv'+(S.server?.id===s.id&&!S.home?' on':'')+ip.cls+(SRV_TIERS[s.tier]?' tier-'+s.tier:''); b.title=s.name+(SRV_TIERS[s.tier]?' · '+SRV_TIERS[s.tier][0]:'');
+    b.setAttribute('style', ip.style); b.innerHTML=ip.inner;
     b.onclick=()=>{ selectServer(s); closeDrawer(); }; r.appendChild(b); });
   const add=document.createElement('button'); add.className='srv add'; add.title='Criar ou entrar em servidor'; add.innerHTML=ic('plus'); add.onclick=()=>openServerModal(S.isAdmin?'create':'join'); r.appendChild(add);
   const sp=document.createElement('div'); sp.style.flex='1'; r.appendChild(sp);
@@ -2537,7 +2581,9 @@ function renderServerHead(){
   $('#srvSub').textContent='';
   const d=$('#srvDesc'); d.textContent=s.description||''; d.classList.toggle('hidden', !s.description);
   head.classList.toggle('has-bn', !!(bn||ac));
-  head.style.backgroundImage = bn ? `url('${bn}')` : ac ? `linear-gradient(135deg,${ac},#0a0a0b)` : '';
+  head.style.backgroundImage = !bn && ac ? `linear-gradient(135deg,${ac},#0a0a0b)` : '';
+  head.querySelector(':scope > .hbimg')?.remove(); head.classList.toggle('gif-host', !!bn);
+  if(bn){ const c=srvC(s); const d=document.createElement('div'); d.className='hbimg'; d.innerHTML=imgFitHtml(bn, c.bannerFit, c.bannerAnim); head.prepend(d); }
   decorateServerHead(s);
 }
 async function selectServer(s){
@@ -4382,7 +4428,8 @@ function renderServerSettings(){
   const ro = edit ? '' : `<div class="ok-box" style="background:var(--card);border-color:var(--line2);color:var(--tx2)">Só o dono do servidor pode mudar estas configurações.</div>`;
 
   if(SET.sec==='geral'){
-    const D = SET.draft || (SET.draft = {...s});
+    const D = SET.draft || (SET.draft = {...s, custom:JSON.parse(JSON.stringify(s.custom||{}))});
+    const DC = D.custom;
     body.innerHTML = `<h2>Visão geral do servidor</h2><p class="sub">Nome, ícone, banner e cara do seu servidor.</p>${ro}
       <div class="pgrid"><div>
         <div class="sc"><label class="field"><span>Nome do servidor</span><input class="inp" data-f="name" maxlength="40" value="${esc(D.name)}" ${edit?'':'disabled'}></label>
@@ -4395,24 +4442,51 @@ function renderServerSettings(){
           <div class="imgrow"><button class="btn sec auto" data-up="banner" ${edit?'':'disabled'}>${ic('img','sm')} Enviar banner</button>${D.banner_url&&edit?`<button class="btn danger auto" data-rm="banner_url">${ic('trash','sm')}</button>`:''}
           <span class="hint" style="margin:0 4px 0 8px">ou cor</span><label class="cpick" style="background:${hex6(D.accent,'#27272a')}"><input type="color" data-c="accent" value="${hex6(D.accent,'#27272a')}" ${edit?'':'disabled'}></label>
           ${D.accent&&edit?`<button class="btn sec auto" data-rm="accent">Sem cor</button>`:''}</div></div>
+        <div class="sc"><h3>Moldura do ícone</h3><p>Cor e estilo da borda do ícone na lista de servidores. As animadas são dos servidores especiais.</p>
+          <div class="ringrow"><div class="ringpv" id="pvRing"></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div class="colorrow"><span class="hint" style="margin:0 6px 0 0">Cor</span><label class="cpick" style="background:${hex6(DC.ringColor,'#ffffff')}"><input type="color" data-rc="ringColor" value="${hex6(DC.ringColor,'#ffffff')}" ${edit?'':'disabled'}></label>
+              <span class="hint" style="margin:0 6px 0 12px">2ª cor</span><label class="cpick" style="background:${hex6(DC.ring2,'#a855f7')}"><input type="color" data-rc="ring2" value="${hex6(DC.ring2,'#a855f7')}" ${edit?'':'disabled'}></label></div></div></div>
+          <div class="chips" id="ringChips">${RING_STYLES.map(([k,l,t])=>{ const ok=ringOk(D,k); return `<button class="chip2 ${(DC.ring||'')===k?'on':''}${ok?'':' locked'}" data-ring="${k}" ${edit&&ok?'':'disabled'}>${l}${t?`<em class="lk${ok?' on':''}">${ok?'':ic('lock','sm')}${SRV_TIERS[t][0].replace('Servidor ','').toUpperCase()}</em>`:''}</button>`; }).join('')}</div></div>
+        ${D.icon_url?`<div class="sc"><h3>Ajustar ícone</h3><p>Arraste para enquadrar e use o zoom.</p><div class="fitrow"><div class="fitbox sq" id="fitIcon"></div>
+          <div class="fitctl"><label class="field" style="margin:0"><span>Zoom</span><input type="range" min="1" max="3" step="0.05" data-zoom="iconFit" value="${DC.iconFit?.z||1}" ${edit?'':'disabled'}></label>
+          ${isGifUrl(D.icon_url)?`<div class="field" style="margin:0"><span>GIF</span><div class="seg" data-anim="iconAnim">${[['always','Sempre animado'],['hover','Anima ao passar o mouse'],['still','Parado']].map(([k,l])=>`<button data-v="${k}" class="${(DC.iconAnim||'always')===k?'on':''}" ${edit?'':'disabled'}>${l}</button>`).join('')}</div></div>`:''}
+          <button class="btn sec auto" data-fitreset="iconFit" ${edit?'':'disabled'}>Centralizar</button></div></div></div>`:''}
+        ${D.banner_url?`<div class="sc"><h3>Ajustar banner</h3><p>Arraste para enquadrar e use o zoom.</p><div class="fitbox wide" id="fitBanner"></div>
+          <div class="fitctl" style="margin-top:12px"><label class="field" style="margin:0"><span>Zoom</span><input type="range" min="1" max="3" step="0.05" data-zoom="bannerFit" value="${DC.bannerFit?.z||1}" ${edit?'':'disabled'}></label>
+          ${isGifUrl(D.banner_url)?`<div class="field" style="margin:0"><span>GIF</span><div class="seg" data-anim="bannerAnim">${[['always','Sempre animado'],['hover','Anima ao passar o mouse'],['still','Parado']].map(([k,l])=>`<button data-v="${k}" class="${(DC.bannerAnim||'always')===k?'on':''}" ${edit?'':'disabled'}>${l}</button>`).join('')}</div></div>`:''}
+          <div><button class="btn sec auto" data-fitreset="bannerFit" ${edit?'':'disabled'}>Centralizar</button></div></div></div>`:''}
       </div>
       <div class="prev"><div class="prevlbl">Pré-visualização</div><div class="panel" style="overflow:hidden;display:flex;gap:10px;padding:10px;background:var(--bg)"><div id="pvRail"></div><div class="panel" style="flex:1;overflow:hidden"><div class="side-head" id="pvHead"><div class="t"><h2></h2></div><small></small></div><div style="padding:6px 16px 16px;color:var(--tx3);font-size:13px">${ic('hash','sm')} geral</div></div></div></div>
       </div>
       ${edit?`<div class="savebar"><button class="btn sec auto" id="svReset">Desfazer</button><button class="btn auto" id="svSave">Salvar alterações</button></div>`:''}`;
-    const preview=()=>{ const img=safeUrl(D.icon_url); $('#pvRail').innerHTML=`<div class="srv on ${img?'has-img':''}">${img?`<img src="${esc(img)}">`:esc(D.icon||initial(D.name))}</div>`;
-      const h=$('#pvHead'); const bn=safeUrl(D.banner_url), ac=safeColor(D.accent); h.classList.toggle('has-bn', !!(bn||ac)); h.style.backgroundImage = bn?`url('${bn}')`:ac?`linear-gradient(135deg,${ac},#0a0a0b)`:'';
+    const preview=()=>{ const ip=srvIconParts(D); $('#pvRail').innerHTML=`<div class="srv on${ip.cls}" style="${ip.style}">${ip.inner}</div>`;
+      const pr=$('#pvRing'); if(pr) pr.innerHTML=`<div class="srv${ip.cls}" style="${ip.style}">${ip.inner}</div>`;
+      const h=$('#pvHead'); const bn=safeUrl(D.banner_url), ac=safeColor(D.accent); h.classList.toggle('has-bn', !!(bn||ac)); h.classList.toggle('gif-host', !!bn); h.style.backgroundImage = !bn&&ac?`linear-gradient(135deg,${ac},#0a0a0b)`:'';
+      h.querySelector(':scope > .hbimg')?.remove(); if(bn){ const d=document.createElement('div'); d.className='hbimg'; d.innerHTML=imgFitHtml(bn, DC.bannerFit, DC.bannerAnim); h.prepend(d); }
       h.querySelector('h2').textContent=D.name||'—'; h.querySelector('small').textContent=D.description||''; };
+    SET.fitRefresh = ()=>{ if(SET.sec==='geral' && $('#pvRail')) preview(); };
     preview();
     if(!edit) return;
     body.querySelectorAll('[data-f]').forEach(i=>i.oninput=()=>{ D[i.dataset.f]=i.value; preview(); });
     body.querySelectorAll('[data-c]').forEach(i=>i.oninput=()=>{ D[i.dataset.c]=i.value; i.parentElement.style.background=i.value; preview(); });
     body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ D[b.dataset.rm]=null; renderServerSettings(); });
+    body.querySelectorAll('[data-rc]').forEach(i=>i.oninput=()=>{ DC[i.dataset.rc]=i.value; i.parentElement.style.background=i.value; if(!DC.ring) DC.ring='solid'; body.querySelectorAll('[data-ring]').forEach(x=>x.classList.toggle('on', x.dataset.ring===DC.ring)); preview(); });
+    body.querySelectorAll('[data-ring]').forEach(b=>b.onclick=()=>{ DC.ring=b.dataset.ring||null; body.querySelectorAll('[data-ring]').forEach(x=>x.classList.toggle('on', x===b)); preview(); });
+    const fits={};
+    [['fitIcon','icon_url','iconFit'],['fitBanner','banner_url','bannerFit']].forEach(([id,f,k])=>{ const box=$('#'+id); if(!box) return; DC[k]=DC[k]||{z:1,x:50,y:50};
+      fits[k]=fitEditor(box, safeUrl(D[f]), DC[k], ()=>{ const z=body.querySelector(`[data-zoom="${k}"]`); if(z) z.value=DC[k].z||1; preview(); }); });
+    body.querySelectorAll('[data-zoom]').forEach(r=>r.oninput=()=>{ const k=r.dataset.zoom; DC[k]=DC[k]||{x:50,y:50}; DC[k].z=+r.value; fits[k]?.(); preview(); });
+    body.querySelectorAll('[data-fitreset]').forEach(b=>b.onclick=()=>{ const k=b.dataset.fitreset; DC[k]={z:1,x:50,y:50}; const z=body.querySelector(`[data-zoom="${k}"]`); if(z) z.value=1; fits[k]?.(); Object.assign(DC[k],{}); renderServerSettings(); });
+    body.querySelectorAll('[data-anim]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{ DC[g.dataset.anim]=b.dataset.v==='always'?null:b.dataset.v; g.querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); preview(); }));
     body.querySelectorAll('[data-up]').forEach(b=>b.onclick=async()=>{ const ico=b.dataset.up==='icon';
       const url=await uploadImage('s/'+s.id, b.dataset.up, ico?1:2.1, ico?512:1000, false, { noGif: !ico && !isPremSrv(s) ? 'Banner animado (GIF) é dos servidores Emerald e Aurora. Veja em Premium.' : null });
-      if(url){ D[ico?'icon_url':'banner_url']=url; renderServerSettings(); toast('Imagem pronta. Clique em "Salvar alterações".'); } });
+      if(url){ D[ico?'icon_url':'banner_url']=url; delete DC[ico?'iconFit':'bannerFit']; renderServerSettings(); toast('Imagem pronta. Clique em "Salvar alterações".'); } });
     $('#svReset').onclick=()=>{ SET.draft=null; renderServerSettings(); };
     $('#svSave').onclick=async()=>{ const name=(D.name||'').trim().slice(0,40); if(!name) return toast('O servidor precisa de um nome.', true);
-      const upd={ name, description:(D.description||'').trim()||null, welcome:(D.welcome||'').trim()||null, icon:(D.icon||'').trim()||null, icon_url:D.icon_url||null, banner_url:D.banner_url||null, accent:D.accent||null };
+      const custom={...DC}; Object.keys(custom).forEach(k=>{ if(custom[k]==null || custom[k]==='') delete custom[k]; });
+      ['iconFit','bannerFit'].forEach(k=>{ const f=custom[k]; if(f && (f.z||1)==1 && (f.x??50)==50 && (f.y??50)==50) delete custom[k]; });
+      if(!custom.ring){ delete custom.ringColor; delete custom.ring2; }
+      const upd={ name, description:(D.description||'').trim()||null, welcome:(D.welcome||'').trim()||null, icon:(D.icon||'').trim()||null, icon_url:D.icon_url||null, banner_url:D.banner_url||null, accent:D.accent||null, custom };
       const { data, error } = await sb.from('dc_servers').update(upd).eq('id', s.id).select().single();
       if(error) return toast('Erro: '+error.message, true);
       Object.assign(S.server, data); SET.draft=null; renderServerHead(); renderRail(); renderServerSettings(); toast('Servidor atualizado!'); };
@@ -4850,7 +4924,7 @@ async function frSearch(q, quiet){
 }
 
 function renderHomeHead(){
-  const head=$('.side-head'); head.classList.remove('has-bn'); head.style.backgroundImage='';
+  const head=$('.side-head'); head.classList.remove('has-bn','gif-host'); head.style.backgroundImage=''; head.querySelector(':scope > .hbimg')?.remove(); head.querySelector(':scope > .hbfx')?.remove();
   $('#srvName').textContent='Mensagens diretas'; $('#srvCode').classList.add('hidden'); $('#srvDesc').classList.add('hidden'); $('#srvSub').textContent='';
   $('#inviteBtn').classList.add('hidden');
 }
@@ -4982,6 +5056,55 @@ $('#callBtn').onclick=()=>{ if(S.view?.type==='dm') startCall(S.view.dm); };
    ===================================================================== */
 const SRV_BGS = { '':['Padrão',''], aurora:['Aurora','radial-gradient(1200px 600px at 0% 0%,#10b98122,transparent 60%),radial-gradient(1000px 600px at 100% 100%,#6366f122,transparent 60%)'], nebula:['Nebulosa','radial-gradient(900px 500px at 80% 10%,#a855f72a,transparent 60%),radial-gradient(800px 500px at 10% 90%,#ec48991f,transparent 60%)'], sunset:['Pôr do sol','linear-gradient(180deg,#f9731614,transparent 40%),radial-gradient(900px 500px at 50% 110%,#ef444422,transparent 60%)'], ocean:['Oceano','linear-gradient(160deg,#0ea5e91c,transparent 50%,#0369a11c)'], forest:['Floresta','radial-gradient(1000px 600px at 0% 100%,#16a34a22,transparent 60%)'], ember:['Brasa','radial-gradient(900px 500px at 100% 0%,#f9731622,transparent 60%),radial-gradient(700px 400px at 0% 100%,#dc262618,transparent 60%)'], mono:['Grafite','linear-gradient(180deg,#ffffff08,transparent 50%)'], grid:['Grade','linear-gradient(#ffffff06 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,#ffffff06 1px,transparent 1px) 0 0/32px 32px'] };
 function srvBgCss(v){ if(!v) return ''; if(SRV_BGS[v]) return SRV_BGS[v][1]; const c=safeColor(v); return c ? `radial-gradient(1100px 600px at 100% 0%,${c}33,transparent 65%),radial-gradient(900px 500px at 0% 100%,${c}1f,transparent 60%)` : ''; }
+
+/* ---------- moldura do ícone do servidor, GIF parado/animado e ajuste de imagem ---------- */
+const RING_STYLES = [['','Nenhuma',''],['solid','Sólida',''],['double','Dupla',''],['dashed','Tracejada',''],['glow','Brilho',''],['duo','Duas cores',''],['pulse','Pulso',''],
+  ['gold','Ouro vivo','gold'],['fire','Fogo','gold'],['platinum','Platina','platinum'],['prism','Prisma','platinum'],['ice','Gelo','platinum'],
+  ['emerald','Esmeralda','diamond'],['neon','Neon','diamond'],['rainbow','Arco-íris','diamond'],['aurora','Aurora','aurora'],['cosmic','Cósmica','aurora']];
+const TIER_N = { '':0, gold:1, platinum:2, diamond:3, aurora:4 };
+const ringNeed = k => (RING_STYLES.find(r=>r[0]===k)||[])[2]||'';
+const ringOk = (s, k) => (TIER_N[s?.tier||'']||0) >= (TIER_N[ringNeed(k)]||0);
+const srvC = s => (s?.custom && typeof s.custom==='object') ? s.custom : {};
+const isGifUrl = u => /\.gif(\?|$)/i.test(u||'');
+const STILL = new Map();
+function stillOf(url){
+  if(STILL.has(url)) return STILL.get(url)||null;
+  STILL.set(url, null);
+  const im=new Image(); im.crossOrigin='anonymous';
+  im.onload=()=>{ try{ const k=Math.min(1, 640/Math.max(im.naturalWidth, im.naturalHeight)); const cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(im.naturalWidth*k)); cv.height=Math.max(1,Math.round(im.naturalHeight*k));
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); STILL.set(url, cv.toDataURL('image/webp', .9)); }catch{ STILL.set(url, url); }
+    renderRail(); if(!S.home) renderServerHead(); SET.fitRefresh?.(); };
+  im.onerror=()=>STILL.set(url, url);
+  im.src=url; return null;
+}
+function fitStyle(f){ const z=Math.max(1, Math.min(3, +f?.z||1)), x=Math.max(0, Math.min(100, f?.x ?? 50)), y=Math.max(0, Math.min(100, f?.y ?? 50));
+  return `object-position:${x}% ${y}%;transform:scale(${z});transform-origin:${x}% ${y}%`; }
+function imgFitHtml(url, fit, anim){
+  const st=fitStyle(fit);
+  if(!isGifUrl(url) || !anim || anim==='always') return `<img src="${esc(url)}" style="${st}" alt="" draggable="false">`;
+  const still=stillOf(url);
+  if(anim==='still') return `<img src="${esc(still||url)}" style="${st}${still?'':';opacity:0'}" alt="" draggable="false">`;
+  return `<img src="${esc(still||url)}" style="${st}" alt="" draggable="false"><img class="g-an" src="${esc(url)}" style="${st}" alt="" draggable="false">`;
+}
+function srvIconParts(s){
+  const c=srvC(s); const img=safeUrl(s.icon_url); const ring = RING_STYLES.some(r=>r[0]===c.ring && c.ring) && ringOk(s, c.ring) ? c.ring : '';
+  let inner = img ? `<span class="sic">${imgFitHtml(img, c.iconFit, c.iconAnim)}</span>` : esc(s.icon || initial(s.name));
+  if(ring) inner += `<i class="sring sr-${ring}"></i>`;
+  return { cls:(img?' has-img gif-host':'')+(ring?' has-ring rg-'+ring:''), style:`--rc:${safeColor(c.ringColor)||'#ffffff'};--rc2:${safeColor(c.ring2)||'#a855f7'}`, inner };
+}
+/* editor de enquadramento: arrastar para mover, controle para o zoom */
+function fitEditor(box, url, fit, onChange){
+  const draw=()=>{ box.innerHTML=imgFitHtml(url, fit, 'always'); };
+  draw();
+  let drag=null;
+  box.onpointerdown=e=>{ drag={x:e.clientX, y:e.clientY, fx:fit.x??50, fy:fit.y??50}; box.setPointerCapture(e.pointerId); };
+  box.onpointermove=e=>{ if(!drag) return; const r=box.getBoundingClientRect(); const z=fit.z||1;
+    fit.x=Math.max(0, Math.min(100, Math.round(drag.fx - (e.clientX-drag.x)/r.width*100/z*1.6)));
+    fit.y=Math.max(0, Math.min(100, Math.round(drag.fy - (e.clientY-drag.y)/r.height*100/z*1.6))); draw(); onChange(); };
+  box.onpointerup=()=>{ drag=null; };
+  box.onwheel=e=>{ e.preventDefault(); fit.z=Math.max(1, Math.min(3, +((fit.z||1) - Math.sign(e.deltaY)*0.1).toFixed(2))); draw(); onChange(true); };
+  return draw;
+}
 const SRV_TIERS = { gold:['Servidor Gold','diretor'], platinum:['Servidor Platinum','presidente'], diamond:['Servidor Emerald','ceo'], aurora:['Servidor Aurora','fundador'] };
 function applyServerTier(s){ document.body.classList.remove('stier-gold','stier-platinum','stier-diamond','stier-aurora'); if(s && !S.home && SRV_TIERS[s.tier]) document.body.classList.add('stier-'+s.tier); }
 const canMod = need => !!S.server && (canEditServer() || (S.server.title_powers && myRank()>=need));

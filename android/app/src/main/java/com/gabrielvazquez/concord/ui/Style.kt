@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -394,3 +396,57 @@ fun HeadFx(fx: String?, modifier: Modifier) {
     Box(modifier.drawWithContent { val x = size.width * t; drawRect(Brush.linearGradient(cols, start = Offset(x - size.width * .5f, 0f), end = Offset(x + size.width * .5f, size.height))) })
 }
 
+
+/* ---------- moldura do ícone do servidor (cor + estilo; as animadas pedem servidor especial) ---------- */
+private val TIER_N = mapOf("gold" to 1, "platinum" to 2, "diamond" to 3, "aurora" to 4)
+private val RING_NEED = mapOf("gold" to "gold", "fire" to "gold", "platinum" to "platinum", "prism" to "platinum", "ice" to "platinum",
+    "emerald" to "diamond", "neon" to "diamond", "rainbow" to "diamond", "aurora" to "aurora", "cosmic" to "aurora")
+private val RING_COLS = mapOf(
+    "gold" to Pair(hex(0xFF78350F, 0xFFFDE68A, 0xFFB45309, 0xFFFFF7D6, 0xFF78350F), 4000), "fire" to Pair(hex(0xFFFACC15, 0xFFF97316, 0xFFEF4444, 0xFFF97316, 0xFFFACC15), 1600),
+    "platinum" to Pair(hex(0xFF94A3B8, 0xFFFFFFFF, 0xFFC7D2FE, 0xFFE2E8F0, 0xFF94A3B8), 4000), "prism" to Pair(hex(0xFFF43F5E, 0xFFF59E0B, 0xFF22C55E, 0xFF06B6D4, 0xFF8B5CF6, 0xFFF43F5E), 3000),
+    "ice" to Pair(hex(0xFFFFFFFF, 0xFFBAE6FD, 0xFF38BDF8, 0xFFBAE6FD, 0xFFFFFFFF), 5000), "emerald" to Pair(hex(0xFF065F46, 0xFF6EE7B7, 0xFFCCFBF1, 0xFF10B981, 0xFF065F46), 3000),
+    "neon" to Pair(hex(0xFF22D3EE, 0xFFE879F9, 0xFF22D3EE), 0), "rainbow" to Pair(hex(0xFFF43F5E, 0xFFF59E0B, 0xFF22C55E, 0xFF06B6D4, 0xFF8B5CF6, 0xFFF43F5E), 2000),
+    "aurora" to Pair(hex(0xFF34D399, 0xFF22D3EE, 0xFFA78BFA, 0xFFF472B6, 0xFF34D399), 2600), "cosmic" to Pair(hex(0xFF1E1B4B, 0xFFA78BFA, 0xFFFFFFFF, 0xFF22D3EE, 0xFF1E1B4B), 2200),
+)
+fun ringOk(s: Server): Boolean { val need = RING_NEED[s.ring] ?: return s.ring != null; return (TIER_N[s.tier] ?: 0) >= (TIER_N[need] ?: 0) }
+
+@Composable
+fun ServerRing(s: Server, modifier: Modifier = Modifier) {
+    if (s.ring == null || !ringOk(s)) { TierRing(s.tier, modifier); return }
+    val c1 = parseColor(s.ringColor, Color.White); val c2 = parseColor(s.ring2, Color(0xFFA855F7))
+    val anim = RING_COLS[s.ring]
+    val ang = spin(anim?.second ?: 0)
+    val pulse = if (s.ring == "pulse") rememberInfiniteTransition(label = "rp").animateFloat(0f, 1f, infiniteRepeatable(tween(1800)), label = "p").value else -1f
+    Canvas(modifier) {
+        val sw = (if (s.ring == "double") 4.dp else 2.5.dp).toPx()
+        val cr = androidx.compose.ui.geometry.CornerRadius(size.width * .34f)
+        val brush: Brush = when {
+            anim != null -> Brush.sweepGradient(anim.first.rotateCols(ang))
+            s.ring == "duo" -> Brush.linearGradient(listOf(c1, c2))
+            else -> androidx.compose.ui.graphics.SolidColor(c1)
+        }
+        if (s.ring == "glow" || s.ring == "neon" || s.ring == "emerald" || s.ring == "aurora") drawRoundRect((if (anim != null) anim.first[1] else c1).copy(alpha = .35f), cornerRadius = cr, style = Stroke(sw * 3.2f))
+        if (pulse >= 0f) drawRoundRect(c1.copy(alpha = (1f - pulse) * .6f), cornerRadius = cr, style = Stroke(sw + 10.dp.toPx() * pulse))
+        val effect = if (s.ring == "dashed") androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 7f)) else null
+        drawRoundRect(brush, cornerRadius = cr, style = Stroke(sw, pathEffect = effect))
+        if (s.ring == "double") drawRoundRect(C.bg, topLeft = Offset(sw / 3, sw / 3), size = androidx.compose.ui.geometry.Size(size.width - sw / 1.5f, size.height - sw / 1.5f), cornerRadius = cr, style = Stroke(sw / 3))
+    }
+}
+private fun List<Color>.rotateCols(deg: Float): List<Color> {
+    val base = dropLast(1); val n = base.size; if (n < 2) return this
+    val f = deg / 360f * n; val i = f.toInt() % n; val fr = f - f.toInt()
+    return (0..n).map { k -> androidx.compose.ui.graphics.lerp(base[(k + i) % n], base[(k + i + 1) % n], fr) }
+}
+
+/** imagem com enquadramento (zoom/posição) e GIF parado ou animado */
+@Composable
+fun FitImage(url: String, fit: Triple<Float, Float, Float>?, animate: Boolean, modifier: Modifier) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val (z, x, y) = fit ?: Triple(1f, 50f, 50f)
+    val req = remember(url, animate) {
+        coil.request.ImageRequest.Builder(ctx).data(url).apply { if (!animate) decoderFactory(coil.decode.BitmapFactoryDecoder.Factory()) }.build()
+    }
+    AsyncImage(req, null, contentScale = ContentScale.Crop, alignment = androidx.compose.ui.BiasAlignment(x / 50f - 1f, y / 50f - 1f),
+        modifier = modifier.graphicsLayerCompat(z, x / 100f, y / 100f))
+}
+private fun Modifier.graphicsLayerCompat(z: Float, ox: Float, oy: Float) = if (z <= 1.001f) this else this.clipToBounds().then(Modifier.graphicsLayer(scaleX = z, scaleY = z, transformOrigin = androidx.compose.ui.graphics.TransformOrigin(ox, oy)))

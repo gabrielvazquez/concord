@@ -217,7 +217,8 @@ private fun DrawerContent(close: () -> Unit, onAskMic: (() -> Unit) -> Unit) {
             val unreadDm = c.dms.count { c.unread.contains(it.id) }
             RailButton(selected = c.home, badge = unreadDm, onClick = { c.openHome() }) { Box(Modifier.semantics { contentDescription = "Mensagens diretas" }) { Logo(28.dp) } }
             HorizontalDivider(Modifier.width(28.dp), color = C.line2)
-            c.servers.forEach { s -> Box { RailButton(selected = !c.home && c.server?.id == s.id, onClick = { c.selectServer(s) }) { ServerIcon(s) }; TierRing(s.tier, Modifier.size(50.dp)) } }
+            c.servers.forEach { s -> val sel = !c.home && c.server?.id == s.id
+                Box { RailButton(selected = sel, onClick = { c.selectServer(s) }) { ServerIcon(s, sel) }; ServerRing(s, Modifier.size(50.dp)) } }
             RailButton(selected = false, onClick = { Ui.joinOpen = true }) { Icon(Icons.Default.Add, "Entrar em servidor", tint = C.tx2) }
             Spacer(Modifier.weight(1f))
             RailButton(selected = false, onClick = { c.logout() }) { Icon(Icons.AutoMirrored.Filled.Logout, "Trocar de conta", tint = C.tx3, modifier = Modifier.size(20.dp)) }
@@ -241,8 +242,9 @@ private fun RailButton(selected: Boolean, badge: Int = 0, onClick: () -> Unit, c
 }
 
 @Composable
-private fun ServerIcon(s: Server) {
-    if (!s.iconUrl.isNullOrEmpty()) AsyncImage(s.iconUrl, null, contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp))
+private fun ServerIcon(s: Server, selected: Boolean = false) {
+    // GIF: "sempre" anima; "ao passar o mouse" anima só no servidor aberto; "parado" fica no primeiro quadro
+    if (!s.iconUrl.isNullOrEmpty()) FitImage(s.iconUrl, s.iconFit, s.iconAnim == null || s.iconAnim == "always" || (s.iconAnim == "hover" && selected), Modifier.size(48.dp))
     else Text(s.icon ?: s.name.take(1).uppercase(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
 }
 
@@ -252,7 +254,7 @@ private fun ColumnScopeHeader(title: String, sub: String? = null, banner: String
     val head = if (srv?.premium == true) srv.head else null
     val tierTint = when (srv?.tier) { "gold" -> Color(0x22F59E0B); "platinum" -> Color(0x22E0E7FF); "diamond" -> Color(0x3310B981); "aurora" -> Color(0x33A78BFA); else -> null }
     Box(Modifier.fillMaxWidth().height(if (!has) 64.dp else if (head == "tall") 150.dp else if (head == "center") 130.dp else 110.dp).clip(RoundedCornerShape(topStart = 18.dp))) {
-        if (banner != null) AsyncImage(banner, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        if (banner != null) FitImage(banner, srv?.bannerFit, srv?.bannerAnim != "still", Modifier.fillMaxSize())
         else if (accent != null) Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(parseColor(accent), C.panel))))
         else if (tierTint != null) Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(tierTint, Color.Transparent))))
         if (srv?.premium == true) HeadFx(srv.headFx, Modifier.fillMaxSize())

@@ -46,15 +46,20 @@ data class Server(
     val accent: String?, val description: String?, val welcome: String?,
     val tier: String? = null, val themeBg: String? = null, val applyAccent: Boolean = false, val ownerId: String? = null,
     val stage: String? = null, val bar: String? = null, val theme: String? = null, val head: String? = null, val headFx: String? = null,
+    // moldura do ícone, GIF parado/animado e enquadramento (z = zoom, x/y = posição em %)
+    val ring: String? = null, val ringColor: String? = null, val ring2: String? = null, val iconAnim: String? = null, val bannerAnim: String? = null,
+    val iconFit: Triple<Float, Float, Float>? = null, val bannerFit: Triple<Float, Float, Float>? = null,
 ) {
     /** Emerald (CEO) e Aurora (Founder) liberam os temas premium */
     val premium get() = tier == "diamond" || tier == "aurora"
     companion object {
+        private fun fit(o: JSONObject?) = o?.let { Triple(it.optDouble("z", 1.0).toFloat().coerceIn(1f, 3f), it.optDouble("x", 50.0).toFloat().coerceIn(0f, 100f), it.optDouble("y", 50.0).toFloat().coerceIn(0f, 100f)) }
         fun from(o: JSONObject): Server {
             val cu = o.optJSONObject("custom")
             return Server(o.getString("id"), o.optString("code"), o.optString("name"), o.s("icon"), o.s("icon_url"),
                 o.s("banner_url"), o.s("accent"), o.s("description"), o.s("welcome"), o.s("tier"), o.s("theme_bg"), o.optBoolean("apply_accent"), o.s("owner_id"),
-                cu?.s("stage"), cu?.s("bar"), cu?.s("theme"), cu?.s("head"), cu?.s("headfx"))
+                cu?.s("stage"), cu?.s("bar"), cu?.s("theme"), cu?.s("head"), cu?.s("headfx"),
+                cu?.s("ring"), cu?.s("ringColor"), cu?.s("ring2"), cu?.s("iconAnim"), cu?.s("bannerAnim"), fit(cu?.optJSONObject("iconFit")), fit(cu?.optJSONObject("bannerFit")))
         }
     }
 }
