@@ -76,6 +76,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -216,7 +217,7 @@ private fun DrawerContent(close: () -> Unit, onAskMic: (() -> Unit) -> Unit) {
             val unreadDm = c.dms.count { c.unread.contains(it.id) }
             RailButton(selected = c.home, badge = unreadDm, onClick = { c.openHome() }) { Box(Modifier.semantics { contentDescription = "Mensagens diretas" }) { Logo(28.dp) } }
             HorizontalDivider(Modifier.width(28.dp), color = C.line2)
-            c.servers.forEach { s -> RailButton(selected = !c.home && c.server?.id == s.id, onClick = { c.selectServer(s) }) { ServerIcon(s) } }
+            c.servers.forEach { s -> Box { RailButton(selected = !c.home && c.server?.id == s.id, onClick = { c.selectServer(s) }) { ServerIcon(s) }; TierRing(s.tier, Modifier.size(50.dp)) } }
             RailButton(selected = false, onClick = { Ui.joinOpen = true }) { Icon(Icons.Default.Add, "Entrar em servidor", tint = C.tx2) }
             Spacer(Modifier.weight(1f))
             RailButton(selected = false, onClick = { c.logout() }) { Icon(Icons.AutoMirrored.Filled.Logout, "Trocar de conta", tint = C.tx3, modifier = Modifier.size(20.dp)) }
@@ -246,13 +247,24 @@ private fun ServerIcon(s: Server) {
 }
 
 @Composable
-private fun ColumnScopeHeader(title: String, sub: String? = null, banner: String? = null, accent: String? = null) {
-    Box(Modifier.fillMaxWidth().height(if (banner != null || accent != null) 96.dp else 60.dp)) {
+private fun ColumnScopeHeader(title: String, sub: String? = null, banner: String? = null, accent: String? = null, srv: Server? = null) {
+    val has = banner != null || accent != null
+    val head = if (srv?.premium == true) srv.head else null
+    val tierTint = when (srv?.tier) { "gold" -> Color(0x22F59E0B); "platinum" -> Color(0x22E0E7FF); "diamond" -> Color(0x3310B981); "aurora" -> Color(0x33A78BFA); else -> null }
+    Box(Modifier.fillMaxWidth().height(if (!has) 64.dp else if (head == "tall") 150.dp else if (head == "center") 130.dp else 110.dp).clip(RoundedCornerShape(topStart = 18.dp))) {
         if (banner != null) AsyncImage(banner, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         else if (accent != null) Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(parseColor(accent), C.panel))))
-        Column(Modifier.align(Alignment.BottomStart).padding(16.dp, 12.dp)) {
+        else if (tierTint != null) Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(tierTint, Color.Transparent))))
+        if (srv?.premium == true) HeadFx(srv.headFx, Modifier.fillMaxSize())
+        if (has) Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, if (head == "glass") Color(0x990A0A0B) else Color(0xEE0A0A0B)))))
+        val inner = @Composable {
             Text(title, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            sub?.let { Text(it, color = C.tx2, fontSize = 12.sp, maxLines = 1) }
+            sub?.let { Text(it, color = C.tx2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
+        when {
+            head == "center" && has -> Column(Modifier.align(Alignment.BottomCenter).padding(16.dp, 12.dp), horizontalAlignment = Alignment.CenterHorizontally) { inner() }
+            head == "glass" && has -> Column(Modifier.align(Alignment.BottomStart).padding(10.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0x8C0A0A0B)).border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(14.dp)).padding(10.dp, 8.dp)) { inner() }
+            else -> Column(Modifier.align(Alignment.BottomStart).padding(16.dp, 12.dp)) { inner() }
         }
     }
 }
@@ -264,7 +276,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.ChannelList(close: ()
     val clip = LocalClipboardManager.current
     val ctx = LocalContext.current
     if (s == null) { Box(Modifier.weight(1f)) {}; return }
-    ColumnScopeHeader(s.name, s.description, s.bannerUrl, s.accent)
+    ColumnScopeHeader(s.name, s.description, s.bannerUrl, s.accent, s)
     Row(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Chip(Icons.Default.ContentCopy, s.code) { clip.setText(AnnotatedString(c.inviteLink())); c.say("Link de convite copiado.") }
         Chip(Icons.Default.Share, "Convidar") {
@@ -283,8 +295,9 @@ private fun androidx.compose.foundation.layout.ColumnScope.ChannelList(close: ()
             items(list, key = { it.id }) { ch ->
                 val sel = (c.view as? View.Text)?.ch?.id == ch.id || (c.view as? View.Voice)?.ch?.id == ch.id
                 val users = if (ch.isVoice) c.voiceUsers(ch.id) else emptyList()
+                val acc = srvAccent(s)
                 Column {
-                    Row(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(10.dp)).background(if (sel) C.card2 else Color.Transparent)
+                    Row(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(10.dp)).background(if (sel) (acc?.copy(alpha = .16f) ?: C.card2) else Color.Transparent)
                         .clickable { if (ch.isVoice) onAskMic { c.openVoice(ch) } else c.openText(ch); close() }.padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (ch.icon != null) Text(ch.icon, fontSize = 16.sp, modifier = Modifier.width(22.dp))
                         else Icon(if (ch.isVoice) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Tag, null, tint = C.tx3, modifier = Modifier.size(18.dp))
@@ -298,7 +311,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.ChannelList(close: ()
                     users.forEach { u ->
                         Row(Modifier.fillMaxWidth().padding(start = 34.dp, top = 2.dp, bottom = 2.dp).clickable { Ui.profile = u.uid }, verticalAlignment = Alignment.CenterVertically) {
                             Avatar(u.uid, 26.dp, fallbackName = u.name, fallbackColor = u.color, speaking = c.voice.channel?.id == ch.id && (c.voice.speaking[u.key] == true || (u.uid == c.meId && c.voice.speaking[c.sid] == true)))
-                            Spacer(Modifier.width(8.dp)); Text(c.name(u.uid, u.name), color = C.tx, fontSize = 13.5.sp, modifier = Modifier.weight(1f), maxLines = 1)
+                            Spacer(Modifier.width(8.dp)); StyledName(u.uid, c.name(u.uid, u.name), 13.5.sp, FontWeight.SemiBold, modifier = Modifier.weight(1f))
                             if (u.screen) Text("AO VIVO", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(C.red).padding(4.dp, 1.dp))
                             if (u.muted || u.deaf) Icon(Icons.Default.MicOff, "Mutado", tint = C.red, modifier = Modifier.padding(start = 4.dp).size(17.dp))
                             if (u.deaf) Icon(Icons.Default.HeadsetOff, "Não está ouvindo", tint = C.red, modifier = Modifier.padding(start = 4.dp).size(17.dp))
@@ -336,7 +349,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.DmList(close: () -> U
             val sel = (c.view as? View.DmChat)?.dm?.id == d.id
             Row(Modifier.fillMaxWidth().height(54.dp).clip(RoundedCornerShape(12.dp)).background(if (sel) C.card2 else Color.Transparent).clickable { c.openDm(d); close() }.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Avatar(o, 36.dp, c.statusOf(o).takeIf { it != "offline" }); Spacer(Modifier.width(10.dp))
-                Text(c.name(o), fontWeight = if (c.unread.contains(d.id)) FontWeight.Bold else FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                StyledName(o, c.name(o), 15.sp, if (c.unread.contains(d.id)) FontWeight.Bold else FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 if (c.voice.channel?.dmId == d.id) Icon(Icons.Default.Call, null, tint = C.green, modifier = Modifier.size(16.dp))
                 if (c.unread.contains(d.id)) Box(Modifier.padding(start = 6.dp).size(8.dp).clip(CircleShape).background(Color.White))
             }
@@ -348,13 +361,32 @@ private fun androidx.compose.foundation.layout.ColumnScope.DmList(close: () -> U
 @Composable
 private fun VoiceCard() {
     val c = Concord.I
-    val ch = c.voice.channel ?: return
-    Column(Modifier.padding(8.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).border(1.dp, C.line, RoundedCornerShape(16.dp)).padding(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { if (ch.dmId != null) c.home = true else c.servers.find { it.id == ch.serverId }?.let { if (c.server?.id != it.id) c.selectServer(it) }; c.view = View.Voice(ch) }) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(if (c.voice.state == "Voz conectada") C.green else C.amber)); Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f)) { Text(c.voice.state, fontWeight = FontWeight.Bold, fontSize = 13.sp); Text(c.voice.title(), color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-            IconButton(onClick = { c.voice.leave() }) { Icon(Icons.Default.CallEnd, "Sair", tint = C.red) }
+    val v = c.voice
+    val ch = v.channel ?: return
+    val ok = v.state == "Voz conectada"
+    Column(Modifier.padding(8.dp, 8.dp, 8.dp, 0.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).border(1.dp, C.line, RoundedCornerShape(16.dp)).padding(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { if (ch.dmId != null) c.home = true else c.servers.find { it.id == ch.serverId }?.let { if (c.server?.id != it.id) c.selectServer(it) }; c.view = View.Voice(ch) }) {
+            Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).border(1.dp, C.line2, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Default.SignalCellularAlt, null, tint = if (ok) C.green else C.amber, modifier = Modifier.size(16.dp)) }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(7.dp).clip(CircleShape).background(if (ok) C.green else C.amber)); Spacer(Modifier.width(6.dp)); Text(v.state, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                Text(v.title(), color = C.tx2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            VcBtn(if (v.muted || v.deaf) Icons.Default.MicOff else Icons.Default.Mic, "Microfone", v.muted || v.deaf) { v.toggleMute() }
+            VcBtn(if (v.deaf) Icons.Default.HeadsetOff else Icons.Default.Headset, "Áudio", v.deaf) { v.toggleDeaf() }
+            VcBtn(Icons.AutoMirrored.Filled.VolumeUp, "Abrir sala", false) { if (ch.dmId != null) c.home = true; c.view = View.Voice(ch) }
+            VcBtn(Icons.Default.CallEnd, "Sair", false, red = true) { v.leave() }
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.VcBtn(icon: ImageVector, label: String, off: Boolean, red: Boolean = false, onClick: () -> Unit) {
+    Box(Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(12.dp)).background(if (red) C.red else if (off) Color(0x22FF4D5E) else C.card2).border(1.dp, if (off) Color(0x55FF4D5E) else C.line2, RoundedCornerShape(12.dp)).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, label, tint = if (red) Color.White else if (off) C.red else C.tx, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -365,7 +397,7 @@ private fun UserBar() {
     Row(Modifier.padding(8.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable { Ui.statusOpen = true }, verticalAlignment = Alignment.CenterVertically) {
             Avatar(me.id, 36.dp, c.myStatus()); Spacer(Modifier.width(10.dp))
-            Column { Text(c.name(me.id), fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1); Text(me.shownStatus ?: STATUS_LABEL[c.myStatus()] ?: "", color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            Column(Modifier.weight(1f)) { StyledName(me.id, c.name(me.id), 14.sp); Text(me.shownStatus ?: STATUS_LABEL[c.myStatus()] ?: "", color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         if (c.voice.channel != null) {
             IconButton(onClick = { c.voice.toggleMute() }) { Icon(if (c.voice.muted || c.voice.deaf) Icons.Default.MicOff else Icons.Default.Mic, "Microfone", tint = if (c.voice.muted || c.voice.deaf) C.red else C.tx2) }
@@ -375,7 +407,7 @@ private fun UserBar() {
     }
 }
 
-/* ===================== Membros ===================== */
+/* ===================== Membros (igual ao painel direito do exe) ===================== */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MembersSheet() {
@@ -383,36 +415,74 @@ private fun MembersSheet() {
     ModalBottomSheet(onDismissRequest = { Ui.membersOpen = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = C.panel) {
         val onIds = c.online.map { it.uid }.toSet()
         val offline = c.members.filter { it !in onIds }
-        LazyColumn(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 24.dp)) {
-            item { Text("ONLINE — ${c.online.size}", color = C.tx3, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp)) }
-            items(c.online, key = { "on-" + it.uid }) { o -> MemberRow(o.uid, c.statusOf(o.uid), sub = o.voice?.let { v -> c.channels.find { it.id == v }?.let { (if (o.screen) "Transmitindo · " else "") + it.name } }, act = o.act) }
-            if (offline.isNotEmpty()) item { Text("OFFLINE — ${offline.size}", color = C.tx3, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp, 16.dp, 8.dp, 8.dp)) }
+        val me = c.me
+        val live = c.online.firstOrNull { it.screen && it.voice != null }
+        val busiest = c.channels.filter { it.isVoice }.map { it to c.voiceUsers(it.id) }.maxByOrNull { it.second.size }?.takeIf { it.second.isNotEmpty() }
+        val featCh = live?.let { l -> c.channels.find { it.id == l.voice } } ?: busiest?.first
+        LazyColumn(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (me != null) item {
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).border(1.dp, C.line, RoundedCornerShape(16.dp)).clickable { Ui.membersOpen = false; Ui.statusOpen = true }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Avatar(me.id, 42.dp, c.myStatus()); Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) { StyledName(me.id, c.name(me.id), 15.sp); Text(me.shownStatus ?: STATUS_LABEL[c.myStatus()] ?: "", color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    Icon(androidx.compose.material.icons.Icons.Default.Settings, null, tint = C.tx3, modifier = Modifier.size(18.dp).clickable { Ui.membersOpen = false; Ui.settingsOpen = true })
+                }
+            }
+            if (featCh != null) item {
+                val users = c.voiceUsers(featCh.id)
+                Column(Modifier.padding(top = 10.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF1C1C20), Color(0xFF111113)))).border(1.dp, C.line, RoundedCornerShape(16.dp)).padding(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).border(1.dp, C.line2, RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) { Icon(if (live != null) Icons.Default.SignalCellularAlt else Icons.AutoMirrored.Filled.VolumeUp, null, tint = C.tx2, modifier = Modifier.size(15.dp)) }
+                        Spacer(Modifier.width(10.dp))
+                        Column { Text(if (live != null) "Transmissão ao vivo" else "Sala de voz", color = C.tx2, fontSize = 12.sp); Text(featCh.name, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                    }
+                    Text(if (live != null) "${c.name(live.uid, live.name)} está transmitindo a tela" else "${users.size} ${if (users.size > 1) "pessoas conversando" else "pessoa na sala"}", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(top = 12.dp, bottom = 10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.weight(1f)) { users.take(6).forEachIndexed { i, u -> Box(Modifier.padding(start = if (i == 0) 0.dp else 0.dp).layout { m, cs -> val pl = m.measure(cs); layout(pl.width - if (i == 0) 0 else 8.dp.roundToPx(), pl.height) { pl.place(if (i == 0) 0 else -8.dp.roundToPx(), 0) } }) { Avatar(u.uid, 26.dp, fallbackName = u.name, fallbackColor = u.color) } } }
+                        if (c.voice.channel?.id != featCh.id) Text(if (live != null) "Assistir" else "Entrar", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp,
+                            modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).clickable { Ui.membersOpen = false; c.openVoice(featCh) }.padding(horizontal = 14.dp, vertical = 8.dp))
+                    }
+                }
+            }
+            item { Text("ONLINE — ${c.online.size}", color = C.tx3, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp, modifier = Modifier.padding(8.dp, 16.dp, 8.dp, 6.dp)) }
+            items(c.online, key = { "on-" + it.uid }) { o ->
+                val ch = o.voice?.let { v -> c.channels.find { it.id == v } }
+                MemberRow(o.uid, c.statusOf(o.uid), sub = ch?.let { (if (o.screen) "Transmitindo" else it.name) }, live = o.screen, since = if (ch != null && o.since > 0) o.since else 0L, act = o.act)
+            }
+            if (offline.isNotEmpty()) item { Text("OFFLINE — ${offline.size}", color = C.tx3, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp, modifier = Modifier.padding(8.dp, 16.dp, 8.dp, 6.dp)) }
             items(offline, key = { "off-$it" }) { MemberRow(it, null, dim = true) }
         }
     }
 }
 
 @Composable
-private fun MemberRow(uid: String, status: String?, sub: String? = null, act: com.gabrielvazquez.concord.Activity? = null, dim: Boolean = false) {
+private fun MemberRow(uid: String, status: String?, sub: String? = null, live: Boolean = false, since: Long = 0L, act: com.gabrielvazquez.concord.Activity? = null, dim: Boolean = false) {
     val c = Concord.I
     val p = c.profiles[uid]
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { Ui.profile = uid }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.then(if (dim) Modifier.background(Color.Transparent) else Modifier)) { Avatar(uid, 38.dp, status) }
+    Row(Modifier.fillMaxWidth().memberCard(if (dim) null else p).clickable { Ui.profile = uid }.padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.then(if (dim) Modifier.alphaDim() else Modifier)) { Avatar(uid, 38.dp, status) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(c.name(uid), fontWeight = FontWeight.SemiBold, color = if (dim) C.tx3 else (p?.nameColor?.let { parseColor(it) } ?: C.tx), maxLines = 1)
+                StyledName(uid, c.name(uid), 14.5.sp, FontWeight.SemiBold, dim = dim, modifier = Modifier.weight(1f, fill = false))
                 TitleBadges(c.titlesOf(uid))
             }
+            val small = @Composable { icon: ImageVector?, tint: Color, text: String ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (icon != null) { Icon(icon, null, tint = tint, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)) }
+                    Text(text, color = C.tx3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    if (since > 0) { val m = ((System.currentTimeMillis() - since) / 60000).coerceAtLeast(0); Spacer(Modifier.width(6.dp)); Text(if (m < 1) "agora" else if (m < 60) "$m min" else "${m / 60} h", color = C.tx3, fontSize = 11.sp) }
+                }
+            }
             when {
-                sub != null -> Text(sub, color = C.tx3, fontSize = 12.sp, maxLines = 1)
-                act?.game != null -> Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.SportsEsports, null, tint = C.tx3, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("Jogando ${act.game}", color = C.tx3, fontSize = 12.sp, maxLines = 1) }
-                act?.musicTitle != null -> Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.MusicNote, null, tint = C.spotify, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("Ouvindo ${act.musicTitle}", color = C.tx3, fontSize = 12.sp, maxLines = 1) }
-                p?.shownStatus != null -> Text(p.shownStatus!!, color = C.tx3, fontSize = 12.sp, maxLines = 1)
+                sub != null -> small(if (live) Icons.Default.SignalCellularAlt else Icons.AutoMirrored.Filled.VolumeUp, if (live) C.red else C.tx3, sub)
+                act?.game != null -> small(Icons.Default.SportsEsports, C.tx3, "Jogando ${act.game}")
+                act?.musicTitle != null -> small(Icons.Default.MusicNote, C.spotify, "Ouvindo ${act.musicTitle}")
+                p?.shownStatus != null -> small(null, C.tx3, p.shownStatus!!)
             }
         }
     }
 }
+private fun Modifier.alphaDim() = this.then(Modifier.graphicsLayer(alpha = .45f))
 
 /* ===================== Perfil ===================== */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -422,22 +492,21 @@ private fun ProfileSheet(uid: String) {
     val p = c.profiles[uid]
     LaunchedEffect(uid) { if (p == null) c.loadProfiles(listOf(uid)) }
     ModalBottomSheet(onDismissRequest = { Ui.profile = null }, containerColor = C.panel, dragHandle = null) {
-        Column(Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
-            Box(Modifier.fillMaxWidth().height(120.dp).background(parseColor(p?.bannerColor ?: p?.color, C.card2))) {
-                p?.banner?.let { AsyncImage(it, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
-            }
+        val bg = cardBrush(p)
+        Column(Modifier.fillMaxWidth().then(if (bg != null) Modifier.background(bg) else Modifier).padding(bottom = 28.dp)) {
+            BannerBox(p, Modifier.fillMaxWidth().height(130.dp))
             Box(Modifier.padding(start = 20.dp).padding(top = 0.dp)) {
-                Box(Modifier.padding(top = 0.dp).offsetUp().clip(CircleShape).background(C.panel).padding(5.dp)) { Avatar(uid, 88.dp, c.statusOf(uid)) }
+                Box(Modifier.padding(top = 0.dp).offsetUp().clip(avatarShape(p?.shape)).background(C.panel).padding(5.dp)) { Avatar(uid, 92.dp, c.statusOf(uid)) }
             }
             Column(Modifier.padding(horizontal = 20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(c.name(uid), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = p?.nameColor?.let { parseColor(it) } ?: C.tx)
-                    Spacer(Modifier.width(8.dp)); TitleBadges(c.titlesOf(uid), big = true)
+                    StyledName(uid, c.name(uid), 22.sp, FontWeight.ExtraBold)
                 }
+                if (c.titlesOf(uid).isNotEmpty()) { Spacer(Modifier.height(6.dp)); TitleBadges(c.titlesOf(uid), big = true) }
                 Text(listOfNotNull(p?.username?.let { "@$it" } ?: p?.name, p?.pronouns).joinToString(" · "), color = C.tx2, fontSize = 14.sp)
                 p?.shownStatus?.let { Spacer(Modifier.height(8.dp)); Text(it, color = C.tx) }
                 val act = c.online.find { it.uid == uid }?.act
-                Column(Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(C.card).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(if (bg != null) Color(0x55000000) else C.card).border(1.dp, if (bg != null) Color(0x1FFFFFFF) else Color.Transparent, RoundedCornerShape(16.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     act?.game?.let { g -> ActivityRow(Icons.Default.SportsEsports, "JOGANDO AGORA", g, if (act.gameSince > 0) sinceLabel(act.gameSince) else null, C.tx) }
                     act?.musicTitle?.let { m -> ActivityRow(Icons.Default.MusicNote, "OUVINDO NO SPOTIFY", m, act.musicArtist, C.spotify) }
                     p?.bio?.let { Text("SOBRE MIM", color = C.tx3, fontSize = 11.sp, fontWeight = FontWeight.Bold); Text(it, color = C.tx2, fontSize = 14.sp) }
@@ -472,22 +541,66 @@ private fun ActivityRow(icon: ImageVector, label: String, title: String, sub: St
     }
 }
 
-/* ===================== Status ===================== */
-@OptIn(ExperimentalMaterial3Api::class)
+/* ===================== Status (tipos + status personalizado, igual ao exe) ===================== */
+private val CST_EMOJI = listOf("🎮","🎧","💻","📚","🍕","☕","😴","🔥","✨","💜","💚","🎬","⚽","🏋️","🚗","✈️","🎉","🤒","🤫","🛠️","🎵","👀","🌙","💎","👑","🧠","🍿","🏖️","📺","🕹️")
+private val CST_PRESETS = listOf("🎮" to "Jogando", "📚" to "Estudando", "💻" to "Trabalhando", "🎬" to "Vendo filme", "😴" to "Dormindo", "🍕" to "Comendo", "🚗" to "Na rua", "🤫" to "Não chama")
+private val CST_UNTIL = listOf(30 to "30 min", 60 to "1 hora", 240 to "4 horas", -1 to "Hoje", 0 to "Não limpar")
+
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun StatusSheet() {
     val c = Concord.I
-    ModalBottomSheet(onDismissRequest = { Ui.statusOpen = false }, containerColor = C.panel) {
-        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
-            val cur = c.me?.presence ?: "online"
-            STATUS_LABEL.forEach { (k, l) ->
-                Row(Modifier.fillMaxWidth().height(54.dp).clip(RoundedCornerShape(12.dp)).background(if (cur == k) C.card2 else Color.Transparent).clickable { c.setStatus(k); Ui.statusOpen = false }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(12.dp).clip(CircleShape).background(statusColor(k))); Spacer(Modifier.width(14.dp)); Text(l, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+    val me = c.me
+    var custom by remember { mutableStateOf(false) }
+    var emoji by remember { mutableStateOf(me?.let { if (it.shownStatus != null) it.statusEmoji else null } ?: "") }
+    var text by remember { mutableStateOf(me?.let { if (it.shownStatus != null) it.statusText else null } ?: "") }
+    var until by remember { mutableStateOf(0) }
+    ModalBottomSheet(onDismissRequest = { Ui.statusOpen = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = C.panel) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp).verticalScroll(rememberScrollState())) {
+            if (!custom) {
+                val cur = me?.shownStatus
+                if (cur != null) Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(C.card).border(1.dp, C.line2, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text(cur, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis); Text("Status personalizado", color = C.tx3, fontSize = 11.sp) }
+                    IconButton(onClick = { custom = true }) { Icon(androidx.compose.material.icons.Icons.Default.Settings, "Editar", tint = C.tx2) }
+                    TextButton(onClick = { c.setCustomStatus(null, null, 0); Ui.statusOpen = false }) { Text("Limpar", color = C.tx2) }
+                } else Row(Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, C.line2, RoundedCornerShape(12.dp)).clickable { custom = true }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("🙂", fontSize = 18.sp); Spacer(Modifier.width(12.dp)); Text("Definir status personalizado", fontWeight = FontWeight.SemiBold)
                 }
-            }
-            HorizontalDivider(Modifier.padding(vertical = 8.dp), color = C.line)
-            Row(Modifier.fillMaxWidth().height(54.dp).clip(RoundedCornerShape(12.dp)).clickable { Ui.statusOpen = false; Ui.settingsOpen = true }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Settings, null, tint = C.tx2); Spacer(Modifier.width(14.dp)); Text("Editar perfil", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                val curSt = me?.presence ?: "online"
+                STATUS_LABEL.forEach { (k, l) ->
+                    Row(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(12.dp)).background(if (curSt == k) C.card2 else Color.Transparent).clickable { c.setStatus(k); Ui.statusOpen = false }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(12.dp).clip(CircleShape).background(statusColor(k))); Spacer(Modifier.width(14.dp)); Text(l, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    }
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp), color = C.line)
+                Row(Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(12.dp)).clickable { Ui.statusOpen = false; Ui.settingsOpen = true }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Settings, null, tint = C.tx2); Spacer(Modifier.width(14.dp)); Text("Editar perfil", fontWeight = FontWeight.SemiBold)
+                }
+            } else {
+                Text("Status personalizado", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp); Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(C.card2).border(1.dp, C.line2, RoundedCornerShape(14.dp)).clickable { emoji = "" }, contentAlignment = Alignment.Center) { Text(emoji.ifEmpty { "🙂" }, fontSize = 24.sp) }
+                    Spacer(Modifier.width(10.dp)); Box(Modifier.weight(1f)) { field(text, { text = it.take(80) }, "O que você está fazendo?") }
+                }
+                Spacer(Modifier.height(10.dp))
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    CST_PRESETS.forEach { (e, t) -> Text("$e $t", fontSize = 13.sp, color = C.tx2, modifier = Modifier.clip(RoundedCornerShape(16.dp)).border(1.dp, C.line2, RoundedCornerShape(16.dp)).clickable { emoji = e; text = t }.padding(horizontal = 11.dp, vertical = 6.dp)) }
+                }
+                Spacer(Modifier.height(12.dp))
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    CST_EMOJI.forEach { e -> Box(Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(if (e == emoji) C.card2 else Color.Transparent).clickable { emoji = if (emoji == e) "" else e }, contentAlignment = Alignment.Center) { Text(e, fontSize = 20.sp) } }
+                }
+                Spacer(Modifier.height(12.dp))
+                Text("LIMPAR DEPOIS DE", color = C.tx3, fontSize = 11.sp, fontWeight = FontWeight.Bold); Spacer(Modifier.height(6.dp))
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    CST_UNTIL.forEach { (m, l) -> Text(l, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (until == m) Color.Black else C.tx2, modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(if (until == m) Color.White else Color.Transparent).border(1.dp, if (until == m) Color.White else C.line2, RoundedCornerShape(16.dp)).clickable { until = m }.padding(horizontal = 12.dp, vertical = 6.dp)) }
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, C.line2, RoundedCornerShape(14.dp)).clickable { c.setCustomStatus(null, null, 0); Ui.statusOpen = false }, contentAlignment = Alignment.Center) { Text("Limpar", fontWeight = FontWeight.Bold) }
+                    Box(Modifier.weight(1f)) { PrimaryButton("Salvar") { c.setCustomStatus(text, emoji, until); Ui.statusOpen = false } }
+                }
             }
         }
     }
@@ -586,7 +699,7 @@ private fun FriendRow(uid: String) {
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { Ui.profile = uid }.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Avatar(uid, 42.dp, c.statusOf(uid).takeIf { it != "offline" }); Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(c.name(uid), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            StyledName(uid, c.name(uid), 15.sp, FontWeight.SemiBold)
             p?.username?.let { Text("@$it", color = C.tx3, fontSize = 12.sp) }
         }
         when (if (uid == c.meId) "me" else c.friendState(uid)) {

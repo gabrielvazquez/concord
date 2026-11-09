@@ -108,27 +108,32 @@ fun VoicePane(ch: Channel, onAskMic: (() -> Unit) -> Unit, onScreenShare: () -> 
     }
     val screens = v.videos.filter { v.isScreen(it) }
     val focus = Ui.focusVideo?.let { f -> v.videos.find { it.track.id() == f } } ?: screens.firstOrNull()
-    Column(Modifier.fillMaxSize()) {
+    val srv = if (ch.dmId == null) c.servers.find { it.id == ch.serverId } else null
+    val stage = stageOf(srv)
+    val bar = barOf(srv)
+    Column(Modifier.fillMaxSize().then(if (stage != null) Modifier.background(stage.bg) else Modifier)) {
         Box(Modifier.weight(1f).fillMaxWidth().padding(10.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (focus != null) VideoCard(focus, big = true)
                 LazyVerticalGrid(GridCells.Adaptive(150.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().weight(1f)) {
                     items(tiles, key = { it.key }) { t ->
                         val cam = if (t.key == c.sid) null else v.videos.find { it.key == t.key && !v.isScreen(it) }
-                        ParticipantTile(t, cam, mine = t.key == c.sid)
+                        ParticipantTile(t, cam, mine = t.key == c.sid, stage = stage)
                     }
                     items(v.videos.filter { it != focus && v.isScreen(it) }, key = { "s-" + it.track.id() }) { VideoCard(it, big = false) }
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            Ctl(if (v.muted || v.deaf) Icons.Default.MicOff else Icons.Default.Mic, "Microfone", off = v.muted || v.deaf) { v.toggleMute() }
-            Ctl(if (v.deaf) Icons.Default.HeadsetOff else Icons.Default.Headset, "Áudio", off = v.deaf) { v.toggleDeaf() }
-            Ctl(if (CallService.speakerOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Hearing, "Alto-falante", active = CallService.speakerOn) { CallService.setSpeaker(c.app, !CallService.speakerOn) }
-            Ctl(if (v.camOn) Icons.Default.Videocam else Icons.Default.VideocamOff, "Câmera", active = v.camOn) { if (v.camOn) v.toggleCam() else onAskCam { v.toggleCam() } }
-            Ctl(if (v.screenOn) Icons.Default.StopScreenShare else Icons.Default.ScreenShare, "Tela", active = v.screenOn) { if (v.screenOn) { v.stopScreen(); c.trackServer() } else onScreenShare() }
-            Ctl(Icons.Default.Tv, "Enviar para a TV", active = c.tvsInRoom() > 0) { Ui.tvOpen = true }
-            Box(Modifier.size(50.dp).clip(CircleShape).background(C.red).clickable { v.leave() }, contentAlignment = Alignment.Center) { Icon(Icons.Default.CallEnd, "Sair", tint = Color.White) }
+        Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 10.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
+            ControlBar(bar) {
+                Ctl(bar, if (v.muted || v.deaf) Icons.Default.MicOff else Icons.Default.Mic, "Microfone", off = v.muted || v.deaf) { v.toggleMute() }
+                Ctl(bar, if (v.deaf) Icons.Default.HeadsetOff else Icons.Default.Headset, "Áudio", off = v.deaf) { v.toggleDeaf() }
+                Ctl(bar, if (CallService.speakerOn) Icons.AutoMirrored.Filled.VolumeUp else Icons.Default.Hearing, "Alto-falante", active = CallService.speakerOn) { CallService.setSpeaker(c.app, !CallService.speakerOn) }
+                Ctl(bar, if (v.camOn) Icons.Default.Videocam else Icons.Default.VideocamOff, "Câmera", active = v.camOn) { if (v.camOn) v.toggleCam() else onAskCam { v.toggleCam() } }
+                Ctl(bar, if (v.screenOn) Icons.Default.StopScreenShare else Icons.Default.ScreenShare, "Tela", active = v.screenOn) { if (v.screenOn) { v.stopScreen(); c.trackServer() } else onScreenShare() }
+                Ctl(bar, Icons.Default.Tv, "Enviar para a TV", active = c.tvsInRoom() > 0) { Ui.tvOpen = true }
+                Box(Modifier.height(42.dp).width(54.dp).clip(bar?.shape?.takeIf { it != CircleShape } ?: RoundedCornerShape(21.dp)).background(C.red).clickable { v.leave() }, contentAlignment = Alignment.Center) { Icon(Icons.Default.CallEnd, "Sair", tint = Color.White) }
+            }
         }
     }
 }
@@ -172,29 +177,62 @@ fun TvDialog() {
         dismissButton = { androidx.compose.material3.TextButton(onClick = { if (on) c.pairTv(c.lastTvCode(), unpair = true) { c.say("TV desconectada.") }; Ui.tvOpen = false }) { Text(if (on) "Desconectar TV" else "Cancelar", color = C.tx2) } })
 }
 
+/** barra da chamada em cápsula, igual ao exe; servidores CEO/Founder trocam o estilo */
 @Composable
-private fun Ctl(icon: ImageVector, label: String, off: Boolean = false, active: Boolean = false, onClick: () -> Unit) {
-    Box(Modifier.size(44.dp).clip(CircleShape).background(if (active) Color.White else if (off) Color(0x33FF4D5E) else C.card2).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, label, tint = if (active) Color.Black else if (off) C.red else C.tx)
+private fun ControlBar(bar: BarStyle?, content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+    val shape = when { bar?.shape is androidx.compose.foundation.shape.CutCornerShape -> androidx.compose.foundation.shape.CutCornerShape(12.dp); bar?.shape == RoundedCornerShape(0.dp) -> RoundedCornerShape(0.dp); else -> RoundedCornerShape(30.dp) }
+    val ang = spin(bar?.spinMs ?: 0)
+    val base = Modifier.clip(shape)
+    val m = when {
+        bar == null -> base.background(C.card).border(1.dp, C.line, shape)
+        bar.bar == null -> Modifier
+        else -> {
+            val bb = bar.barBorder
+            val borderBrush = if (bb == null) androidx.compose.ui.graphics.SolidColor(Color.Transparent) else if (bar.spinMs > 0) androidx.compose.ui.graphics.Brush.sweepGradient(rotateCols(bb, ang)) else androidx.compose.ui.graphics.Brush.linearGradient(bb)
+            base.background(bar.bar).border(if (bar.spinMs > 0 || bb?.size ?: 0 > 2) 1.5.dp else 1.dp, borderBrush, shape)
+        }
+    }
+    Row(m.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(if (bar == BARS["split"] || bar == BARS["minimal"]) 10.dp else 6.dp), verticalAlignment = Alignment.CenterVertically, content = content)
+}
+private fun rotateCols(c: List<Color>, deg: Float): List<Color> {
+    val base = c.dropLast(1); val n = base.size; if (n < 2) return c
+    val f = deg / 360f * n; val i = f.toInt() % n; val fr = f - f.toInt()
+    return (0..n).map { k -> androidx.compose.ui.graphics.lerp(base[(k + i) % n], base[(k + i + 1) % n], fr) }
+}
+
+@Composable
+private fun Ctl(bar: BarStyle?, icon: ImageVector, label: String, off: Boolean = false, active: Boolean = false, onClick: () -> Unit) {
+    val shape = bar?.shape ?: CircleShape
+    val bg = if (active) Color.White else if (off) Color(0x33FF4D5E) else bar?.btn ?: C.card2
+    val bd = if (active) Color.White else if (off) Color(0x664A1F25) else bar?.btnBorder ?: C.line2
+    Box(Modifier.size(40.dp).clip(shape).background(bg).border(1.dp, bd, shape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, label, tint = if (active) Color.Black else if (off) C.red else bar?.tint ?: C.tx, modifier = Modifier.size(20.dp))
     }
 }
 
 @Composable
-private fun ParticipantTile(t: Tile, cam: RemoteVideo?, mine: Boolean) {
+private fun ParticipantTile(t: Tile, cam: RemoteVideo?, mine: Boolean, stage: StageTheme?) {
     val c = Concord.I
     val v = c.voice
     val speaking = v.speaking[t.key] == true
-    Box(Modifier.fillMaxWidth().aspectRatio(16f / 11f).clip(RoundedCornerShape(16.dp)).background(C.card)
-        .border(if (speaking) 2.dp else 1.dp, if (speaking) C.green else C.line, RoundedCornerShape(16.dp))
+    val p = t.uid?.let { c.profiles[it] }
+    val shape = RoundedCornerShape(stage?.radius ?: 16.dp)
+    val spk = stage?.speak ?: C.green
+    Box(Modifier.fillMaxWidth().aspectRatio(16f / 11f).clip(shape).background(stage?.tile ?: parseColor(p?.bannerColor ?: p?.themePrimary, C.card))
+        .border(if (speaking) 2.5.dp else 1.dp, if (speaking) spk else stage?.tileBorder ?: C.line, shape)
         .clickable { t.uid?.let { Ui.profile = it } }) {
+        if (stage == null && cam == null && !(mine && v.camTrack != null) && !p?.banner.isNullOrEmpty()) {
+            coil.compose.AsyncImage(p!!.banner, null, contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            Box(Modifier.fillMaxSize().background(Color(0x66000000)))
+        }
         val myCam = if (mine) v.camTrack else null
         when {
             myCam != null -> VideoView(myCam, Modifier.fillMaxSize(), mirror = true, fill = true)
             cam != null -> VideoView(cam.track, Modifier.fillMaxSize(), fill = true)
             else -> Box(Modifier.align(Alignment.Center)) { Avatar(t.uid, 64.dp, fallbackName = t.name, fallbackColor = t.color, speaking = speaking) }
         }
-        Row(Modifier.align(Alignment.BottomStart).padding(8.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xAA000000)).padding(horizontal = 8.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (mine) "${t.name} (você)" else t.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Row(Modifier.align(Alignment.BottomStart).padding(8.dp).clip(RoundedCornerShape(if (stage?.radius == 0.dp) 0.dp else 999.dp)).then(if (stage != null) Modifier.background(stage.label) else Modifier.background(Color(0xCC000000))).padding(horizontal = 9.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(if (mine) "${t.name} (você)" else t.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = stage?.labelText ?: Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (t.muted || t.deaf) { Spacer(Modifier.width(4.dp)); Icon(Icons.Default.MicOff, null, tint = C.red, modifier = Modifier.size(13.dp)) }
             if (t.deaf) { Spacer(Modifier.width(3.dp)); Icon(Icons.Default.HeadsetOff, null, tint = C.red, modifier = Modifier.size(13.dp)) }
         }

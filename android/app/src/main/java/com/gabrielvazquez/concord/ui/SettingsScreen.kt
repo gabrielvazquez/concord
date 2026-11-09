@@ -8,6 +8,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,8 +66,10 @@ fun SettingsScreen() {
     var username by remember { mutableStateOf(me.username ?: "") }
     var bio by remember { mutableStateOf(me.bio ?: "") }
     var busy by remember { mutableStateOf(false) }
+    var look by remember { mutableStateOf(false) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? -> if (uri != null) c.uploadAvatar(uri) }
     Dialog(onDismissRequest = { Ui.settingsOpen = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        if (look) AppearanceScreen { look = false }
         Column(Modifier.fillMaxSize().background(C.bg).systemBarsPadding().imePadding()) {
             Row(Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { Ui.settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar") }
@@ -80,7 +83,7 @@ fun SettingsScreen() {
                             Box(Modifier.align(Alignment.BottomEnd).size(26.dp).clip(CircleShape).background(Color.White), contentAlignment = Alignment.Center) { Icon(Icons.Default.Edit, null, tint = Color.Black, modifier = Modifier.size(14.dp)) }
                         }
                         Spacer(Modifier.width(14.dp))
-                        Column { Text(c.name(me.id), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp); Text(STATUS_LABEL[c.myStatus()] ?: "", color = statusColor(c.myStatus()), fontSize = 13.sp) }
+                        Column { StyledName(me.id, c.name(me.id), 18.sp, FontWeight.ExtraBold); Text(STATUS_LABEL[c.myStatus()] ?: "", color = statusColor(c.myStatus()), fontSize = 13.sp) }
                     }
                     Spacer(Modifier.height(14.dp))
                     field(name, { name = it.take(24) }, "Nome de exibição"); Spacer(Modifier.height(10.dp))
@@ -89,7 +92,10 @@ fun SettingsScreen() {
                     field(status, { status = it.take(80) }, "Status personalizado"); Spacer(Modifier.height(10.dp))
                     field(bio, { bio = it.take(300) }, "Sobre mim"); Spacer(Modifier.height(14.dp))
                     PrimaryButton("Salvar", busy) { busy = true; c.saveProfile(name, status, bio, pronouns, username) { busy = false } }
-                    Text("Decorações, efeitos e banner animado são editados pelo site ou pelo app de PC.", color = C.tx3, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+                    Spacer(Modifier.height(10.dp))
+                    Row(Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, C.line2, RoundedCornerShape(14.dp)).clickable { look = true }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Edit, null, tint = C.tx2); Spacer(Modifier.width(12.dp)); Text("Aparência: nome, moldura, banner e premium", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    }
                 }
                 Section("Status") {
                     STATUS_LABEL.forEach { (k, l) ->

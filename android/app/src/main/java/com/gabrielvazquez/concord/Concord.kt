@@ -381,7 +381,10 @@ class Concord(val app: Application) {
         if (uid == null) return "offline"
         if (uid == meId) return myStatus()
         val o = online.find { it.uid == uid } ?: return "offline"
-        return if (o.st == "invisible") "offline" else o.st
+        if (o.st == "invisible") return "offline"
+        if (o.st == "online" && o.screen) return "live"
+        if (o.st == "online" && o.act?.game != null) return "game"
+        return o.st
     }
 
     fun myStatus(): String {
@@ -395,6 +398,18 @@ class Concord(val app: Application) {
         val p = me ?: return@launch
         profiles[p.id] = p.copy(presence = st); autoIdle = false; trackServer()
         try { supa.update("dc_profiles", "id=eq.${p.id}", JSONObject().put("presence_status", st)) } catch (e: Exception) { say(authMessage(e)) }
+    }
+
+    /** status personalizado: emoji + texto + quando limpa (minutos; 0 = não limpa; -1 = fim do dia) */
+    fun setCustomStatus(text: String?, emoji: String?, minutes: Int) = scope.launch {
+        val p = me ?: return@launch
+        val t = text?.trim()?.take(80)?.ifEmpty { null }; val e = emoji?.trim()?.ifEmpty { null }
+        val until = if (t == null && e == null || minutes == 0) null else if (minutes < 0) java.time.LocalDate.now().atTime(23, 59, 59).atZone(java.time.ZoneId.systemDefault()).toInstant().toString() else java.time.Instant.now().plusSeconds(minutes * 60L).toString()
+        try {
+            val r = supa.update("dc_profiles", "id=eq.${p.id}", JSONObject().put("status_text", t ?: JSONObject.NULL).put("status_emoji", e ?: JSONObject.NULL).put("status_until", until ?: JSONObject.NULL))
+            if (r.length() > 0) profiles[p.id] = Profile.from(r.getJSONObject(0))
+            srvRt?.send("profile", JSONObject().put("id", p.id)); trackServer()
+        } catch (ex: Exception) { say(authMessage(ex)) }
     }
 
     fun name(uid: String?, fb: String? = null): String = uid?.let { nicks[it] ?: profiles[it]?.name } ?: fb ?: "…"
@@ -717,6 +732,22 @@ class Concord(val app: Application) {
             supa.rememberAccount(me?.name, me?.color, me?.avatar)
             trackServer(); say("Perfil salvo."); done()
         } catch (e: Exception) { val m = authMessage(e); say(if (m.contains("username") || m.contains("duplicate")) "Esse nome de usuário já tem dono. Escolha outro." else m); done() }
+    }
+
+    /** aparência do perfil (moldura, nome, placa, banner, borda premium...) — os mesmos campos do site */
+    fun saveLook(d: Profile, done: () -> Unit) = scope.launch {
+        val p = me ?: return@launch
+        val n = { v: String? -> v?.ifEmpty { null } ?: JSONObject.NULL }
+        try {
+            val prem = JSONObject(); d.premBorder?.let { prem.put("border", it) }; if (!d.premRing) prem.put("ring", false)
+            val patch = JSONObject().put("name_color", n(d.nameColor)).put("name_color2", n(d.nameColor2)).put("name_font", n(d.nameFont)).put("name_effect", n(d.nameEffect))
+                .put("decoration", n(d.decoration)).put("avatar_shape", n(d.shape)).put("nameplate", n(d.plate)).put("banner_anim", n(d.bannerAnim))
+                .put("theme_primary", n(d.themePrimary)).put("theme_accent", n(d.themeAccent)).put("prem", prem).put("updated_at", java.time.Instant.now().toString())
+            val r = supa.update("dc_profiles", "id=eq.${p.id}", patch)
+            if (r.length() > 0) profiles[p.id] = Profile.from(r.getJSONObject(0))
+            srvRt?.send("profile", JSONObject().put("id", p.id)); say("Aparência salva.")
+        } catch (e: Exception) { say(authMessage(e)) }
+        done()
     }
 
     fun uploadAvatar(uri: Uri) = scope.launch {

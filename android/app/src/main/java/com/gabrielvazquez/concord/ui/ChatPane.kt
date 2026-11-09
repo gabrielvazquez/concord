@@ -75,7 +75,8 @@ fun ChatPane(key: String, placeholder: String, readonly: Boolean) {
     val size = c.messages.size
     LaunchedEffect(key, size) { if (size > 0) list.animateScrollToItem(size - 1) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? -> if (uri != null) c.sendImage(uri) }
-    Column(Modifier.fillMaxSize().imePadding()) {
+    val bg = if (key.startsWith("dm-")) null else chatBrush(c.server)
+    Column(Modifier.fillMaxSize().then(if (bg != null) Modifier.background(bg) else Modifier).imePadding()) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (c.loadingMsgs && c.messages.isEmpty()) CircularProgressIndicator(Modifier.align(Alignment.Center).size(28.dp), color = C.tx3, strokeWidth = 2.dp)
             LazyColumn(state = list, modifier = Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp)) {
@@ -126,7 +127,7 @@ private fun MessageRow(m: Msg, grouped: Boolean) {
             Column(Modifier.weight(1f)) {
                 if (!grouped) Row(verticalAlignment = Alignment.CenterVertically) {
                     val p = m.userId?.let { c.profiles[it] }
-                    Text(c.name(m.userId, m.author), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = p?.nameColor?.let { parseColor(it) } ?: C.tx, modifier = Modifier.clickable { m.userId?.let { Ui.profile = it } })
+                    StyledNameP(p, c.name(m.userId, m.author), 15.sp, FontWeight.Bold, modifier = Modifier.weight(1f, fill = false).clickable { m.userId?.let { Ui.profile = it } })
                     TitleBadges(c.titlesOf(m.userId))
                     Spacer(Modifier.width(8.dp)); Text(timeLabel(m.at), color = C.tx3, fontSize = 11.sp)
                 }

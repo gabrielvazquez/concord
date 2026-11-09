@@ -19,6 +19,10 @@ data class Profile(
     val id: String, val name: String, val color: String, val avatar: String?, val banner: String?, val bannerColor: String?,
     val bio: String?, val pronouns: String?, val statusText: String?, val presence: String, val nameColor: String?, val createdAt: String?,
     val username: String? = null, val statusEmoji: String? = null, val statusUntil: String? = null,
+    // visual do perfil (mesmos campos do site/exe)
+    val nameColor2: String? = null, val nameFont: String? = null, val nameEffect: String? = null, val decoration: String? = null,
+    val shape: String? = null, val plate: String? = null, val themePrimary: String? = null, val themeAccent: String? = null,
+    val bannerAnim: String? = null, val cardStyle: String? = null, val premBorder: String? = null, val premRing: Boolean = true,
 ) {
     /** status personalizado com emoji, sumindo quando passa da validade */
     val shownStatus: String? get() {
@@ -30,6 +34,9 @@ data class Profile(
         fun from(o: JSONObject) = Profile(
             o.getString("id"), o.s("display_name") ?: "…", o.s("color") ?: "#6366f1", o.s("avatar_url"), o.s("banner_url"), o.s("banner_color"),
             o.s("bio"), o.s("pronouns"), o.s("status_text"), o.s("presence_status") ?: "online", o.s("name_color"), o.s("created_at"), o.s("username"), o.s("status_emoji"), o.s("status_until"),
+            o.s("name_color2"), o.s("name_font"), o.s("name_effect"), o.s("decoration"), o.s("avatar_shape"), o.s("nameplate"),
+            o.s("theme_primary"), o.s("theme_accent"), o.s("banner_anim"), o.s("card_style"),
+            o.optJSONObject("prem")?.let { it.s("border") }, o.optJSONObject("prem")?.let { !(it.has("ring") && !it.optBoolean("ring", true)) } ?: true,
         )
     }
 }
@@ -37,10 +44,18 @@ data class Profile(
 data class Server(
     val id: String, val code: String, val name: String, val icon: String?, val iconUrl: String?, val bannerUrl: String?,
     val accent: String?, val description: String?, val welcome: String?,
+    val tier: String? = null, val themeBg: String? = null, val applyAccent: Boolean = false, val ownerId: String? = null,
+    val stage: String? = null, val bar: String? = null, val theme: String? = null, val head: String? = null, val headFx: String? = null,
 ) {
+    /** Emerald (CEO) e Aurora (Founder) liberam os temas premium */
+    val premium get() = tier == "diamond" || tier == "aurora"
     companion object {
-        fun from(o: JSONObject) = Server(o.getString("id"), o.optString("code"), o.optString("name"), o.s("icon"), o.s("icon_url"),
-            o.s("banner_url"), o.s("accent"), o.s("description"), o.s("welcome"))
+        fun from(o: JSONObject): Server {
+            val cu = o.optJSONObject("custom")
+            return Server(o.getString("id"), o.optString("code"), o.optString("name"), o.s("icon"), o.s("icon_url"),
+                o.s("banner_url"), o.s("accent"), o.s("description"), o.s("welcome"), o.s("tier"), o.s("theme_bg"), o.optBoolean("apply_accent"), o.s("owner_id"),
+                cu?.s("stage"), cu?.s("bar"), cu?.s("theme"), cu?.s("head"), cu?.s("headfx"))
+        }
     }
 }
 

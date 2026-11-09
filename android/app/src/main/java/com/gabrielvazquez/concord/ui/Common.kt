@@ -126,10 +126,8 @@ fun TitleBadge(key: String?, big: Boolean = false, mini: Boolean = false) {
 
 @Composable
 fun Avatar(uid: String?, size: Dp, status: String? = null, fallbackName: String? = null, fallbackColor: String? = null, speaking: Boolean = false) {
-    val c = Concord.I
-    val p = uid?.let { c.profiles[it] }
-    val name = p?.name ?: fallbackName ?: "?"
-    AvatarRaw(p?.avatar, name, p?.color ?: fallbackColor, size, status, speaking)
+    val p = uid?.let { Concord.I.profiles[it] }
+    FancyAvatar(p, uid, size, status, fallbackName, fallbackColor, speaking)
 }
 
 @Composable
